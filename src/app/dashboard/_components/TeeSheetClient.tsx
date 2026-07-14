@@ -205,9 +205,12 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
                         <>
                           {s.bookings.map((b) => (
                             <div key={b.id} className="relative">
-                              <button onClick={() => setMenu(menu === b.id ? null : b.id)} className="flex w-full items-center gap-1 truncate rounded-md bg-black/[0.03] px-2 py-1 text-left text-xs font-medium transition hover:bg-black/[0.06]">
-                                <span className="truncate">{b.golferName.split(" ")[0]} · {b.numPlayers}</span>
+                              <button onClick={() => setMenu(menu === b.id ? null : b.id)} className="flex w-full items-center gap-1.5 truncate rounded-lg bg-gradient-to-r from-linx-green/10 to-linx-green/5 px-2.5 py-2 text-left text-xs font-semibold border border-linx-green/20 transition hover:bg-linx-green/15 hover:border-linx-green/40">
+                                <span className="truncate text-foreground/80">{b.golferName.split(" ")[0]}</span>
+                                <span className="text-[10px] text-foreground/60">·</span>
+                                <span className="shrink-0 text-foreground/70">{b.numPlayers}p</span>
                                 {b.withCart && <span className="ml-auto shrink-0" title="Riding — cart" aria-label="cart">🛺</span>}
+                                <span className="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{backgroundColor: b.paymentStatus === "paid_online" ? "#eaf7ef" : b.paymentStatus === "paid_in_person" ? "#fef3e2" : "#e7f0fb", color: b.paymentStatus === "paid_online" ? "#2f855a" : b.paymentStatus === "paid_in_person" ? "#b7791f" : "#2b6cb0"}}>{b.paymentStatus === "paid_online" ? "Paid" : b.paymentStatus === "paid_in_person" ? "Counter" : b.paymentStatus === "partially_paid" ? "Partial" : "Unpaid"}</span>
                               </button>
                               {menu === b.id && <DetailsPopover booking={b} onClose={() => setMenu(null)} shopItems={shopItems} taxRateBps={taxRateBps} inPersonFeePerPlayer={inPersonFeePerPlayer} grid />}
                             </div>

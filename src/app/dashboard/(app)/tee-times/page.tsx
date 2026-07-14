@@ -72,12 +72,11 @@ export default async function TeeTimesPage() {
       {/* Daily overrides */}
       <div className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
         <h2 className="font-display text-lg font-semibold text-foreground">Daily overrides</h2>
-        <p className="mt-1 text-sm text-foreground/55">Close the whole day (leave time blank) or a specific tee time — e.g. a tournament.</p>
+        <p className="mt-1 text-sm text-foreground/55">Close the whole day — e.g. a weather closure.</p>
         <form action={addOverride} className="mt-3 flex flex-wrap items-end gap-3">
           <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Date</span><input name="date" type="date" required className={inp} /></label>
-          <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Time (optional)</span><input name="slotTime" placeholder="HH:MM" className={`${inp} w-24`} /></label>
-          <label className="block flex-1"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Reason</span><input name="reason" placeholder="Tournament" className={`${inp} w-full`} /></label>
-          <button className="rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast">Add closure</button>
+          <label className="block flex-1"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Reason</span><input name="reason" placeholder="Weather closure" className={`${inp} w-full`} /></label>
+          <button className="rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast">Close day</button>
         </form>
 
         <p className="mt-5 text-sm font-medium text-foreground/70">Block a time range (tournament / outing)</p>
