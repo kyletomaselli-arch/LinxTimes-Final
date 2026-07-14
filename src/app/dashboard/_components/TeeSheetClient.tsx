@@ -82,6 +82,7 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
   const [filter, setFilter] = useState("all");
   const [menu, setMenu] = useState<string | null>(null); // popover id
   const [showPast, setShowPast] = useState(false);
+  const [openOnly, setOpenOnly] = useState(false);
   const [nowTime, setNowTime] = useState("");
 
   useEffect(() => {
@@ -111,6 +112,7 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
 
   let shown = slots.filter((s) => filter === "all" || s.layoutId === filter);
   if (!showPast) shown = shown.filter((s) => !isPastSlot(s.time));
+  if (openOnly) shown = shown.filter((s) => !s.closed && s.spotsLeft > 0);
 
   const groups = [
     { title: "Morning", slots: shown.filter((s) => s.ampm === "AM") },
@@ -127,6 +129,9 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
         <div className="ml-auto flex items-center gap-3">
           <button onClick={() => setShowPast(!showPast)} className="text-xs font-medium text-foreground/55 transition hover:text-foreground/80">
             {showPast ? "Hide past" : "Show past"}
+          </button>
+          <button onClick={() => setOpenOnly(!openOnly)} className="text-xs font-medium text-foreground/55 transition hover:text-foreground/80">
+            {openOnly ? "All slots" : "Open only"}
           </button>
           <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
             <button onClick={() => setViewP("list")} className={chip(view === "list")}>▤ List</button>
@@ -194,7 +199,12 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
             ) : (
               <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
                 {g.slots.map((s) => (
-                  <div key={s.key} className="rounded-2xl border border-black/[0.06] bg-white p-3">
+                  <div key={s.key} className="rounded-2xl border border-black/[0.06] bg-white p-3 relative">
+                    {s.spotsLeft === 0 && !s.closed && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/[0.02]">
+                        <div className="font-display text-sm font-bold text-foreground/40">Full</div>
+                      </div>
+                    )}
                     <div className="flex items-baseline justify-between">
                       <div className="font-mono text-base font-bold">{s.label}<small className="ml-1 text-[11px] text-foreground/40">{s.ampm}</small></div>
                       <div className="text-[11px] font-medium text-foreground/40">{s.maxPlayers - s.spotsLeft}/{s.maxPlayers}</div>
