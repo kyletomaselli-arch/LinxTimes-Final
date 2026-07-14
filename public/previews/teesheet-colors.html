@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tee sheet color schemes · LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#eef0f3;color:#1c2430;padding:40px 24px 80px}
+.wrap{max-width:900px;margin:0 auto}
+a.back{color:#1c2430;text-decoration:none;font-size:13px;background:#fff;border:1px solid #e2e5ea;padding:8px 14px;border-radius:99px}
+.title{font-family:'Fraunces';font-size:34px;font-weight:600;margin:20px 0 4px}
+.lead{color:#6b7280;margin-bottom:28px}
+.demo{background:#fff;border-radius:18px;box-shadow:0 20px 44px -34px rgba(16,24,40,.35);padding:22px;margin-bottom:22px}
+.dh{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}.dh .n{font-family:'Space Grotesk';font-weight:700;color:#12a06f}.dh h3{font-size:16px;font-weight:700}.dh .sub{margin-left:auto;font-size:12px;color:#9aa1ab}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.st{border-radius:14px;padding:14px 16px}.st .k{font-size:11px;font-weight:500}.st .v{font-family:'Space Grotesk';font-size:23px;font-weight:700;margin-top:6px}.st .t{font-size:11px;font-weight:600;margin-top:8px}
+.list{margin-top:14px}
+.row{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:11px;margin-bottom:6px;border-left:4px solid}
+.tm{font-family:'Space Grotesk';font-weight:600;width:56px;font-size:13px}
+.ini{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700}
+.nm{font-weight:600;font-size:13px}.subx{color:#8a919b;font-size:11px}
+.pill{margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+
+/* 1 · Slate neutral */
+.s1 .st{background:#fff;border:1px solid #e7e9ee}.s1 .st .k{color:#6b7280}.s1 .st .v{color:#14181c}.s1 .st.hi{background:#1f2733;border:0}.s1 .st.hi .k{color:#9aa8ba}.s1 .st.hi .v{color:#fff}.s1 .up{color:#16a34a}
+.s1 .row.paid{background:#f7f8fa;border-color:#334155}.s1 .row.walk{background:#f7f8fa;border-color:#94a3b8}
+.s1 .ini{background:#e6e9ef;color:#334155}.s1 .paid .pill{background:#eef1f5;color:#334155}.s1 .walk .pill{background:#eef1f5;color:#64748b}
+
+/* 2 · Forest (brand greens) */
+.s2 .st{background:#eef5ef}.s2 .st .k{color:#5a7268}.s2 .st .v{color:#12241a}.s2 .st.hi{background:#0d3522}.s2 .st.hi .k{color:#8fbfa6}.s2 .st.hi .v{color:#fff}.s2 .up{color:#12a06f}
+.s2 .row.paid{background:#f2f8f4;border-color:#12a06f}.s2 .row.walk{background:#f6f4ec;border-color:#caa53f}
+.s2 .ini{background:#d7ebdd;color:#1f7a53}.s2 .paid .pill{background:#e6f2ea;color:#2f6b4c}.s2 .walk .pill{background:#f2ead2;color:#8a6d1a}
+
+/* 3 · Charcoal + lime */
+.s3 .st{background:#16181d;color:#fff}.s3 .st .k{color:#8b93a1}.s3 .st .v{color:#fff}.s3 .st.hi .v{color:#a3e635}.s3 .up{color:#a3e635}
+.s3 .row.paid{background:#f5f7f4;border-color:#3f6212}.s3 .row.walk{background:#f6f6f4;border-color:#a1a1aa}
+.s3 .ini{background:#e6efd6;color:#3f6212}.s3 .paid .pill{background:#eaf2da;color:#3f6212}.s3 .walk .pill{background:#eef0f2;color:#52525b}
+
+/* 4 · Warm sand / clubhouse */
+.s4 .st{background:#f6f0e3}.s4 .st .k{color:#8a7f66}.s4 .st .v{color:#2b2b28}.s4 .st.hi{background:#2b2b28}.s4 .st.hi .k{color:#c9b892}.s4 .st.hi .v{color:#e6c34c}.s4 .up{color:#98771e}
+.s4 .row.paid{background:#f8f4ea;border-color:#7d6a2e}.s4 .row.walk{background:#f6f2ea;border-color:#b8975a}
+.s4 .ini{background:#eadfc4;color:#7d6a2e}.s4 .paid .pill{background:#efe6cf;color:#6b5a24}.s4 .walk .pill{background:#efe6cf;color:#8a7233}
+</style></head><body>
+<div class="wrap">
+<a class="back" href="/previews/admin-teesheet-final.html">← back to tee sheet</a>
+<div class="title">Color schemes</div>
+<p class="lead">Same layout, four palettes — no more Easter pastels. Pick the mood.</p>
+
+<!-- 1 -->
+<div class="demo s1"><div class="dh"><span class="n">01</span><h3>Slate neutral</h3><span class="sub">Corporate · minimal · one dark highlight</span></div>
+<div class="stats"><div class="st hi"><div class="k">Revenue today</div><div class="v">$1,240</div><div class="t">▲ 14.9%</div></div><div class="st"><div class="k">Bookings</div><div class="v">42</div><div class="t up">▲ 12%</div></div><div class="st"><div class="k">Players</div><div class="v">118</div><div class="t up">▲ 8%</div></div><div class="st"><div class="k">Next 7 days</div><div class="v">96</div></div></div>
+<div class="list">
+  <div class="row paid"><div class="tm">7:00</div><div class="ini">JG</div><div><div class="nm">Jane Golfer</div><div class="subx">2 · 18H · The Liberator</div></div><span class="pill">Paid</span></div>
+  <div class="row walk"><div class="tm">7:30</div><div class="ini">DF</div><div><div class="nm">Dana Fenn</div><div class="subx">1 · 9H · phone</div></div><span class="pill">Walk-in</span></div>
+</div></div>
+
+<!-- 2 -->
+<div class="demo s2"><div class="dh"><span class="n">02</span><h3>Forest — brand greens</h3><span class="sub">On-brand · cohesive · gold accent</span></div>
+<div class="stats"><div class="st hi"><div class="k">Revenue today</div><div class="v">$1,240</div><div class="t">▲ 14.9%</div></div><div class="st"><div class="k">Bookings</div><div class="v">42</div><div class="t up">▲ 12%</div></div><div class="st"><div class="k">Players</div><div class="v">118</div><div class="t up">▲ 8%</div></div><div class="st"><div class="k">Next 7 days</div><div class="v">96</div></div></div>
+<div class="list">
+  <div class="row paid"><div class="tm">7:00</div><div class="ini">JG</div><div><div class="nm">Jane Golfer</div><div class="subx">2 · 18H · The Liberator</div></div><span class="pill">Paid</span></div>
+  <div class="row walk"><div class="tm">7:30</div><div class="ini">DF</div><div><div class="nm">Dana Fenn</div><div class="subx">1 · 9H · phone</div></div><span class="pill">Walk-in</span></div>
+</div></div>
+
+<!-- 3 -->
+<div class="demo s3"><div class="dh"><span class="n">03</span><h3>Charcoal + lime</h3><span class="sub">Sleek · modern SaaS · dark stat cards</span></div>
+<div class="stats"><div class="st hi"><div class="k">Revenue today</div><div class="v">$1,240</div><div class="t">▲ 14.9%</div></div><div class="st"><div class="k">Bookings</div><div class="v">42</div><div class="t up">▲ 12%</div></div><div class="st"><div class="k">Players</div><div class="v">118</div><div class="t up">▲ 8%</div></div><div class="st"><div class="k">Next 7 days</div><div class="v">96</div></div></div>
+<div class="list">
+  <div class="row paid"><div class="tm">7:00</div><div class="ini">JG</div><div><div class="nm">Jane Golfer</div><div class="subx">2 · 18H · The Liberator</div></div><span class="pill">Paid</span></div>
+  <div class="row walk"><div class="tm">7:30</div><div class="ini">DF</div><div><div class="nm">Dana Fenn</div><div class="subx">1 · 9H · phone</div></div><span class="pill">Walk-in</span></div>
+</div></div>
+
+<!-- 4 -->
+<div class="demo s4"><div class="dh"><span class="n">04</span><h3>Warm sand — clubhouse</h3><span class="sub">Premium · golf-club warmth · gold accent</span></div>
+<div class="stats"><div class="st hi"><div class="k">Revenue today</div><div class="v">$1,240</div><div class="t">▲ 14.9%</div></div><div class="st"><div class="k">Bookings</div><div class="v">42</div><div class="t up">▲ 12%</div></div><div class="st"><div class="k">Players</div><div class="v">118</div><div class="t up">▲ 8%</div></div><div class="st"><div class="k">Next 7 days</div><div class="v">96</div></div></div>
+<div class="list">
+  <div class="row paid"><div class="tm">7:00</div><div class="ini">JG</div><div><div class="nm">Jane Golfer</div><div class="subx">2 · 18H · The Liberator</div></div><span class="pill">Paid</span></div>
+  <div class="row walk"><div class="tm">7:30</div><div class="ini">DF</div><div><div class="nm">Dana Fenn</div><div class="subx">1 · 9H · phone</div></div><span class="pill">Walk-in</span></div>
+</div></div>
+
+</div></body></html>

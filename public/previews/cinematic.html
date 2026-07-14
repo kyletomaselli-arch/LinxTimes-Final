@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cinematic nature-luxe — LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:#0c1410;color:#f2efe6;min-height:100vh;overflow-x:hidden}
+  a.back{position:fixed;top:22px;left:22px;z-index:10;color:#e8e3d6;text-decoration:none;font-size:12px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid rgba(232,227,214,.4);padding-bottom:3px}
+  .photo{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(120% 80% at 50% 120%,rgba(0,0,0,.7),transparent),
+    linear-gradient(180deg,rgba(8,16,11,.35),rgba(8,16,11,.85)),
+    radial-gradient(90% 60% at 70% 20%,#3a6b46,transparent 60%),
+    linear-gradient(160deg,#16331f 0%,#0b1a11 45%,#070f0a 100%)}
+  .mist{position:fixed;left:0;right:0;bottom:0;height:40%;z-index:1;background:linear-gradient(0deg,rgba(180,200,170,.12),transparent)}
+  .shell{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:120px 32px 70px;min-height:100vh}
+  .kicker{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:#cdbb8e}
+  h1{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(48px,9vw,104px);line-height:1;letter-spacing:-.02em;margin:24px 0 0}
+  h1 em{font-style:italic;font-weight:400;color:#e6d6a3}
+  .lede{font-family:'Fraunces',serif;font-weight:300;color:#d8d3c4;font-size:21px;margin-top:22px;max-width:480px;line-height:1.5}
+  .panel{margin-top:56px;max-width:760px;border-radius:4px;border:1px solid rgba(232,227,214,.18);background:rgba(12,20,16,.55);backdrop-filter:blur(16px)}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid rgba(232,227,214,.14)}
+  .panel-h .nm{font-family:'Fraunces';font-size:18px;letter-spacing:.02em}
+  .panel-h .sub{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#9aa893;margin-top:4px}
+  .panel-h .tag{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#cdbb8e;border:1px solid rgba(205,187,142,.4);padding:6px 12px;border-radius:2px}
+  .body{padding:26px 28px 30px}
+  .label{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#9aa893}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1px;margin-top:16px;background:rgba(232,227,214,.12);border:1px solid rgba(232,227,214,.12)}
+  .slot{background:rgba(12,20,16,.6);padding:18px 16px;cursor:pointer;transition:.4s}
+  .slot:hover{background:rgba(58,107,70,.35)}
+  .slot .time{font-family:'Fraunces',serif;font-weight:400;font-size:26px;letter-spacing:.01em}
+  .slot .price{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9aa893;margin-top:7px}
+  .slot.sel{background:#e6d6a3;color:#0c1410}
+  .slot.sel .price{color:#5a5230}
+  .slot.full{opacity:.4;cursor:not-allowed}
+  .cta{margin-top:30px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .price-big{font-family:'Fraunces';font-weight:300;font-size:34px}
+  .price-big span{font-size:13px;font-family:'Inter';letter-spacing:.16em;text-transform:uppercase;color:#9aa893}
+  .btn{font-size:12px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:#0c1410;background:#e6d6a3;border:none;padding:18px 38px;cursor:pointer;border-radius:2px;transition:.3s}
+  .btn:hover{background:#fff}
+</style>
+</head>
+<body>
+<a class="back" href="/previews/">← all directions</a>
+<div class="photo"></div><div class="mist"></div>
+<div class="shell">
+  <div class="kicker">Winged Pheasant Golf Links · Est. 1962</div>
+  <h1>A morning<br><em>worth</em> rising for.</h1>
+  <p class="lede">Reserve your place on the first tee. Quietly, beautifully, in a moment.</p>
+  <div class="panel">
+    <div class="panel-h">
+      <div><div class="nm">The Liberator</div><div class="sub">18 Holes · Par 72</div></div>
+      <span class="tag">Tue · Jul 02</span>
+    </div>
+    <div class="body">
+      <div class="label">Select a tee time</div>
+      <div class="slots">
+        <div class="slot sel"><div class="time">7:00</div><div class="price">$55 · Weekday</div></div>
+        <div class="slot"><div class="time">7:10</div><div class="price">$55 · Weekday</div></div>
+        <div class="slot"><div class="time">7:20</div><div class="price">$55 · Weekday</div></div>
+        <div class="slot full"><div class="time">7:30</div><div class="price">Reserved</div></div>
+        <div class="slot"><div class="time">7:40</div><div class="price">$55 · Weekday</div></div>
+        <div class="slot"><div class="time">7:50</div><div class="price">$55 · Weekday</div></div>
+        <div class="slot"><div class="time">8:00</div><div class="price">$55 · Weekday</div></div>
+        <div class="slot"><div class="time">8:10</div><div class="price">$55 · Weekday</div></div>
+      </div>
+      <div class="cta"><div class="price-big">$110 <span>/ Twosome</span></div><button class="btn">Continue</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

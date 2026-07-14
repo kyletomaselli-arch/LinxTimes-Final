@@ -1,26 +1,259 @@
 @import "tailwindcss";
 
+/* Accessibility: visible keyboard-focus ring for anyone navigating without a
+   mouse (WCAG 2.4.7). Mouse clicks don't trigger :focus-visible, so this only
+   shows for keyboard/AT users. */
+:focus-visible {
+  outline: 2px solid var(--color-linx-green, #0d3522);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light green-cream surface — the aurora-golf design system base */
+  --background: #eef5e9;
+  --foreground: #0b2418;
+
+  /* Golf-toned aurora palette (light) */
+  --aurora-fairway: #8fd39f;
+  --aurora-sky: #a9dcef;
+  --aurora-sand: #f0dfa6;
+  --aurora-mint: #bfead0;
+  --topo-line: #2f7d52;
+
+  /* LinxTimes brand palette */
+  --linx-green: #0d3522;
+  --linx-green-600: #14492f;
+  --linx-green-50: #eef4f0;
+  --linx-gold: #c9a84c;
+  --linx-gold-soft: #e6d6a3;
+
+  /* Per-course theme tokens — overridden inline on tenant pages.
+     Default to the LinxTimes brand so non-tenant UI looks right. */
+  --course-primary: #0d3522;
+  --course-secondary: #c9a84c;
+  --course-primary-contrast: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-linx-green: var(--linx-green);
+  --color-linx-green-600: var(--linx-green-600);
+  --color-linx-green-50: var(--linx-green-50);
+  --color-linx-gold: var(--linx-gold);
+
+  /* Course-themed colors usable as Tailwind utilities, e.g. bg-course */
+  --color-course: var(--course-primary);
+  --color-course-secondary: var(--course-secondary);
+  --color-course-contrast: var(--course-primary-contrast);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: rgba(20, 32, 26, 0.08);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle entrance animations */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(20, 32, 26, 0.06);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+/* ─── Aurora-golf design system: animated background ─────────────────────────
+   Light, luminous, golf-toned aurora + drifting topographic contour lines.
+   Used behind the marketing site, booking page, dashboards, and onboarding.
+   Each course can tint the accent blob via --course-primary. */
+
+.lx-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, #f4f9ef 0%, #e9f2e3 100%);
+}
+/* #2 aurora, blended OVER the course map to tint it green and fade it */
+.lx-aurora {
+  position: absolute;
+  inset: -25%;
+  filter: blur(64px);
+  opacity: 0.85;
+  mix-blend-mode: soft-light;
+}
+.lx-blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+.lx-blob-1 {
+  width: 52vw;
+  height: 52vw;
+  background: var(--aurora-fairway);
+  top: -8%;
+  left: -6%;
+  animation: lx-f1 22s ease-in-out infinite;
+}
+.lx-blob-2 {
+  width: 46vw;
+  height: 46vw;
+  background: var(--aurora-sky);
+  top: 2%;
+  right: -10%;
+  animation: lx-f2 26s ease-in-out infinite;
+}
+.lx-blob-3 {
+  width: 44vw;
+  height: 44vw;
+  background: var(--aurora-sand);
+  bottom: -14%;
+  left: 20%;
+  animation: lx-f3 24s ease-in-out infinite;
+}
+.lx-blob-4 {
+  width: 40vw;
+  height: 40vw;
+  background: color-mix(in srgb, var(--course-primary) 40%, var(--aurora-mint));
+  bottom: 2%;
+  right: 14%;
+  animation: lx-f1 28s ease-in-out infinite;
+}
+@keyframes lx-f1 {
+  50% {
+    transform: translate(8%, 10%) scale(1.12);
+  }
+}
+@keyframes lx-f2 {
+  50% {
+    transform: translate(-9%, 7%) scale(1.16);
+  }
+}
+@keyframes lx-f3 {
+  50% {
+    transform: translate(7%, -9%) scale(1.08);
+  }
+}
+/* Aerial course-map artwork — the base layer, faded and static. `contain`
+   shows more of the map (zoomed out) and the matching cream fills the margins
+   seamlessly; the aurora (above) blends over it with soft-light to green-tint
+   and fade it. */
+.lx-map {
+  position: absolute;
+  inset: 0;
+  background: url("/course-map.png") center / contain no-repeat;
+  background-color: #f2efe4;
+  opacity: 0.55;
+}
+.lx-wash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      130% 90% at 50% -10%,
+      rgba(255, 255, 255, 0.45),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(143, 211, 159, 0.28),
+      rgba(120, 190, 150, 0.34)
+    );
+}
+
+/* Shimmering gradient sweep for primary CTAs */
+@keyframes lx-shine {
+  to {
+    background-position: 180% center;
+  }
+}
+
+/* Confirmation checkmark pop */
+@keyframes lx-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.lx-pop {
+  animation: lx-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Frosted glass surface for panels/cards over the aurora */
+.lx-glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(26px) saturate(1.3);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+/* Respect reduced-motion: freeze all ambient animation */
+@media (prefers-reduced-motion: reduce) {
+  .lx-blob,
+  .lx-map,
+  .lx-pop,
+  .animate-fade-up {
+    animation: none !important;
+  }
 }

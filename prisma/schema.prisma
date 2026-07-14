@@ -1,0 +1,475 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum CourseStatus {
+  pending
+  approved
+  active
+  suspended
+}
+
+enum BookingStatus {
+  confirmed
+  checked_in
+  cancelled
+  no_show
+}
+
+enum PaymentStatus {
+  unpaid
+  partially_paid
+  paid_online
+  paid_in_person
+  pay_at_course
+  refunded
+}
+
+enum BookingSource {
+  online
+  walkin
+  phone
+}
+
+// How an in-person payment was collected.
+enum PaymentMethod {
+  terminal // tapped/inserted on a Stripe reader
+  cash
+  other
+}
+
+enum PaymentState {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum RateType {
+  weekday
+  weekend
+  twilight
+  member
+}
+
+enum DiscountDays {
+  all
+  mon_thu
+}
+
+enum MembershipType {
+  full
+  associate
+  junior
+  senior
+  social
+}
+
+// Course-admin roles. Owner + manager see revenue/financials; staff do not.
+enum CourseRole {
+  owner
+  manager
+  staff
+}
+
+// ─── LinxTimes Super-Admins ───────────────────────────────────────────────────
+
+model SuperAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("super_admins")
+}
+
+// ─── Golf Course (Tenant) ─────────────────────────────────────────────────────
+
+model Course {
+  id                 String       @id @default(uuid())
+  slug               String       @unique
+  name               String
+  address            String?
+  city               String?
+  state              String?
+  zip                String?
+  phone              String?
+  website            String?
+  email              String?
+  logoUrl            String?
+  heroImageUrl       String?
+  primaryColor       String?      @default("#0D3522")
+  secondaryColor     String?      @default("#C9A84C")
+  latitude           Float?
+  longitude          Float?
+  timezone           String       @default("America/Chicago")
+  stripeAccountId       String?
+  stripeOnboarded       Boolean   @default(false)
+  stripeTerminalReaderId String?  // registered Stripe reader for in-person charges
+  status             CourseStatus @default(pending)
+  linxtimesFee         Int        @default(100) // online per-player fee (cents)
+  linxtimesInPersonFee Int        @default(50)  // in-person per-player fee (cents)
+  taxRateBps           Int        @default(0)   // sales tax rate in basis points (825 = 8.25%); course remits
+  notificationEmail  String?
+  announcement       String?      // optional message shown on the booking page
+  payAtCourseEnabled Boolean      @default(false)
+  maxDaysAhead       Int          @default(14)
+  bookingIntervalMin Int          @default(10)
+  onboardedAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  layouts      Layout[]
+  members      Member[]
+  bookings     Booking[]
+  adminUsers   CourseAdmin[]
+  dailyOverrides DailyOverride[]
+  waitlist     Waitlist[]
+  promoCodes   PromoCode[]
+  rainChecks   RainCheck[]
+  shopItems    ShopItem[]
+
+  @@map("courses")
+}
+
+// ─── Course Admins ────────────────────────────────────────────────────────────
+
+model CourseAdmin {
+  id           String     @id @default(uuid())
+  courseId     String
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         CourseRole @default(owner)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_admins")
+}
+
+// ─── Course Layouts ───────────────────────────────────────────────────────────
+
+model Layout {
+  id       String  @id @default(uuid())
+  courseId String
+  name     String
+  holes    Int     @default(18) // 9 or 18
+  isActive Boolean @default(true)
+
+  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teeTimeSlots TeeTimeSlot[]
+  pricing      Pricing?
+  bookings     Booking[]
+  waitlist     Waitlist[]
+
+  @@map("layouts")
+}
+
+// ─── Tee Time Slot Templates (per day-of-week) ────────────────────────────────
+// day: 0=Sun, 1=Mon, ..., 6=Sat
+
+model TeeTimeSlot {
+  id          String  @id @default(uuid())
+  layoutId    String
+  dayOfWeek   Int     // 0-6
+  startTime   String  // "07:00"
+  endTime     String  // "18:00"
+  intervalMin Int     @default(10)
+  maxPlayers  Int     @default(4)
+  isActive    Boolean @default(true)
+
+  layout Layout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+
+  @@unique([layoutId, dayOfWeek])
+  @@map("tee_time_slots")
+}
+
+// ─── Daily Overrides ──────────────────────────────────────────────────────────
+
+model DailyOverride {
+  id          String   @id @default(uuid())
+  courseId    String
+  overrideDate DateTime @db.Date
+  slotTime    String?  // null = full day close
+  isClosed    Boolean  @default(true)
+  maxPlayers  Int?
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("daily_overrides")
+}
+
+// ─── Promo / Discount Codes ──────────────────────────────────────────────────
+
+enum DiscountKind {
+  percent // value = 1..100 (% off green + cart)
+  amount  // value = cents off green + cart
+}
+
+model PromoCode {
+  id             String       @id @default(uuid())
+  courseId       String
+  code           String       // human code, e.g. "SPRING20"
+  kind           DiscountKind
+  value          Int
+  isActive       Boolean      @default(true)
+  expiresAt      DateTime?
+  maxRedemptions Int?         // null = unlimited
+  timesRedeemed  Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, code])
+  @@map("promo_codes")
+}
+
+// ─── Pro-shop items (point-of-sale add-ons) ─────────────────────────────────
+
+model ShopItem {
+  id         String   @id @default(uuid())
+  courseId   String
+  name       String
+  priceCents Int
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("shop_items")
+}
+
+// ─── Rain Checks (staff-issued credits) ──────────────────────────────────────
+
+model RainCheck {
+  id               String    @id @default(uuid())
+  courseId         String
+  code             String    // bearer code the golfer redeems, e.g. "RC-7QK2P9"
+  amountCents      Int       // credit value
+  reason           String?
+  note             String?   // e.g. golfer name it was issued to
+  originBookingId  String?   // the rained-out booking it came from, if any
+  isActive         Boolean   @default(true)
+  redeemedAt       DateTime?
+  redeemedBookingId String?
+  createdBy        String?   // admin id
+  createdAt        DateTime  @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, code])
+  @@map("rain_checks")
+}
+
+// ─── Waitlist ─────────────────────────────────────────────────────────────────
+// Golfers who want a full tee time; notified by email if a spot frees up.
+
+model Waitlist {
+  id          String    @id @default(uuid())
+  courseId    String
+  layoutId    String
+  bookingDate DateTime  @db.Date
+  slotTime    String    // "09:30"
+  name        String
+  email       String
+  phone       String?
+  numPlayers  Int       @default(1)
+  notifiedAt  DateTime? // set when we email them that a spot opened
+  createdAt   DateTime  @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  layout Layout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, layoutId, bookingDate, slotTime])
+  @@map("waitlist")
+}
+
+// ─── Pricing (per layout or course-wide) ─────────────────────────────────────
+
+model Pricing {
+  id               String  @id @default(uuid())
+  layoutId         String  @unique
+  weekdayFee       Int     @default(5000) // cents
+  weekendFee       Int     @default(7000)
+  twilightFee      Int     @default(3000)
+  twilightHour     Int     @default(16) // 24h hour when twilight starts
+  memberFee        Int     @default(2500)
+  cartFee          Int     @default(1500)
+  cartAvailable    Boolean @default(true)
+  nineHoleDiscount Boolean @default(true) // if true, 9 holes = half green fee
+
+  layout Layout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+
+  @@map("pricing")
+}
+
+// ─── Members ─────────────────────────────────────────────────────────────────
+
+model Member {
+  id              String         @id @default(uuid())
+  courseId        String
+  memberId        String         // human-readable member ID used on booking page
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  membershipType  MembershipType @default(full)
+  greenFeeOverride Int?          // null = use course-level memberFee
+  cartIncluded    Boolean        @default(false)
+  discountDays    DiscountDays   @default(all)
+  isActive        Boolean        @default(true)
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  course   Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@unique([courseId, memberId])
+  @@map("members")
+}
+
+// ─── Bookings ─────────────────────────────────────────────────────────────────
+
+model Booking {
+  id                    String        @id @default(uuid())
+  confirmationNo        String        @unique
+  courseId              String
+  layoutId              String
+  memberId              String?
+
+  bookingDate           DateTime      @db.Date
+  slotTime              String        // "09:30"
+  numPlayers            Int
+  withCart              Boolean       @default(false)
+  holes                 Int           @default(18)
+
+  golferName            String
+  golferEmail           String
+  golferPhone           String?
+
+  rateType              RateType      @default(weekday)
+  greenFeeCents         Int
+  cartFeeCents          Int           @default(0)
+  bookingFeeCents       Int           // LinxTimes per-player fee * guest count
+  taxCents              Int           @default(0) // sales tax collected for the course
+  memberCount           Int           @default(0) // players priced at the member rate
+  discountCents         Int           @default(0) // promo/discount applied (course-funded)
+  promoCode             String?       // the discount code used, if any
+  creditCents           Int           @default(0) // rain-check credit applied
+  rainCheckCode         String?       // the rain-check code redeemed, if any
+  totalCents            Int
+
+  paymentStatus         PaymentStatus @default(unpaid)
+  amountPaidCents       Int           @default(0) // green+cart collected toward totalCents
+  stripePaymentIntentId String?
+  stripeTransferId      String?
+  stripeChargeId        String?
+
+  status                BookingStatus @default(confirmed)
+  source                BookingSource @default(online)
+
+  cancelledAt           DateTime?
+  cancelledBy           String?       // admin user id or "system"
+  cancellationReason    String?
+  cancellationOverride  Boolean       @default(false) // true if bypassed 24h rule
+
+  notes                 String?
+  termsAcceptedAt       DateTime?     // when the golfer agreed to Terms + cancellation policy
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  course   Course    @relation(fields: [courseId], references: [id])
+  layout   Layout    @relation(fields: [layoutId], references: [id])
+  member   Member?   @relation(fields: [memberId], references: [id])
+  payments Payment[]
+
+  // Multiple groups may share a tee time up to its capacity (maxPlayers);
+  // capacity is enforced in the app layer (see availability.ts / booking-service),
+  // not by a unique constraint. This index makes the per-slot lookups fast.
+  @@index([layoutId, bookingDate, slotTime])
+  @@index([courseId, bookingDate])
+  @@index([golferEmail])
+  @@index([confirmationNo])
+  @@map("bookings")
+}
+
+// ─── In-person payments (counter / Stripe Terminal) ──────────────────────────
+// One row per collected payment. A booking may have several (split per player,
+// or partial "pay for 2 of 4"). amountCents is the green+cart portion collected;
+// feeCents is the LinxTimes in-person fee taken on top.
+
+model Payment {
+  id                    String        @id @default(uuid())
+  bookingId             String
+  courseId              String
+  amountCents           Int // green+cart portion collected toward the booking total
+  feeCents              Int // LinxTimes in-person fee charged on top
+  addonsCents           Int           @default(0) // pro-shop items sold on this charge
+  taxCents              Int           @default(0) // sales tax on (amount + add-ons)
+  addonSummary          String? // e.g. "2× Range balls, 1× Club rental"
+  playersCovered        Int           @default(0)
+  method                PaymentMethod @default(terminal)
+  state                 PaymentState  @default(pending)
+  stripePaymentIntentId String?
+  createdBy             String? // course-admin id
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([courseId])
+  @@map("payments")
+}
+
+// ─── Course Onboarding Requests ───────────────────────────────────────────────
+
+model OnboardingRequest {
+  id              String       @id @default(uuid())
+  courseId        String?      // set once a Course record is created on approval
+  ownerName       String
+  courseName      String
+  city            String?
+  state           String?
+  estimatedRounds Int?
+  phone           String?
+  email           String
+  message         String?
+  status          CourseStatus @default(pending)
+  reviewedAt      DateTime?
+  reviewedBy      String?      // super admin id
+  declineReason   String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("onboarding_requests")
+}
+
+// ─── Onboarding Tokens (magic link for approved courses) ─────────────────────
+
+model OnboardingToken {
+  id        String   @id @default(uuid())
+  courseId  String
+  token     String   @unique @default(uuid())
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("onboarding_tokens")
+}

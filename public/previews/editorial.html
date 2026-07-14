@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Editorial brutalist-lux — LinxTimes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:#f4f1ea;color:#0d3522;min-height:100vh;overflow-x:hidden}
+  a.back{position:fixed;top:18px;left:18px;z-index:10;color:#0d3522;text-decoration:none;font-size:13px;border:1.5px solid #0d3522;padding:7px 14px;border-radius:0;font-weight:600;background:#f4f1ea}
+  .shell{max-width:1180px;margin:0 auto;padding:70px 28px 60px}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0d3522;padding-bottom:18px}
+  .top .loc{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:600}
+  .top .by{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6b6256}
+  h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(58px,13vw,168px);line-height:.82;letter-spacing:-.04em;margin:34px 0 0;text-transform:uppercase}
+  h1 .out{-webkit-text-stroke:2px #0d3522;color:transparent}
+  h1 em{font-style:italic;font-weight:400;color:#b8860b}
+  .meta-row{display:grid;grid-template-columns:1.4fr .9fr .9fr;gap:0;margin-top:40px;border-top:2px solid #0d3522;border-bottom:2px solid #0d3522}
+  .cell{padding:22px 20px;border-right:1.5px solid rgba(13,53,34,.25)}
+  .cell:last-child{border-right:none}
+  .cell .k{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6b6256;font-weight:600}
+  .cell .v{font-family:'Fraunces',serif;font-weight:600;font-size:30px;margin-top:8px;line-height:1}
+  .cell .v small{font-size:14px;font-family:'Inter';color:#6b6256}
+  .section-l{display:flex;align-items:center;gap:14px;margin:46px 0 18px}
+  .section-l .n{font-family:'Fraunces';font-weight:900;font-size:20px;color:#b8860b}
+  .section-l h2{font-size:14px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+  .section-l .line{flex:1;height:1.5px;background:rgba(13,53,34,.25)}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0;border:2px solid #0d3522}
+  .slot{border-right:1.5px solid rgba(13,53,34,.2);border-bottom:1.5px solid rgba(13,53,34,.2);padding:20px 18px;cursor:pointer;transition:background .2s;background:#faf8f2}
+  .slot:hover{background:#ece7da}
+  .slot .time{font-family:'Fraunces',serif;font-weight:900;font-size:34px;line-height:1;letter-spacing:-.02em}
+  .slot .price{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6b6256;margin-top:8px;font-weight:600}
+  .slot.sel{background:#0d3522;color:#f4f1ea}
+  .slot.sel .price{color:#cdbb7e}
+  .slot.full{color:#b3ada0;cursor:not-allowed}
+  .slot.full .time{-webkit-text-stroke:1.5px #b3ada0;color:transparent}
+  .cta{margin-top:34px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .price-big{font-family:'Fraunces';font-weight:900;font-size:40px}
+  .price-big small{font-size:14px;font-family:'Inter';color:#6b6256;font-weight:400}
+  .btn{font-family:'Inter';font-size:15px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#f4f1ea;background:#0d3522;border:none;padding:18px 40px;cursor:pointer;border-radius:0}
+  .btn:hover{background:#b8860b;color:#0d3522}
+</style>
+</head>
+<body>
+<a class="back" href="/previews/">← all directions</a>
+<div class="shell">
+  <div class="top"><div class="loc">Winged Pheasant Golf Links — Nashville, TN</div><div class="by">Booking № 0001 / Powered by LinxTimes</div></div>
+  <h1>Tee <em>times</em><br><span class="out">redefined.</span></h1>
+  <div class="meta-row">
+    <div class="cell"><div class="k">Course</div><div class="v">The Liberator <small>/ 18 holes</small></div></div>
+    <div class="cell"><div class="k">Date</div><div class="v">Jul 02</div></div>
+    <div class="cell"><div class="k">From</div><div class="v">$55<small>/player</small></div></div>
+  </div>
+  <div class="section-l"><span class="n">01</span><h2>Select a tee time</h2><span class="line"></span></div>
+  <div class="slots">
+    <div class="slot sel"><div class="time">7:00</div><div class="price">Weekday · $55</div></div>
+    <div class="slot"><div class="time">7:10</div><div class="price">Weekday · $55</div></div>
+    <div class="slot"><div class="time">7:20</div><div class="price">Weekday · $55</div></div>
+    <div class="slot full"><div class="time">7:30</div><div class="price">Full</div></div>
+    <div class="slot"><div class="time">7:40</div><div class="price">Weekday · $55</div></div>
+    <div class="slot"><div class="time">7:50</div><div class="price">Weekday · $55</div></div>
+    <div class="slot"><div class="time">8:00</div><div class="price">Weekday · $55</div></div>
+    <div class="slot"><div class="time">8:10</div><div class="price">Weekday · $55</div></div>
+  </div>
+  <div class="cta"><div class="price-big">$110<small> / twosome</small></div><button class="btn">Continue →</button></div>
+</div>
+</body>
+</html>

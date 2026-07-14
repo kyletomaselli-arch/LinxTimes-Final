@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design B — mix · LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#eef4ea;color:#12211a}
+a.back{position:fixed;top:14px;right:16px;z-index:50;color:#12211a;text-decoration:none;font-size:13px;background:#fff;border:1px solid #dfe7dd;padding:8px 14px;border-radius:99px;box-shadow:0 8px 20px -12px rgba(0,0,0,.25)}
+.app{display:flex;min-height:100vh}
+/* deep green sidebar */
+.sb{width:236px;background:#0d3522;color:#fff;display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:10px;padding:6px 8px 20px}
+.logo .m{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#2aa87b,#7CFFB2);display:grid;place-items:center;font-family:'Fraunces';font-weight:600;color:#0d3522}
+.logo b{font-size:17px}
+.sec{font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.4);margin:16px 10px 8px;font-weight:600}
+.nav{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:11px;color:rgba(255,255,255,.7);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:2px}
+.nav svg{width:18px;height:18px}
+.nav.on{background:rgba(255,255,255,.14);color:#fff}.nav.on svg{color:#7CFFB2}
+.logout{margin-top:auto;color:rgba(255,255,255,.7)}
+.main{flex:1;min-width:0}
+.top{display:flex;align-items:center;gap:16px;padding:16px 28px;background:rgba(255,255,255,.6);backdrop-filter:blur(10px);border-bottom:1px solid rgba(13,53,34,.06)}
+.search{flex:1;max-width:340px;background:#fff;border-radius:12px;padding:9px 14px;color:#7c8a80;font-size:14px;box-shadow:0 8px 20px -16px rgba(16,50,34,.4)}
+.top .rt{margin-left:auto;display:flex;align-items:center;gap:14px;color:#7c8a80}
+.av{width:34px;height:34px;border-radius:50%;background:#cfe0d3}
+.body{padding:26px 28px}
+.welcome{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.welcome h1{font-family:'Fraunces';font-size:28px;font-weight:600}.welcome p{color:#5f7268;font-size:14px;margin-top:4px}
+.wbtns{display:flex;gap:10px}
+.drop{background:#fff;border-radius:12px;padding:9px 14px;font-size:13px;font-weight:500;box-shadow:0 8px 20px -16px rgba(16,50,34,.4)}
+.dark-btn{background:#0d3522;color:#fff;border-radius:12px;padding:9px 16px;font-size:13px;font-weight:600}
+/* brand-tinted stat cards (restrained, not rainbow) */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:22px}
+.stat{border-radius:18px;padding:16px 18px;box-shadow:0 20px 44px -34px rgba(16,50,34,.5)}
+.stat .k{font-size:12px;font-weight:500;color:#5f7268}
+.stat .v{font-family:'Space Grotesk';font-size:26px;font-weight:700;margin-top:8px;color:#12211a}
+.stat .t{font-size:12px;font-weight:600;margin-top:10px}
+.up{color:#12a06f}.dn{color:#c0603f}.mut{color:#9aad9f;font-weight:500}
+.s-green{background:linear-gradient(160deg,#eaf6ee,#dcefe1)}
+.s-sand{background:linear-gradient(160deg,#f6f0dd,#efe6c9)}
+.s-sky{background:linear-gradient(160deg,#e8f1f6,#d9e9f0)}
+.s-mint{background:linear-gradient(160deg,#e6f5ee,#d3ecdd)}
+.s-cream{background:#fff}
+.stat.accent{position:relative;padding-left:22px}.stat.accent::before{content:"";position:absolute;left:14px;top:16px;bottom:16px;width:3px;border-radius:3px;background:#caa53f}
+/* row */
+.row{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;margin-top:16px}
+.card{background:#fff;border-radius:20px;padding:18px 20px;box-shadow:0 30px 60px -46px rgba(16,50,34,.5)}
+.card h3{font-family:'Fraunces';font-size:17px;font-weight:600}
+.chead{display:flex;align-items:center;justify-content:space-between}
+.legend{display:flex;gap:14px;font-size:12px;color:#7c8a80;margin-left:auto;margin-right:12px}
+.legend b{color:#12211a;font-weight:500}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
+/* mini calendar tee sheet (their signature) */
+.mini .slot{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f4f0}
+.mini .slot:last-child{border:0}
+.mini .time{font-family:'Space Grotesk';font-weight:600;width:64px;font-size:13px}
+.mini .who{flex:1;font-size:13px}.mini .who span{color:#7c8a80;font-size:11px;margin-left:6px}
+.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+.t-paid{background:#e6f2ea;color:#2f6b4c}.t-open{color:#b6c2b8;font-size:12px;flex:1}
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:14px}
+.day{border-radius:12px;padding:8px 6px;text-align:center;background:#f4f8f3;cursor:pointer}
+.day.on{background:#0d3522;color:#fff}
+.day .wd{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#8aa093;font-weight:600}
+.day.on .wd{color:rgba(255,255,255,.6)}
+.day .dn{font-family:'Space Grotesk';font-weight:600;margin-top:2px}
+.day .fill{height:4px;border-radius:99px;background:rgba(13,53,34,.1);margin-top:6px;overflow:hidden}.day .fill i{display:block;height:100%;background:#2f8a63}.day.on .fill i{background:#7CFFB2}
+.row3{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;margin-top:16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:#9aad9f;font-weight:500;padding:10px 8px;font-size:12px}
+td{padding:12px 8px;border-top:1px solid #f1f4f0}
+.pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+.p-pend{background:#f6efd9;color:#8a6d1a}.p-canc{background:#f6e6e6;color:#a3432a}.p-ship{background:#e6f2ea;color:#2f6b4c}
+.cust{display:flex;align-items:center;gap:10px;padding:11px 0}
+.cust .av2{width:34px;height:34px;border-radius:50%;background:#cfe0d3}
+.cust .vw{margin-left:auto;font-size:12px;color:#0d3522;border:1px solid #cfe0d3;padding:4px 12px;border-radius:99px}
+.nm{font-weight:600}.sub{color:#9aad9f;font-size:12px}
+</style></head><body>
+<a class="back" href="/previews/admin.html">← all directions</a>
+<div class="app">
+  <aside class="sb">
+    <div class="logo"><div class="m">L</div><b>LinxTimes</b></div>
+    <div class="sec">COURSE</div>
+    <div class="nav on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Tee Sheet</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Bookings</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 14a4 4 0 10-8 0M12 7a3 3 0 100-6 3 3 0 000 6"/></svg>Members</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg>Tee Times</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Pricing</div>
+    <div class="sec">ACCOUNT</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a7.9 7.9 0 000-6l2-1.5-2-3.5-2.4 1a8 8 0 00-5-3L11.6 1H8.4L8 2.5a8 8 0 00-5 3l-2.4-1-2 3.5 2 1.5a7.9 7.9 0 000 6l-2 1.5 2 3.5 2.4-1a8 8 0 005 3L8.4 23h3.2l.4-1.5a8 8 0 005-3l2.4 1 2-3.5z"/></svg>Settings</div>
+    <div class="nav logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sign out</div>
+  </aside>
+  <div class="main">
+    <div class="top"><div class="search">Search bookings, members…</div><div class="rt"><span>🔔</span><div class="av"></div></div></div>
+    <div class="body">
+      <div class="welcome">
+        <div><h1>Welcome back, Winged Pheasant</h1><p>Here's what's happening at your course today.</p></div>
+        <div class="wbtns"><div class="drop">This week ▾</div><div class="dark-btn">All time</div></div>
+      </div>
+      <div class="stats">
+        <div class="stat s-sand accent"><div class="k">Revenue today</div><div class="v">$1,240</div><div class="t"><span class="up">▲ 14.9%</span> <span class="mut">(+$754)</span></div></div>
+        <div class="stat s-green"><div class="k">Bookings today</div><div class="v">42</div><div class="t"><span class="up">▲ 12%</span></div></div>
+        <div class="stat s-mint"><div class="k">Players today</div><div class="v">118</div><div class="t"><span class="up">▲ 8%</span></div></div>
+        <div class="stat s-sky"><div class="k">Fill rate</div><div class="v">75.1%</div><div class="t"><span class="up">▲ 20.1%</span></div></div>
+        <div class="stat s-cream"><div class="k">Cancellations</div><div class="v">3</div><div class="t"><span class="dn">▼ 1.4%</span></div></div>
+      </div>
+      <div class="row">
+        <div class="card">
+          <div class="chead"><h3>Bookings &amp; revenue</h3><div class="legend"><span><span class="dot" style="background:#12a06f"></span><b>Bookings</b></span><span><span class="dot" style="background:#caa53f"></span><b>Revenue</b></span></div><div class="drop" style="padding:6px 12px">Last 7 days ▾</div></div>
+          <svg viewBox="0 0 620 220" style="width:100%;height:220px;margin-top:8px">
+            <g stroke="#eef2ec"><line x1="0" y1="40" x2="620" y2="40"/><line x1="0" y1="90" x2="620" y2="90"/><line x1="0" y1="140" x2="620" y2="140"/><line x1="0" y1="190" x2="620" y2="190"/></g>
+            <polyline fill="none" stroke="#12a06f" stroke-width="2.5" points="10,150 100,110 190,130 280,80 370,120 460,70 550,95 610,60"/>
+            <polyline fill="none" stroke="#caa53f" stroke-width="2.5" points="10,180 100,160 190,120 280,150 370,100 460,130 550,90 610,120"/>
+            <circle cx="280" cy="80" r="5" fill="#12a06f"/><rect x="250" y="46" width="70" height="24" rx="6" fill="#0d3522"/><text x="285" y="62" fill="#fff" font-size="11" text-anchor="middle" font-family="Inter">$4,300</text>
+            <g fill="#9aad9f" font-size="11" font-family="Inter"><text x="30" y="212">Mon</text><text x="120" y="212">Tue</text><text x="210" y="212">Wed</text><text x="300" y="212">Thu</text><text x="390" y="212">Fri</text><text x="480" y="212">Sat</text><text x="560" y="212">Sun</text></g>
+          </svg>
+        </div>
+        <div class="card mini">
+          <div class="chead" style="margin-bottom:12px"><h3>Today&rsquo;s tee sheet</h3><span style="color:#0d3522;font-size:13px;font-weight:600">Open →</span></div>
+          <div class="strip">
+            <div class="day"><div class="wd">Mon</div><div class="dn">1</div><div class="fill"><i style="width:45%"></i></div></div>
+            <div class="day on"><div class="wd">Tue</div><div class="dn">2</div><div class="fill"><i style="width:72%"></i></div></div>
+            <div class="day"><div class="wd">Wed</div><div class="dn">3</div><div class="fill"><i style="width:30%"></i></div></div>
+            <div class="day"><div class="wd">Thu</div><div class="dn">4</div><div class="fill"><i style="width:88%"></i></div></div>
+            <div class="day"><div class="wd">Fri</div><div class="dn">5</div><div class="fill"><i style="width:95%"></i></div></div>
+            <div class="day"><div class="wd">Sat</div><div class="dn">6</div><div class="fill"><i style="width:100%"></i></div></div>
+            <div class="day"><div class="wd">Sun</div><div class="dn">7</div><div class="fill"><i style="width:64%"></i></div></div>
+          </div>
+          <div class="slot"><div class="time">7:00</div><div class="who">Jane Golfer<span>2·18H</span></div><span class="tag t-paid">Paid</span></div>
+          <div class="slot"><div class="time">7:10</div><div class="t-open">Open</div></div>
+          <div class="slot"><div class="time">7:20</div><div class="who">Mark Reyes<span>4·18H</span></div><span class="tag t-paid">Paid</span></div>
+        </div>
+      </div>
+      <div class="row3">
+        <div class="card">
+          <div class="chead"><h3>Recent bookings</h3><span style="color:#0d3522;font-size:13px;font-weight:600">View all</span></div>
+          <table>
+            <tr><th>Golfer</th><th>Layout</th><th>Conf #</th><th>Date</th><th>Status</th></tr>
+            <tr><td>Peterson Jack</td><td>The Liberator</td><td>WP-…8441</td><td>Jul 2</td><td><span class="pill p-pend">Unpaid</span></td></tr>
+            <tr><td>Michel Datta</td><td>The Rock</td><td>WP-…2457</td><td>Jul 2</td><td><span class="pill p-canc">Cancelled</span></td></tr>
+            <tr><td>Jesiya Rose</td><td>The Liberator</td><td>WP-…1024</td><td>Jul 1</td><td><span class="pill p-ship">Paid</span></td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:6px">Top members</h3>
+          <div class="cust"><div class="av2"></div><div><div class="nm" style="font-size:14px">Marks Hoverson</div><div class="sub">25 rounds</div></div><span class="vw">View</span></div>
+          <div class="cust"><div class="av2"></div><div><div class="nm" style="font-size:14px">Jhony Peters</div><div class="sub">23 rounds</div></div><span class="vw">View</span></div>
+          <div class="cust"><div class="av2"></div><div><div class="nm" style="font-size:14px">Michel Datta</div><div class="sub">15 rounds</div></div><span class="vw">View</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></body></html>

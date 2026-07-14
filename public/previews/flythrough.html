@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Light Topo-Aurora + Hole Flythrough — LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:#eef4ec;color:#0d3522;min-height:100vh;overflow-x:hidden}
+  a.back{position:fixed;top:20px;left:20px;z-index:30;color:#0d3522;text-decoration:none;font-size:13px;background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:1px solid rgba(13,53,34,.12);padding:8px 14px;border-radius:99px;font-weight:500}
+
+  /* layered background */
+  .stage{position:fixed;inset:0;z-index:0;overflow:hidden;background:linear-gradient(180deg,#f3f7ee,#e7f0e6)}
+  .scene{position:absolute;inset:-25%;will-change:transform;animation:fly 34s ease-in-out infinite alternate}
+  .scene svg{width:100%;height:100%;display:block}
+  @keyframes fly{
+    0%   {transform:scale(1.65) translate(4%, -22%) rotate(-1deg)}
+    100% {transform:scale(1.18) translate(-3%, 16%) rotate(1.5deg)}
+  }
+  /* soft pastel aurora wash */
+  .aurora{position:absolute;inset:-20%;filter:blur(70px);opacity:.5;mix-blend-mode:multiply}
+  .blob{position:absolute;border-radius:50%}
+  .b1{width:50vw;height:50vw;background:#bdebcf;top:-10%;left:-5%;animation:f1 20s ease-in-out infinite}
+  .b2{width:45vw;height:45vw;background:#bfeee6;top:0;right:-10%;animation:f2 24s ease-in-out infinite}
+  .b3{width:42vw;height:42vw;background:#f1e6b6;bottom:-15%;left:30%;animation:f3 22s ease-in-out infinite}
+  @keyframes f1{50%{transform:translate(8%,10%) scale(1.1)}}
+  @keyframes f2{50%{transform:translate(-8%,6%) scale(1.15)}}
+  @keyframes f3{50%{transform:translate(6%,-8%) scale(1.08)}}
+  /* topo contour overlay */
+  .topo{position:absolute;inset:0;opacity:.22;pointer-events:none}
+  .topo path{stroke:#2f7d52;stroke-width:1;fill:none}
+  .topo .dash{stroke-dasharray:4 9;animation:flow 12s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-220}}
+  /* readability wash on the left where content sits */
+  .wash{position:fixed;inset:0;z-index:1;background:linear-gradient(100deg,rgba(244,248,240,.92) 0%,rgba(244,248,240,.7) 40%,rgba(244,248,240,.15) 72%,transparent 100%)}
+
+  .shell{position:relative;z-index:5;max-width:1180px;margin:0 auto;padding:84px 28px 60px;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:44px;align-items:center;min-height:100vh}
+  @media(max-width:900px){.shell{grid-template-columns:1fr}.wash{background:linear-gradient(180deg,rgba(244,248,240,.85),rgba(244,248,240,.6))}}
+  .tag{display:inline-flex;align-items:center;gap:8px;font-family:'Space Grotesk';font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#0f6e4d;background:rgba(255,255,255,.6);border:1px solid rgba(15,110,77,.25);padding:7px 14px;border-radius:99px;font-weight:500;backdrop-filter:blur(6px)}
+  .tag .live{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;animation:bl 1.6s infinite}
+  @keyframes bl{50%{opacity:.4}}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(46px,7vw,90px);line-height:.98;letter-spacing:-.02em;margin:20px 0 0;color:#0b2418}
+  h1 .g{font-style:italic;font-weight:400;background:linear-gradient(100deg,#0f6e4d,#1aa37a,#caa53f);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{color:#3c5a4a;font-size:19px;margin-top:18px;max-width:440px;line-height:1.6}
+  .coords{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;font-family:'Space Grotesk';font-size:12px;letter-spacing:.08em;color:#5a7a68}
+  .coords b{color:#0d3522;font-weight:500}
+
+  .panel{border-radius:24px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.3);box-shadow:0 30px 80px -34px rgba(13,53,34,.4);overflow:hidden}
+  .panel-h{display:flex;align-items:center;gap:11px;padding:18px 22px;border-bottom:1px solid rgba(13,53,34,.08)}
+  .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#1aa37a,#0b5e42);display:grid;place-items:center;font-family:'Fraunces';font-weight:900;color:#fff}
+  .panel-h b{font-weight:600;font-size:15px;color:#0b2418}.panel-h span{display:block;color:#5a7a68;font-size:11px}
+  .body{padding:22px}
+  .label{font-family:'Space Grotesk';font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#5a7a68}
+  .slots{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:13px}
+  .slot{position:relative;border-radius:14px;border:1px solid rgba(13,53,34,.12);background:rgba(255,255,255,.72);padding:13px 14px;cursor:pointer;transition:transform .28s cubic-bezier(.16,1,.3,1),box-shadow .28s}
+  .slot::before{content:"⛳";position:absolute;top:11px;right:12px;font-size:11px;opacity:.4}
+  .slot:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px rgba(13,53,34,.35)}
+  .slot .time{font-family:'Space Grotesk';font-size:19px;font-weight:600;color:#0b2418}
+  .slot .price{font-size:11px;color:#5a7a68;margin-top:4px}
+  .slot.sel{border:none;background:linear-gradient(135deg,#10b981,#0b5e42);color:#fff;box-shadow:0 14px 30px -10px rgba(16,185,129,.55)}
+  .slot.sel .time{color:#fff}.slot.sel .price{color:#cdeede}.slot.sel::before{opacity:.8}
+  .slot.full{opacity:.4;cursor:not-allowed}.slot.full::before{content:"✕"}
+  .cta{margin-top:20px}
+  .btn{width:100%;font-size:15px;font-weight:600;color:#fff;background:linear-gradient(90deg,#10b981,#0b5e42,#caa53f);background-size:180% auto;border:none;padding:15px;border-radius:99px;cursor:pointer;box-shadow:0 14px 36px -10px rgba(16,185,129,.5);animation:shine 7s linear infinite}
+  @keyframes shine{to{background-position:180% center}}
+  .btn:hover{transform:translateY(-2px)}
+  .hint{position:fixed;bottom:18px;right:22px;z-index:20;font-family:'Space Grotesk';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5a7a68;background:rgba(255,255,255,.6);padding:6px 12px;border-radius:99px;backdrop-filter:blur(6px)}
+</style>
+</head>
+<body>
+<a class="back" href="/previews/">← all directions</a>
+
+<div class="stage">
+  <div class="scene">
+    <svg viewBox="0 0 1000 1100" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="turf" cx="45%" cy="45%" r="75%"><stop offset="0%" stop-color="#9ad6a6"/><stop offset="100%" stop-color="#6cbb82"/></radialGradient>
+        <linearGradient id="fw" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#7fce93"/><stop offset="100%" stop-color="#5cb978"/></linearGradient>
+      </defs>
+      <rect width="1000" height="1100" fill="url(#turf)"/>
+      <g opacity="0.45" fill="#3f8a57">
+        <circle cx="120" cy="240" r="34"/><circle cx="180" cy="180" r="26"/><circle cx="90" cy="340" r="28"/>
+        <circle cx="900" cy="820" r="36"/><circle cx="950" cy="900" r="26"/><circle cx="840" cy="900" r="22"/>
+        <circle cx="170" cy="860" r="30"/><circle cx="120" cy="780" r="22"/><circle cx="880" cy="300" r="26"/>
+      </g>
+      <path d="M300,1040 C340,820 520,760 560,600 C600,430 720,380 800,210"
+            stroke="#3a7a4f" stroke-width="190" fill="none" stroke-linecap="round" opacity="0.55"/>
+      <path d="M300,1040 C340,820 520,760 560,600 C600,430 720,380 800,210"
+            stroke="url(#fw)" stroke-width="150" fill="none" stroke-linecap="round"/>
+      <path d="M300,1040 C340,820 520,760 560,600 C600,430 720,380 800,210"
+            stroke="#b9e6c6" stroke-width="2.5" fill="none" stroke-dasharray="2 16" opacity="0.7"/>
+      <ellipse cx="470" cy="820" rx="56" ry="34" fill="#ece1b0"/>
+      <ellipse cx="640" cy="500" rx="46" ry="30" fill="#ece1b0"/>
+      <ellipse cx="730" cy="560" rx="34" ry="24" fill="#ece1b0"/>
+      <circle cx="815" cy="195" r="78" fill="#9fe2b4"/>
+      <circle cx="815" cy="195" r="78" fill="none" stroke="#d7f5e1" stroke-width="3" opacity="0.6"/>
+      <circle cx="806" cy="202" r="6" fill="#0b3a22"/>
+      <line x1="806" y1="202" x2="806" y2="140" stroke="#fff" stroke-width="3"/>
+      <path d="M806,140 L834,150 L806,162 Z" fill="#e23b3b"/>
+      <rect x="266" y="1018" width="68" height="36" rx="8" fill="#86c79a"/>
+    </svg>
+  </div>
+  <div class="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+  <svg class="topo" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 700">
+    <path d="M-50,140 Q250,90 500,160 T1050,140"/><path class="dash" d="M-50,210 Q260,150 520,230 T1050,210"/>
+    <path d="M-50,300 Q300,230 540,320 T1050,300"/><path class="dash" d="M-50,400 Q300,330 540,420 T1050,400"/>
+    <path d="M-50,500 Q320,420 560,520 T1050,500"/>
+  </svg>
+</div>
+<div class="wash"></div>
+
+<div class="shell">
+  <div class="left">
+    <span class="tag"><span class="live"></span>Now flying · Hole 1 · The Liberator</span>
+    <h1>Book a round<br>at <span class="g">Winged Pheasant.</span></h1>
+    <p class="lede">Watch the opening hole unfold behind you while you pick your time. No account needed.</p>
+    <div class="coords"><span>📍 <b>36.1627° N</b></span><span><b>86.7816° W</b></span><span>PAR <b>72</b></span><span><b>6,742 yds</b></span></div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="mark">W</div><div><b>Book a tee time</b><span>Tue, Jul 2 · The Liberator</span></div></div>
+    <div class="body">
+      <div class="label">Available tee times</div>
+      <div class="slots">
+        <div class="slot sel"><div class="time">7:00</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">7:10</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">7:20</div><div class="price">$55 · weekday</div></div>
+        <div class="slot full"><div class="time">7:30</div><div class="price">Full</div></div>
+        <div class="slot"><div class="time">7:40</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">7:50</div><div class="price">$55 · weekday</div></div>
+      </div>
+      <div class="cta"><button class="btn">Continue · $110 →</button></div>
+    </div>
+  </div>
+</div>
+<div class="hint">↑ background = live flythrough of hole 1</div>
+</body>
+</html>
