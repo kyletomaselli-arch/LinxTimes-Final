@@ -18,13 +18,13 @@ const ICON: Record<string, string> = {
 
 const NAV = [
   { href: "/dashboard", label: "Tee Sheet", icon: "tee" },
-  { href: "/dashboard/bookings", label: "Bookings", icon: "bookings" },
   { href: "/dashboard/members", label: "Members", icon: "members" },
-  { href: "/dashboard/tee-times", label: "Tee Times", icon: "times" },
   { href: "/dashboard/pricing", label: "Pricing", icon: "pricing" },
   { href: "/dashboard/shop", label: "Shop", icon: "shop" },
   { href: "/dashboard/discounts", label: "Discounts", icon: "discounts" },
   { href: "/dashboard/reports", label: "Reports", icon: "reports" },
+  { href: "/dashboard/tee-times", label: "Tee time settings", icon: "times" },
+  { href: "/dashboard/bookings", label: "Bookings", icon: "bookings" },
 ];
 
 export function DarkSidebar({ courseName, logoUrl }: { courseName: string; logoUrl: string | null }) {
