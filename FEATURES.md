@@ -17,7 +17,7 @@ A running list of what LinxTimes does, written to help pitch a golf course. Kept
 - **Secure payment** — card handled by Stripe; card details never touch our servers (PCI-compliant).
 
 ## For the pro shop / course staff (daily operations)
-- **Live tee sheet** — see the day at a glance: who's booked, party size, cart, and payment status; Grid view (default) or List. Now-time indicator (red dot + current time) updates every minute. Auto-hide past tee times with Show/Hide toggle so you're only looking at upcoming bookings.
+- **Live tee sheet** — see the day at a glance: who's booked, party size, cart, and payment status; Grid view (default) or List. Now-time indicator (red dot + current time) updates every minute. Auto-hide past tee times with Show/Hide toggle. Filter to show only open spots ("Open only" toggle) to focus on available times. Full slots show "Full" overlay for clarity.
 - **Cart visibility** — a cart badge on every booking so staff know who's riding.
 - **Member badge** — see which groups include members.
 - **Check-in & no-show** — one tap to mark arrivals and no-shows.
