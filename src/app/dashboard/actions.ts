@@ -325,3 +325,25 @@ export async function cancelBookingAction(
       : "Booking cancelled.",
   };
 }
+
+/**
+ * Check the status of the most recent payment for a booking.
+ * Used for polling during terminal payment processing.
+ */
+export async function checkPaymentStatus(bookingId: string): Promise<{ status: "pending" | "succeeded" | "failed"; amountCents?: number }> {
+  const { course } = await requireCourseAdmin();
+  const booking = await prisma.booking.findFirst({ where: { id: bookingId, courseId: course.id } });
+  if (!booking) return { status: "failed" };
+
+  const payment = await prisma.payment.findFirst({
+    where: { bookingId, courseId: course.id },
+    orderBy: { createdAt: "desc" },
+    select: { state: true, amountCents: true, feeCents: true, addonsCents: true, taxCents: true },
+  });
+
+  if (!payment) return { status: "failed" };
+  return {
+    status: payment.state === "succeeded" ? "succeeded" : payment.state === "failed" ? "failed" : "pending",
+    amountCents: payment.amountCents + (payment.feeCents ?? 0) + (payment.addonsCents ?? 0) + (payment.taxCents ?? 0),
+  };
+}

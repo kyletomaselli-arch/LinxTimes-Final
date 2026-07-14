@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createWalkIn, editBooking, collectPayment, setBookingStatus } from "../actions";
+import { createWalkIn, editBooking, collectPayment, checkPaymentStatus, setBookingStatus } from "../actions";
 import { cancelBookingAction } from "../actions";
 import { formatCentsCompact } from "@/lib/money";
 import { minutesToTime } from "@/lib/datetime";
@@ -371,6 +371,32 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
       if (res.ok) router.refresh();
     });
   }
+
+  // Poll for payment status while processing
+  useEffect(() => {
+    if (mode !== "paying" || paymentStatus !== "processing") return;
+
+    let elapsed = 0;
+    const pollInterval = setInterval(async () => {
+      elapsed += 1500;
+      if (elapsed > 30000) { // 30 second timeout
+        setPaymentStatus("failed");
+        setMsg("Payment processing timed out. Check card reader and try again.");
+        clearInterval(pollInterval);
+        return;
+      }
+      const status = await checkPaymentStatus(booking.id);
+      if (status.status !== "pending") {
+        setPaymentStatus(status.status === "succeeded" ? "success" : status.status);
+        if (status.status === "succeeded") {
+          setTimeout(() => { onClose(); router.refresh(); }, 2000);
+        }
+        clearInterval(pollInterval);
+      }
+    }, 1500);
+
+    return () => clearInterval(pollInterval);
+  }, [mode, paymentStatus, booking.id, onClose, router]);
 
   return (
     <>
