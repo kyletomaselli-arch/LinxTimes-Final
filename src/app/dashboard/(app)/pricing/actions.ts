@@ -54,3 +54,35 @@ export async function updateBookingWindow(formData: FormData): Promise<void> {
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
 }
+
+/** Create a membership tier (scoped to the admin's course). */
+export async function createMembershipTier(formData: FormData): Promise<void> {
+  const { course } = await requireCourseAdmin();
+  const name = String(formData.get("name") ?? "").trim();
+  const price = toCents(formData.get("price"));
+
+  if (!name || price <= 0) return;
+
+  await prisma.membershipTier.create({
+    data: {
+      courseId: course.id,
+      name,
+      priceCents: price,
+    },
+  });
+  revalidatePath("/dashboard/pricing");
+}
+
+/** Delete a membership tier (scoped to the admin's course). */
+export async function deleteMembershipTier(formData: FormData): Promise<void> {
+  const { course } = await requireCourseAdmin();
+  const tierId = String(formData.get("tierId") ?? "");
+
+  const tier = await prisma.membershipTier.findFirst({
+    where: { id: tierId, courseId: course.id },
+  });
+  if (!tier) return;
+
+  await prisma.membershipTier.delete({ where: { id: tierId } });
+  revalidatePath("/dashboard/pricing");
+}
