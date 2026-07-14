@@ -5,10 +5,8 @@ import {
   todayKeyInTz, fromDateKey, toDateKey, addDays, dayOfWeek,
   timeToMinutes, minutesToTime,
 } from "@/lib/datetime";
-import { formatCentsCompact } from "@/lib/money";
 import { hoursUntilTeeTime, refundableCents, CANCELLATION_WINDOW_HOURS } from "@/lib/cancellation";
 import { TeeSheetClient, type Slot } from "../_components/TeeSheetClient";
-import { MetricsChart } from "../_components/MetricsChart";
 import type { Booking } from "@/generated/prisma";
 
 function slotTimes(s: string, e: string, i: number): string[] {
@@ -41,18 +39,11 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
     select: { id: true, name: true, priceCents: true },
   });
 
-  const canSeeRevenue = admin.role !== "staff";
-  const CHART_DAYS = 14;
-  const chartStart = addDays(today, -(CHART_DAYS - 1));
-  const [dayBookings, overrides, upcomingWeek, prevWeek, chartBookings] = await Promise.all([
+  const [dayBookings, overrides, upcomingWeek, prevWeek] = await Promise.all([
     prisma.booking.findMany({ where: { courseId: course.id, bookingDate: selDate, status: { not: "cancelled" } } }),
     prisma.dailyOverride.findMany({ where: { courseId: course.id, overrideDate: selDate } }),
     prisma.booking.count({ where: { courseId: course.id, status: { not: "cancelled" }, bookingDate: { gt: fromDateKey(today), lte: fromDateKey(addDays(today, 7)) } } }),
     prisma.booking.findMany({ where: { courseId: course.id, bookingDate: fromDateKey(addDays(selected, -7)), status: { not: "cancelled" } } }),
-    prisma.booking.findMany({
-      where: { courseId: course.id, status: { not: "cancelled" }, bookingDate: { gte: fromDateKey(chartStart), lte: fromDateKey(today) } },
-      select: { bookingDate: true, numPlayers: true, totalCents: true, paymentStatus: true },
-    }),
   ]);
 
   // Daily player capacity from the weekly slot templates (for fill rate).
@@ -69,33 +60,9 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
   // Stats for the selected day
   const bookings = dayBookings.length;
   const players = dayBookings.reduce((n, b) => n + b.numPlayers, 0);
-  const revenue = dayBookings.filter((b) => b.paymentStatus === "paid_online").reduce((n, b) => n + b.totalCents, 0);
-  const prevRev = prevWeek.filter((b) => b.paymentStatus === "paid_online").reduce((n, b) => n + b.totalCents, 0);
-  const revTrend = prevRev > 0 ? Math.round(((revenue - prevRev) / prevRev) * 100) : null;
   const bkTrend = prevWeek.length > 0 ? Math.round(((bookings - prevWeek.length) / prevWeek.length) * 100) : null;
   const selCap = capacityForDay(selected);
   const fillToday = selCap > 0 ? Math.round((players / selCap) * 100) : 0;
-
-  // Chart series — rolling last 14 days (independent of the selected day).
-  const days = Array.from({ length: CHART_DAYS }, (_, i) => addDays(chartStart, i));
-  const playersMap = new Map<string, number>();
-  const bookingsMap = new Map<string, number>();
-  const revenueMap = new Map<string, number>();
-  for (const b of chartBookings) {
-    const k = toDateKey(b.bookingDate);
-    playersMap.set(k, (playersMap.get(k) ?? 0) + b.numPlayers);
-    bookingsMap.set(k, (bookingsMap.get(k) ?? 0) + 1);
-    if (b.paymentStatus === "paid_online" || b.paymentStatus === "paid_in_person")
-      revenueMap.set(k, (revenueMap.get(k) ?? 0) + b.totalCents);
-  }
-  const chartData = days.map((d) => ({
-    date: d,
-    label: new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { month: "numeric", day: "numeric", timeZone: "UTC" }),
-    players: playersMap.get(d) ?? 0,
-    bookings: bookingsMap.get(d) ?? 0,
-    fill: (() => { const c = capacityForDay(d); return c > 0 ? Math.round(((playersMap.get(d) ?? 0) / c) * 100) : 0; })(),
-    revenueCents: revenueMap.get(d) ?? 0,
-  }));
 
   // Build the tee-sheet slots (a tee time can hold multiple groups up to max).
   const bookingsByKey = new Map<string, typeof dayBookings>();
@@ -150,21 +117,12 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
         </a>
       </div>
 
-      {/* colorful stat cards — revenue only for owners/managers */}
-      <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-        {canSeeRevenue ? (
-          <StatCard bg="#fdeee3" label={selected === today ? "Revenue today" : "Revenue"} value={formatCentsCompact(revenue)} trend={revTrend} />
-        ) : (
-          <StatCard bg="#fdeee3" label="Fill rate" value={`${fillToday}%`} />
-        )}
+      {/* colorful stat cards */}
+      <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-3">
+        <StatCard bg="#fdeee3" label="Fill rate" value={`${fillToday}%`} />
         <StatCard bg="#eaf7ef" label="Bookings" value={String(bookings)} trend={bkTrend} />
         <StatCard bg="#eaf1fb" label="Players" value={String(players)} />
         <StatCard bg="#eef7e9" label="Next 7 days" value={String(upcomingWeek)} sub="upcoming" />
-      </div>
-
-      {/* operational chart — switchable metrics, rolling 14-day window */}
-      <div className="mt-3.5 rounded-2xl bg-white p-4 pt-3.5 shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)]">
-        <MetricsChart data={chartData} canSeeRevenue={canSeeRevenue} />
       </div>
 
       {/* day navigation — the selected date is the focus; Today is a jump-back */}

@@ -1,6 +1,7 @@
 import { requireCourseAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { todayKeyInTz, fromDateKey, toDateKey } from "@/lib/datetime";
+import { todayKeyInTz, fromDateKey, toDateKey, addDays, timeToMinutes } from "@/lib/datetime";
+import { MetricsChart } from "../../_components/MetricsChart";
 
 const usd = (c: number) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -23,6 +24,8 @@ export default async function ReportsPage(props: PageProps<"/dashboard/reports">
 
   const today = todayKeyInTz(course.timezone);
   const monthStart = `${today.slice(0, 7)}-01`;
+  const CHART_DAYS = 14;
+  const chartStart = addDays(today, -(CHART_DAYS - 1));
   const sp = await props.searchParams;
   const get = (k: string, dflt: string) => {
     const v = sp[k];
@@ -31,14 +34,20 @@ export default async function ReportsPage(props: PageProps<"/dashboard/reports">
   const from = get("from", monthStart);
   const to = get("to", today);
 
-  const bookings = await prisma.booking.findMany({
-    where: { courseId: course.id, bookingDate: { gte: fromDateKey(from), lte: fromDateKey(to) } },
-    select: {
-      paymentStatus: true, status: true, source: true, numPlayers: true,
-      greenFeeCents: true, cartFeeCents: true, bookingFeeCents: true, taxCents: true,
-      discountCents: true, creditCents: true, totalCents: true, amountPaidCents: true,
-    },
-  });
+  const [bookings, chartBookings] = await Promise.all([
+    prisma.booking.findMany({
+      where: { courseId: course.id, bookingDate: { gte: fromDateKey(from), lte: fromDateKey(to) } },
+      select: {
+        paymentStatus: true, status: true, source: true, numPlayers: true,
+        greenFeeCents: true, cartFeeCents: true, bookingFeeCents: true, taxCents: true,
+        discountCents: true, creditCents: true, totalCents: true, amountPaidCents: true,
+      },
+    }),
+    prisma.booking.findMany({
+      where: { courseId: course.id, status: { not: "cancelled" }, bookingDate: { gte: fromDateKey(chartStart), lte: fromDateKey(today) } },
+      select: { bookingDate: true, numPlayers: true, totalCents: true, paymentStatus: true },
+    }),
+  ]);
   // In-person LinxTimes fees ($/player) live on the Payment rows, by round date.
   const inPersonFeeAgg = await prisma.payment.aggregate({
     where: {
@@ -80,6 +89,49 @@ export default async function ReportsPage(props: PageProps<"/dashboard/reports">
   linxFees += inPersonFeeAgg._sum.feeCents ?? 0;
   const netToCourse = courseRevenue + tax - refunds;
 
+  // Chart series — rolling last 14 days
+  const days = Array.from({ length: CHART_DAYS }, (_, i) => addDays(chartStart, i));
+  const playersMap = new Map<string, number>();
+  const bookingsMap = new Map<string, number>();
+  const revenueMap = new Map<string, number>();
+  const capacityMap = new Map<string, number>();
+
+  // Need layout data to calculate capacity
+  const layouts = await prisma.layout.findMany({
+    where: { courseId: course.id, isActive: true },
+    include: { teeTimeSlots: true },
+  });
+
+  const capacityForDay = (dayKey: string) => {
+    const dayOfWk = Number(new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Mon" ? 1 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Tue" ? 2 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Wed" ? 3 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Thu" ? 4 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Fri" ? 5 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Sat" ? 6 : 0);
+    let cap = 0;
+    for (const l of layouts) {
+      const t = l.teeTimeSlots.find((s) => s.dayOfWeek === dayOfWk && s.isActive);
+      if (t) {
+        const slotCount = Math.ceil((timeToMinutes(t.endTime) - timeToMinutes(t.startTime)) / t.intervalMin) + 1;
+        cap += slotCount * t.maxPlayers;
+      }
+    }
+    return cap;
+  };
+
+  for (const b of chartBookings) {
+    const k = toDateKey(b.bookingDate);
+    playersMap.set(k, (playersMap.get(k) ?? 0) + b.numPlayers);
+    bookingsMap.set(k, (bookingsMap.get(k) ?? 0) + 1);
+    if (b.paymentStatus === "paid_online" || b.paymentStatus === "paid_in_person")
+      revenueMap.set(k, (revenueMap.get(k) ?? 0) + b.totalCents);
+  }
+
+  const chartData = days.map((d) => ({
+    date: d,
+    label: new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { month: "numeric", day: "numeric", timeZone: "UTC" }),
+    players: playersMap.get(d) ?? 0,
+    bookings: bookingsMap.get(d) ?? 0,
+    fill: (() => { const c = capacityForDay(d); return c > 0 ? Math.round(((playersMap.get(d) ?? 0) / c) * 100) : 0; })(),
+    revenueCents: revenueMap.get(d) ?? 0,
+  }));
+
   const exportQs = new URLSearchParams({ from, to }).toString();
   const niceRange = `${from} → ${to}`;
 
@@ -102,11 +154,15 @@ export default async function ReportsPage(props: PageProps<"/dashboard/reports">
       </form>
 
       {/* Headline cards */}
-      <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-3">
         <Card bg="#eaf7ef" label="Net to course" value={usd(netToCourse)} sub="green+cart+tax − refunds" />
         <Card bg="#eaf1fb" label="Gross collected" value={usd(grossCollected)} sub={`${paidRounds} paid rounds`} />
         <Card bg="#fdeee3" label="Sales tax collected" value={usd(tax)} sub="you remit this" />
-        <Card bg="#eef7e9" label="LinxTimes fees" value={usd(linxFees)} sub="platform fee" />
+      </div>
+
+      {/* Chart — 14-day operational metrics */}
+      <div className="mt-5 rounded-2xl bg-white p-4 pt-3.5 shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)]">
+        <MetricsChart data={chartData} canSeeRevenue={true} />
       </div>
 
       {/* Detail table */}
@@ -117,7 +173,6 @@ export default async function ReportsPage(props: PageProps<"/dashboard/reports">
             <Line label="Sales tax collected (you remit)" value={usd(tax)} />
             <Line label="Refunds issued" value={`− ${usd(refunds)}`} negative />
             <Line label="Net to course (before Stripe processing fees)" value={usd(netToCourse)} strong />
-            <Line label="LinxTimes platform fees" value={usd(linxFees)} muted />
             <Line label="Discounts given (course-funded)" value={usd(discounts)} muted />
             <Line label="Rain checks redeemed (course-funded)" value={usd(credits)} muted />
           </tbody>
@@ -151,7 +206,7 @@ export default async function ReportsPage(props: PageProps<"/dashboard/reports">
 
       <p className="mt-4 text-xs text-foreground/40">
         Figures are grouped by tee-time date. &quot;Net to course&quot; is what settles to your Stripe account before Stripe&apos;s
-        card-processing fees (~2.9% + $0.30 online). LinxTimes fees include the in-person per-player fee collected on the reader.
+        card-processing fees (~2.9% + $0.30 online).
       </p>
     </div>
   );

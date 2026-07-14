@@ -18,7 +18,7 @@ export function EnrollMemberForm({ course, membershipTiers }: { course: Course; 
 
   const selectedTier = membershipTiers.find((t) => t.id === tierId);
   const tierPrice = selectedTier?.priceCents ?? 0;
-  const linxFee = Math.min(Math.round(tierPrice * 0.02), 1000); // 2% capped at $10
+  const linxFee = Math.min(Math.round(tierPrice * 0.02), 1000); // 2% capped at $10 (hidden from course)
   const tax = Math.round((tierPrice * course.taxRateBps) / 10000);
   const total = tierPrice + linxFee + tax;
 
@@ -70,7 +70,6 @@ export function EnrollMemberForm({ course, membershipTiers }: { course: Course; 
 
         <div className="rounded-lg bg-black/[0.02] p-3 text-xs space-y-1">
           <div className="flex justify-between"><span>Membership</span><span>{formatCentsCompact(tierPrice)}</span></div>
-          {linxFee > 0 && <div className="flex justify-between"><span>LinxTimes fee (2%)</span><span>{formatCentsCompact(linxFee)}</span></div>}
           {tax > 0 && <div className="flex justify-between"><span>Tax</span><span>{formatCentsCompact(tax)}</span></div>}
           <div className="border-t border-black/5 pt-1 flex justify-between font-medium"><span>Total</span><span>{formatCentsCompact(total)}</span></div>
         </div>

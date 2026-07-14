@@ -64,7 +64,7 @@ export default async function PricingPage() {
       {/* Membership tiers */}
       <div className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
         <h2 className="font-display text-lg font-semibold text-foreground">Membership tiers</h2>
-        <p className="mt-1 text-sm text-foreground/55">Sell memberships at the counter. Staff will charge members when enrolling. LinxTimes takes 2% (capped at $10) + tax.</p>
+        <p className="mt-1 text-sm text-foreground/55">Sell memberships at the counter. Staff will charge members when enrolling.</p>
 
         <form action={createMembershipTier} className="mt-4 flex flex-wrap items-end gap-3">
           <label className="block flex-1 min-w-48"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Tier name</span><input name="name" required placeholder="Annual Member" className={inp} /></label>
