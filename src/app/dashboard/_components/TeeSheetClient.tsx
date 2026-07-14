@@ -300,6 +300,7 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
   const [collCustom, setCollCustom] = useState("");
   const [collMethod, setCollMethod] = useState<"terminal" | "cash">("terminal");
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [showAddOns, setShowAddOns] = useState(false);
   const router = useRouter();
   const manual = booking.source !== "online";
   const remaining = Math.max(0, booking.totalCents - booking.amountPaidCents);
@@ -370,7 +371,7 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className={`absolute z-20 w-64 rounded-xl border border-black/10 bg-white p-3.5 text-left shadow-xl ${grid ? "left-0" : "left-11"} top-[calc(100%+4px)]`}>
+      <div className={`absolute z-20 ${mode === "collect" ? "w-[40vw] max-w-2xl" : "w-64"} rounded-xl border border-black/10 bg-white p-3.5 text-left shadow-xl ${grid ? "left-0" : "left-11"} top-[calc(100%+4px)]`}>
         {mode === "view" && (
           <>
             <div className="font-semibold">{booking.golferName}</div>
@@ -441,16 +442,56 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
 
             {shopItems.length > 0 && (
               <div className="mt-3">
-                <div className="text-xs font-semibold text-foreground/70">Pro shop items</div>
-                <div className="mt-1 max-h-28 space-y-1 overflow-auto pr-0.5">
-                  {shopItems.map((it) => (
-                    <div key={it.id} className="flex items-center gap-1.5 text-xs">
-                      <span className="min-w-0 flex-1 truncate">{it.name} · {formatCentsCompact(it.priceCents)}</span>
-                      <button type="button" onClick={() => addQty(it.id, -1)} className="grid h-5 w-5 place-items-center rounded border border-black/10 text-foreground/60 hover:bg-black/[0.04]">−</button>
-                      <span className="w-4 text-center font-medium">{cart[it.id] ?? 0}</span>
-                      <button type="button" onClick={() => addQty(it.id, 1)} className="grid h-5 w-5 place-items-center rounded border border-black/10 text-foreground/60 hover:bg-black/[0.04]">+</button>
-                    </div>
-                  ))}
+                <button type="button" onClick={() => setShowAddOns(!showAddOns)} className="text-xs font-semibold text-[#12a06f] hover:text-[#0d8659] transition">
+                  {showAddOns ? "▼ Add ons" : "▶ Add ons"}
+                </button>
+                {showAddOns && (
+                  <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                    {shopItems.map((it) => {
+                      const qty = cart[it.id] ?? 0;
+                      return (
+                        <button
+                          key={it.id}
+                          type="button"
+                          onClick={() => addQty(it.id, 1)}
+                          className={`flex flex-col items-center gap-1.5 rounded-2xl p-3 transition ${qty > 0 ? "bg-[#12a06f]/10 border-2 border-[#12a06f]" : "border-2 border-black/10 hover:border-black/20"}`}
+                        >
+                          <div className="text-2xl">🛍️</div>
+                          <div className="text-center">
+                            <div className="text-[11px] font-semibold text-foreground/80 line-clamp-2">{it.name}</div>
+                            <div className="text-[10px] text-foreground/60 mt-0.5">{formatCentsCompact(it.priceCents)}</div>
+                          </div>
+                          {qty > 0 && (
+                            <div className="mt-1 rounded-full bg-[#12a06f] px-2 py-0.5 text-[10px] font-bold text-white">
+                              {qty}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Selected add-ons summary */}
+            {Object.entries(cart).some(([, qty]) => qty > 0) && (
+              <div className="mt-3 rounded-lg bg-black/[0.02] p-2 text-xs">
+                <div className="font-semibold text-foreground/70 mb-1.5">Selected:</div>
+                <div className="space-y-1">
+                  {shopItems.map((it) => {
+                    const qty = cart[it.id] ?? 0;
+                    if (qty <= 0) return null;
+                    return (
+                      <div key={it.id} className="flex items-center justify-between">
+                        <span className="text-foreground/70">{it.name} × {qty}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">{formatCentsCompact(it.priceCents * qty)}</span>
+                          <button type="button" onClick={() => addQty(it.id, -1)} className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-red-600 hover:bg-red-50">Remove</button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -471,8 +512,8 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
 
             {msg && <p className="mt-2 text-xs font-medium text-red-600">{msg}</p>}
             <div className="mt-3 flex gap-2">
-              <button disabled={pending || chargeTotal <= 0} className="flex-1 rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{pending ? "…" : `Charge ${formatCentsCompact(chargeTotal)}`}</button>
-              <button type="button" onClick={() => setMode("view")} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
+              <button disabled={pending || chargeTotal <= 0} className="flex-1 rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{pending ? "…" : `Continue · ${formatCentsCompact(chargeTotal)}`}</button>
+              <button type="button" onClick={() => { setMode("view"); setShowAddOns(false); }} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
             </div>
           </form>
         )}
