@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin · Aurora glass — LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;color:#0b2418;min-height:100vh;background:#eef5e9}
+a.back{position:fixed;top:16px;right:16px;z-index:30;color:#0b2418;text-decoration:none;font-size:13px;background:rgba(255,255,255,.75);backdrop-filter:blur(10px);border:1px solid rgba(11,36,24,.12);padding:8px 14px;border-radius:99px}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:linear-gradient(180deg,#f4f9ef,#e6f0e0)}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.6}
+.b1{width:44vw;height:44vw;background:#8fd39f;top:-10%;left:-6%}.b2{width:38vw;height:38vw;background:#a9dcef;top:0;right:-8%}.b3{width:36vw;height:36vw;background:#f0dfa6;bottom:-14%;left:28%}
+.app{position:relative;z-index:2;display:flex;min-height:100vh}
+.sb{width:230px;padding:22px 16px;display:flex;flex-direction:column;gap:6px;background:rgba(13,53,34,.92);color:#fff;backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.brand .m{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#2aa87b,#0b5e42);display:grid;place-items:center;font-family:'Fraunces';font-weight:900}
+.brand b{font-size:14px}.brand span{display:block;font-size:11px;color:rgba(255,255,255,.5)}
+.nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;font-size:14px;color:rgba(255,255,255,.72);cursor:pointer}
+.nav.on{background:rgba(255,255,255,.14);color:#fff}
+.nav:hover{background:rgba(255,255,255,.1)}
+.main{flex:1;padding:26px 30px}
+h1{font-family:'Fraunces',serif;font-size:34px;font-weight:600}
+.date{color:#3c5a4a;font-size:14px;margin-top:2px}
+.stats{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{border-radius:20px;padding:18px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.85);backdrop-filter:blur(20px);box-shadow:0 20px 50px -30px rgba(13,53,34,.5)}
+.stat .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5a7a68;font-weight:600}
+.stat .v{font-family:'Space Grotesk';font-size:28px;font-weight:600;margin-top:6px}
+.stat .v.g{background:linear-gradient(90deg,#12a06f,#caa53f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sheet{margin-top:26px;border-radius:22px;overflow:hidden;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.85);backdrop-filter:blur(22px);box-shadow:0 30px 70px -40px rgba(13,53,34,.5)}
+.sheet .h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid rgba(11,36,24,.06)}
+.sheet .h b{font-family:'Fraunces';font-size:16px}
+.slot{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid rgba(11,36,24,.04)}
+.slot:last-child{border:0}
+.time{width:70px;font-family:'Space Grotesk';font-weight:600}
+.who{flex:1;font-size:14px}.who span{color:#5a7a68;font-size:12px;margin-left:8px}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+.paid{background:#d5f2e4;color:#0f6e4d}.open{color:#9db0a5;font-size:13px;flex:1}
+.pill{background:linear-gradient(90deg,#12a06f,#0b5e42);color:#fff;border:none;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;cursor:pointer}
+</style></head><body>
+<a class="back" href="/previews/admin.html">← all directions</a>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="app">
+  <aside class="sb">
+    <div class="brand"><div class="m">W</div><div><b>Winged Pheasant</b><span>LinxTimes dashboard</span></div></div>
+    <div class="nav on">◧ Overview</div><div class="nav">▤ Bookings</div><div class="nav">◎ Members</div><div class="nav">◷ Tee Times</div><div class="nav">$ Pricing</div><div class="nav">⚙ Settings</div>
+  </aside>
+  <main class="main">
+    <h1>Overview</h1><div class="date">Tuesday, July 2</div>
+    <div class="stats">
+      <div class="stat"><div class="k">Bookings today</div><div class="v">42</div></div>
+      <div class="stat"><div class="k">Players today</div><div class="v">118</div></div>
+      <div class="stat"><div class="k">Revenue today</div><div class="v g">$1,240</div></div>
+      <div class="stat"><div class="k">Next 7 days</div><div class="v">96</div></div>
+    </div>
+    <div class="sheet">
+      <div class="h"><b>The Liberator · today</b><button class="pill">+ Add walk-in</button></div>
+      <div class="slot"><div class="time">7:00</div><div class="who">Jane Golfer <span>2 · 18H · cart</span></div><span class="badge paid">Paid</span></div>
+      <div class="slot"><div class="time">7:10</div><div class="open">Open</div></div>
+      <div class="slot"><div class="time">7:20</div><div class="who">Mark Reyes <span>4 · 18H</span></div><span class="badge paid">Paid</span></div>
+      <div class="slot"><div class="time">7:30</div><div class="open">Open</div></div>
+      <div class="slot"><div class="time">7:40</div><div class="who">Tom Blair <span>1 · 9H · walk-in</span></div><span class="badge" style="background:#eee;color:#666">Pay at course</span></div>
+    </div>
+  </main>
+</div></body></html>

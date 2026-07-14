@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>10 tee sheet designs · LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#eef0f3;color:#1c2430;padding:40px 24px 80px}
+.wrap{max-width:900px;margin:0 auto}
+a.back{color:#1c2430;text-decoration:none;font-size:13px;background:#fff;border:1px solid #e2e5ea;padding:8px 14px;border-radius:99px}
+.title{font-family:'Fraunces';font-size:34px;font-weight:600;margin:20px 0 4px}
+.lead{color:#6b7280;margin-bottom:28px}
+.demo{background:#fff;border-radius:18px;box-shadow:0 20px 44px -34px rgba(16,24,40,.35);padding:20px 22px;margin-bottom:22px}
+.dh{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
+.dh .n{font-family:'Space Grotesk';font-weight:700;color:#12a06f}
+.dh h3{font-size:16px;font-weight:700}
+.dh .tag{margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;background:#eef0f3;color:#6b7280}
+.dh .tag.m{background:#e8f6ef;color:#2f855a}
+
+/* ---------- 1 · Agenda cards (color) ---------- */
+.t1 .row{display:flex;align-items:center;gap:16px;padding:11px 12px;border-radius:12px;margin-bottom:6px;border-left:4px solid}
+.t1 .row.paid{background:#f4fbf7;border-color:#16a34a}.t1 .row.walk{background:#fdf6ea;border-color:#d99b1c}.t1 .row.open{background:#f6f7f9;border-color:#d5d9df}
+.t1 .tm{font-family:'Space Grotesk';font-weight:600;width:64px}
+.t1 .ini{width:34px;height:34px;border-radius:50%;background:#dcf1e6;color:#1f7a53;display:grid;place-items:center;font-size:12px;font-weight:700}
+.t1 .nm{font-weight:600;font-size:14px}.t1 .sub{color:#8a919b;font-size:12px}
+.t1 .pill{margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+.t1 .paid .pill{background:#eaf7ef;color:#2f855a}.t1 .walk .pill{background:#fbeecf;color:#9a6a12}
+.t1 .open .book{margin-left:auto;font-size:12px;font-weight:600;color:#12a06f}
+
+/* ---------- 2 · Timeline rail (color) ---------- */
+.t2{position:relative;padding-left:78px}
+.t2::before{content:"";position:absolute;left:70px;top:6px;bottom:6px;width:2px;background:#e6e9ee}
+.t2 .row{position:relative;display:flex;align-items:center;gap:12px;padding:9px 0}
+.t2 .tm{position:absolute;left:-78px;width:56px;text-align:right;font-family:'Space Grotesk';font-weight:600;font-size:13px}
+.t2 .node{position:absolute;left:-14px;width:12px;height:12px;border-radius:50%;border:2px solid #fff}
+.t2 .paid .node{background:#16a34a}.t2 .walk .node{background:#d99b1c}.t2 .open .node{background:#cfd4da}
+.t2 .card{flex:1;display:flex;align-items:center;gap:12px;background:#f7f8fa;border-radius:12px;padding:10px 14px}
+.t2 .nm{font-weight:600;font-size:14px}.t2 .sub{color:#8a919b;font-size:12px}
+.t2 .pill{margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+.t2 .paid .pill{background:#eaf7ef;color:#2f855a}.t2 .walk .pill{background:#fbeecf;color:#9a6a12}
+.t2 .open .card{background:#fafbfc;color:#a9b0ba;font-size:13px}
+
+/* ---------- 3 · Card grid (color) ---------- */
+.t3{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.t3 .c{border-radius:12px;padding:12px;background:#f7f8fa;border-top:3px solid}
+.t3 .c.paid{border-color:#16a34a}.t3 .c.walk{border-color:#d99b1c}.t3 .c.open{border-color:#d5d9df;background:#fbfcfd}
+.t3 .tm{font-family:'Space Grotesk';font-weight:700;font-size:17px}
+.t3 .nm{font-weight:600;font-size:13px;margin-top:6px}.t3 .sub{color:#8a919b;font-size:11px}
+.t3 .c.open .nm{color:#b6bdc7;font-weight:500}
+
+/* ---------- 4 · Two columns by course (color) ---------- */
+.t4{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.t4 .col h4{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#8a919b;margin-bottom:8px}
+.t4 .row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:#f7f8fa;margin-bottom:6px}
+.t4 .tm{font-family:'Space Grotesk';font-weight:600;width:52px;font-size:13px}
+.t4 .nm{font-weight:600;font-size:13px}.t4 .sub{color:#8a919b;font-size:11px}
+.t4 .d{width:8px;height:8px;border-radius:50%;margin-left:auto}
+.t4 .paid .d{background:#16a34a}.t4 .walk .d{background:#d99b1c}
+.t4 .open{background:#fbfcfd;color:#b6bdc7;font-size:12px}
+
+/* ---------- 5 · Status kanban (color) ---------- */
+.t5{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.t5 .col{background:#f7f8fa;border-radius:12px;padding:12px}
+.t5 .col h4{font-size:12px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.t5 .k-up h4{color:#2f855a}.t5 .k-in h4{color:#2a5aa8}.t5 .k-op h4{color:#9aa1ab}
+.t5 .k{width:8px;height:8px;border-radius:50%}.t5 .k-up .k{background:#16a34a}.t5 .k-in .k{background:#3b82f6}.t5 .k-op .k{background:#cfd4da}
+.t5 .c{background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:7px;box-shadow:0 6px 14px -12px rgba(0,0,0,.3)}
+.t5 .tm{font-family:'Space Grotesk';font-weight:600;font-size:13px}.t5 .nm{font-weight:600;font-size:13px}.t5 .sub{color:#8a919b;font-size:11px}
+
+/* ============ MUTED HALF ============ */
+/* ---------- 6 · Ledger table (muted) ---------- */
+.t6{font-size:13px}
+.t6 table{width:100%;border-collapse:collapse}
+.t6 th{text-align:left;color:#9aa1ab;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:1px solid #eceef1}
+.t6 td{padding:9px 8px;border-bottom:1px solid #f4f5f7}
+.t6 .tm{font-family:'Space Grotesk';font-weight:600}
+.t6 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px}
+.t6 .paid{background:#111}.t6 .walk{background:#b6bdc7}.t6 .op{color:#c0c6cf}
+
+/* ---------- 7 · Hairline list (muted) ---------- */
+.t7 .row{display:flex;align-items:center;gap:16px;padding:12px 4px;border-bottom:1px solid #eef0f2}
+.t7 .row:last-child{border:0}
+.t7 .tm{font-family:'Space Grotesk';font-weight:600;width:66px;color:#3a4048}
+.t7 .nm{font-weight:600;font-size:14px}.t7 .sub{color:#98a0aa;font-size:12px}
+.t7 .st{margin-left:auto;width:8px;height:8px;border-radius:50%;background:#12a06f}
+.t7 .row.walk .st{background:#c9ced5}
+.t7 .row.open{color:#b6bdc7}.t7 .row.open .st{background:transparent;border:1px dashed #cfd4da}
+
+/* ---------- 8 · Single time column (muted) ---------- */
+.t8{display:grid;grid-template-columns:56px 1fr}
+.t8 .g{text-align:right;padding:6px 10px;font-family:'Space Grotesk';font-size:11px;color:#b0b6bf;border-top:1px solid #f2f3f5}
+.t8 .lane{border-top:1px solid #f2f3f5;border-left:1px solid #f2f3f5;padding:5px}
+.t8 .b{background:#f2f3f5;border-radius:8px;padding:7px 10px;font-size:13px}
+.t8 .b .nm{font-weight:600}.t8 .b .sub{color:#8a919b;font-size:11px}
+.t8 .b.walk{background:#eceef1}
+.t8 .op{height:100%;min-height:30px;border:1px dashed #e6e8eb;border-radius:8px}
+
+/* ---------- 9 · Roster rows (muted) ---------- */
+.t9 .row{display:flex;align-items:center;gap:16px;padding:10px 12px;border-radius:10px;background:#f7f8f9;margin-bottom:5px;font-family:'Space Grotesk'}
+.t9 .tm{font-weight:600;width:60px;font-size:13px}
+.t9 .nm{font-family:'Inter';font-weight:600;font-size:14px}
+.t9 .sub{font-family:'Inter';color:#98a0aa;font-size:11px}
+.t9 .pips{margin-left:auto;display:flex;gap:4px}
+.t9 .pips i{width:14px;height:14px;border-radius:3px;background:#cfd4da}.t9 .pips i.on{background:#3a4048}
+.t9 .row.open{background:#fbfcfc;color:#bcc2ca}
+
+/* ---------- 10 · Hour groups (muted) ---------- */
+.t10 .hr{font-size:12px;font-weight:700;color:#3a4048;padding:8px 4px;border-bottom:2px solid #eceef1;margin-top:6px}
+.t10 .row{display:flex;align-items:center;gap:14px;padding:9px 6px;border-bottom:1px solid #f4f5f7}
+.t10 .tm{font-family:'Space Grotesk';font-weight:600;width:60px;color:#5a6069}
+.t10 .nm{font-weight:600;font-size:13px}.t10 .sub{color:#98a0aa;font-size:11px}
+.t10 .tag{margin-left:auto;font-size:11px;color:#8a919b;border:1px solid #e6e8eb;padding:2px 9px;border-radius:99px}
+.t10 .row.open{color:#bcc2ca}
+</style></head><body>
+<div class="wrap">
+<a class="back" href="/previews/admin.html">← all directions</a>
+<div class="title">10 tee sheet designs</div>
+<p class="lead">Five colorful, five stripped-back. Same day of tee times in each — pick the one that's easiest to read.</p>
+
+<!-- 1 -->
+<div class="demo"><div class="dh"><span class="n">01</span><h3>Agenda cards</h3><span class="tag">Color</span></div>
+<div class="t1">
+  <div class="row paid"><div class="tm">7:00</div><div class="ini">JG</div><div><div class="nm">Jane Golfer</div><div class="sub">2 · 18H · cart · The Liberator</div></div><span class="pill">Paid</span></div>
+  <div class="row paid"><div class="tm">7:00</div><div class="ini">AC</div><div><div class="nm">Andre Cole</div><div class="sub">2 · 9H · The Rock</div></div><span class="pill">Paid</span></div>
+  <div class="row open"><div class="tm">7:10</div><div style="color:#b6bdc7">Open</div><span class="book">+ Book</span></div>
+  <div class="row paid"><div class="tm">7:20</div><div class="ini">MR</div><div><div class="nm">Mark Reyes</div><div class="sub">4 · 18H · The Liberator</div></div><span class="pill">Paid</span></div>
+  <div class="row walk"><div class="tm">7:30</div><div class="ini" style="background:#faedd4;color:#9a6a12">DF</div><div><div class="nm">Dana Fenn</div><div class="sub">1 · 9H · phone · The Rock</div></div><span class="pill">Walk-in</span></div>
+</div></div>
+
+<!-- 2 -->
+<div class="demo"><div class="dh"><span class="n">02</span><h3>Timeline rail</h3><span class="tag">Color</span></div>
+<div class="t2">
+  <div class="row paid"><div class="tm">7:00</div><div class="node"></div><div class="card"><div><div class="nm">Jane Golfer</div><div class="sub">2 · 18H · The Liberator</div></div><span class="pill">Paid</span></div></div>
+  <div class="row open"><div class="tm">7:10</div><div class="node"></div><div class="card">Open — + Book</div></div>
+  <div class="row paid"><div class="tm">7:20</div><div class="node"></div><div class="card"><div><div class="nm">Mark Reyes</div><div class="sub">4 · 18H · The Liberator</div></div><span class="pill">Paid</span></div></div>
+  <div class="row walk"><div class="tm">7:30</div><div class="node"></div><div class="card"><div><div class="nm">Dana Fenn</div><div class="sub">1 · 9H · The Rock</div></div><span class="pill">Walk-in</span></div></div>
+</div></div>
+
+<!-- 3 -->
+<div class="demo"><div class="dh"><span class="n">03</span><h3>Card grid</h3><span class="tag">Color</span></div>
+<div class="t3">
+  <div class="c paid"><div class="tm">7:00</div><div class="nm">Jane Golfer</div><div class="sub">2 · 18H · Paid</div></div>
+  <div class="c paid"><div class="tm">7:00</div><div class="nm">Andre Cole</div><div class="sub">2 · 9H · Paid</div></div>
+  <div class="c open"><div class="tm">7:10</div><div class="nm">Open</div><div class="sub">+ Book</div></div>
+  <div class="c paid"><div class="tm">7:20</div><div class="nm">Mark Reyes</div><div class="sub">4 · 18H · Paid</div></div>
+  <div class="c walk"><div class="tm">7:30</div><div class="nm">Dana Fenn</div><div class="sub">1 · 9H · Walk-in</div></div>
+  <div class="c walk"><div class="tm">7:40</div><div class="nm">Tom Blair</div><div class="sub">1 · 9H · Walk-in</div></div>
+  <div class="c paid"><div class="tm">7:50</div><div class="nm">Kwame Osei</div><div class="sub">3 · 18H · Paid</div></div>
+  <div class="c open"><div class="tm">8:00</div><div class="nm">Open</div><div class="sub">+ Book</div></div>
+</div></div>
+
+<!-- 4 -->
+<div class="demo"><div class="dh"><span class="n">04</span><h3>Two columns by course</h3><span class="tag">Color</span></div>
+<div class="t4">
+  <div class="col"><h4>The Liberator · 18H</h4>
+    <div class="row paid"><div class="tm">7:00</div><div><div class="nm">Jane Golfer</div><div class="sub">2 players · cart</div></div><span class="d"></span></div>
+    <div class="row paid"><div class="tm">7:20</div><div><div class="nm">Mark Reyes</div><div class="sub">4 players</div></div><span class="d"></span></div>
+    <div class="row walk"><div class="tm">7:40</div><div><div class="nm">Tom Blair</div><div class="sub">1 player · walk-in</div></div><span class="d"></span></div>
+  </div>
+  <div class="col"><h4>The Rock · 9H</h4>
+    <div class="row paid"><div class="tm">7:00</div><div><div class="nm">Andre Cole</div><div class="sub">2 players</div></div><span class="d"></span></div>
+    <div class="row walk"><div class="tm">7:30</div><div><div class="nm">Dana Fenn</div><div class="sub">1 player · phone</div></div><span class="d"></span></div>
+    <div class="row open"><div class="tm">7:50</div><div>Open — + Book</div></div>
+  </div>
+</div></div>
+
+<!-- 5 -->
+<div class="demo"><div class="dh"><span class="n">05</span><h3>Status board</h3><span class="tag">Color</span></div>
+<div class="t5">
+  <div class="col k-up"><h4><span class="k"></span>Upcoming</h4>
+    <div class="c"><div class="tm">7:20</div><div class="nm">Mark Reyes</div><div class="sub">4 · 18H</div></div>
+    <div class="c"><div class="tm">7:50</div><div class="nm">Kwame Osei</div><div class="sub">3 · 18H</div></div>
+  </div>
+  <div class="col k-in"><h4><span class="k"></span>Checked in</h4>
+    <div class="c"><div class="tm">7:00</div><div class="nm">Jane Golfer</div><div class="sub">2 · 18H</div></div>
+  </div>
+  <div class="col k-op"><h4><span class="k"></span>Open</h4>
+    <div class="c"><div class="tm">7:10</div><div class="nm" style="color:#b6bdc7">+ Book</div></div>
+    <div class="c"><div class="tm">8:00</div><div class="nm" style="color:#b6bdc7">+ Book</div></div>
+  </div>
+</div></div>
+
+<!-- 6 -->
+<div class="demo"><div class="dh"><span class="n">06</span><h3>Ledger table</h3><span class="tag m">Muted</span></div>
+<div class="t6"><table>
+  <tr><th>Time</th><th>Golfer</th><th>Group</th><th>Course</th><th>Status</th></tr>
+  <tr><td class="tm">7:00</td><td>Jane Golfer</td><td>2 · 18H</td><td>The Liberator</td><td><span class="dot paid"></span>Paid</td></tr>
+  <tr><td class="tm">7:00</td><td>Andre Cole</td><td>2 · 9H</td><td>The Rock</td><td><span class="dot paid"></span>Paid</td></tr>
+  <tr><td class="tm">7:10</td><td class="op" colspan="3">Open</td><td class="op">— Book</td></tr>
+  <tr><td class="tm">7:20</td><td>Mark Reyes</td><td>4 · 18H</td><td>The Liberator</td><td><span class="dot paid"></span>Paid</td></tr>
+  <tr><td class="tm">7:30</td><td>Dana Fenn</td><td>1 · 9H</td><td>The Rock</td><td><span class="dot walk"></span>Walk-in</td></tr>
+</table></div></div>
+
+<!-- 7 -->
+<div class="demo"><div class="dh"><span class="n">07</span><h3>Hairline list</h3><span class="tag m">Muted</span></div>
+<div class="t7">
+  <div class="row"><div class="tm">7:00 AM</div><div><div class="nm">Jane Golfer</div><div class="sub">2 players · 18 holes · The Liberator</div></div><span class="st"></span></div>
+  <div class="row"><div class="tm">7:00 AM</div><div><div class="nm">Andre Cole</div><div class="sub">2 players · 9 holes · The Rock</div></div><span class="st"></span></div>
+  <div class="row open"><div class="tm">7:10 AM</div><div>Open</div><span class="st"></span></div>
+  <div class="row"><div class="tm">7:20 AM</div><div><div class="nm">Mark Reyes</div><div class="sub">4 players · 18 holes · The Liberator</div></div><span class="st"></span></div>
+  <div class="row walk"><div class="tm">7:30 AM</div><div><div class="nm">Dana Fenn</div><div class="sub">1 player · 9 holes · phone</div></div><span class="st"></span></div>
+</div></div>
+
+<!-- 8 -->
+<div class="demo"><div class="dh"><span class="n">08</span><h3>Single time column</h3><span class="tag m">Muted</span></div>
+<div class="t8">
+  <div class="g">7:00</div><div class="lane"><div class="b"><div class="nm">Jane Golfer · Andre Cole</div><div class="sub">2 groups · Liberator + Rock</div></div></div>
+  <div class="g">7:10</div><div class="lane"><div class="op"></div></div>
+  <div class="g">7:20</div><div class="lane"><div class="b"><div class="nm">Mark Reyes</div><div class="sub">4 · 18H · The Liberator</div></div></div>
+  <div class="g">7:30</div><div class="lane"><div class="b walk"><div class="nm">Dana Fenn</div><div class="sub">1 · 9H · phone</div></div></div>
+  <div class="g">7:40</div><div class="lane"><div class="b walk"><div class="nm">Tom Blair</div><div class="sub">1 · 9H · walk-in</div></div></div>
+</div></div>
+
+<!-- 9 -->
+<div class="demo"><div class="dh"><span class="n">09</span><h3>Roster rows</h3><span class="tag m">Muted</span></div>
+<div class="t9">
+  <div class="row"><div class="tm">7:00</div><div><div class="nm">Jane Golfer</div><div class="sub">18 holes · cart · The Liberator</div></div><span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+  <div class="row"><div class="tm">7:20</div><div><div class="nm">Mark Reyes</div><div class="sub">18 holes · The Liberator</div></div><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+  <div class="row open"><div class="tm">7:10</div><div>Open — + Book</div></div>
+  <div class="row"><div class="tm">7:30</div><div><div class="nm">Dana Fenn</div><div class="sub">9 holes · phone · The Rock</div></div><span class="pips"><i class="on"></i><i></i><i></i><i></i></span></div>
+  <div class="row"><div class="tm">7:50</div><div><div class="nm">Kwame Osei</div><div class="sub">18 holes · The Liberator</div></div><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+</div></div>
+
+<!-- 10 -->
+<div class="demo"><div class="dh"><span class="n">10</span><h3>Grouped by hour</h3><span class="tag m">Muted</span></div>
+<div class="t10">
+  <div class="hr">7 AM · 4 booked</div>
+  <div class="row"><div class="tm">7:00</div><div><div class="nm">Jane Golfer</div><div class="sub">2 · 18H</div></div><span class="tag">Liberator</span></div>
+  <div class="row"><div class="tm">7:00</div><div><div class="nm">Andre Cole</div><div class="sub">2 · 9H</div></div><span class="tag">Rock</span></div>
+  <div class="row open"><div class="tm">7:10</div><div>Open</div><span class="tag">+ Book</span></div>
+  <div class="row"><div class="tm">7:20</div><div><div class="nm">Mark Reyes</div><div class="sub">4 · 18H</div></div><span class="tag">Liberator</span></div>
+  <div class="hr">8 AM · 1 booked</div>
+  <div class="row"><div class="tm">8:00</div><div><div class="nm">Kwame Osei</div><div class="sub">3 · 18H</div></div><span class="tag">Liberator</span></div>
+</div></div>
+
+</div></body></html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fairway Grass — LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:#dff0d8;color:#0b2418;min-height:100vh;overflow-x:hidden}
+  a.back{position:fixed;top:20px;left:20px;z-index:30;color:#0b2418;text-decoration:none;font-size:13px;background:rgba(255,255,255,.75);backdrop-filter:blur(10px);border:1px solid rgba(11,36,24,.12);padding:8px 14px;border-radius:99px;font-weight:500}
+  /* mown fairway stripes */
+  .turf{position:fixed;inset:0;z-index:0;background:
+    repeating-linear-gradient(115deg,#63b06f 0 70px,#58a463 70px 140px)}
+  .turf::after{content:"";position:absolute;inset:0;background:
+    repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 70px,rgba(0,0,0,.04) 70px 140px)}
+  .sheen{position:fixed;inset:0;z-index:1;background:
+    radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.4),transparent 55%),
+    radial-gradient(120% 90% at 100% 100%,rgba(11,50,30,.28),transparent 60%)}
+  .mist{position:fixed;left:0;right:0;top:0;height:44%;z-index:2;background:linear-gradient(180deg,rgba(226,242,220,.85),transparent)}
+  .shell{position:relative;z-index:5;max-width:1120px;margin:0 auto;padding:84px 24px 60px}
+  .tag{display:inline-flex;align-items:center;gap:8px;font-family:'Space Grotesk';font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#0f6e4d;background:rgba(255,255,255,.7);border:1px solid rgba(15,110,77,.22);padding:7px 14px;border-radius:99px;font-weight:500;backdrop-filter:blur(6px)}
+  .tag .live{width:7px;height:7px;border-radius:50%;background:#12a06f;box-shadow:0 0 8px #12a06f}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(46px,7.4vw,92px);line-height:.98;letter-spacing:-.02em;margin:18px 0 0;color:#08301d}
+  h1 .g{font-style:italic;font-weight:400;color:#caa53f}
+  .lede{color:#1f4a35;font-size:19px;margin-top:16px;max-width:500px;line-height:1.6}
+  .panel{margin-top:40px;border-radius:26px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.72);backdrop-filter:blur(22px) saturate(1.2);box-shadow:0 32px 84px -34px rgba(8,40,24,.5);overflow:hidden}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;padding:20px 26px;border-bottom:1px solid rgba(11,36,24,.08)}
+  .logo{display:flex;align-items:center;gap:12px}
+  .mark{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#2aa87b,#0b5e42);display:grid;place-items:center;font-family:'Fraunces';font-weight:900;color:#fff}
+  .logo b{font-weight:600;font-size:16px}.logo span{display:block;color:#5a7a68;font-size:12px}
+  .steps{display:flex;gap:8px}.step{font-family:'Space Grotesk';font-size:12px;color:#5a7a68;padding:6px 13px;border-radius:99px}.step.on{color:#fff;background:linear-gradient(90deg,#12a06f,#0b5e42);font-weight:600}
+  .body{padding:26px}
+  .label{font-family:'Space Grotesk';font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#5a7a68}
+  .chips{display:flex;gap:10px;margin:12px 0 24px;flex-wrap:wrap}
+  .chip{padding:11px 18px;border-radius:99px;font-size:14px;font-weight:500;border:1px solid rgba(11,36,24,.12);background:rgba(255,255,255,.7);cursor:pointer}
+  .chip.on{border:none;background:linear-gradient(90deg,#12a06f,#0b5e42);color:#fff}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px}
+  .slot{position:relative;border-radius:16px;border:1px solid rgba(11,36,24,.1);background:rgba(255,255,255,.78);padding:15px 16px;cursor:pointer;transition:.28s}
+  .slot::before{content:"⛳";position:absolute;top:12px;right:13px;font-size:11px;opacity:.4}
+  .slot:hover{transform:translateY(-4px);box-shadow:0 16px 32px -16px rgba(8,40,24,.35)}
+  .slot .time{font-family:'Space Grotesk';font-size:21px;font-weight:600}
+  .slot .price{font-size:12px;color:#5a7a68;margin-top:4px}
+  .slot.sel{border:none;background:linear-gradient(135deg,#12a06f,#0b5e42);color:#fff}.slot.sel .price{color:#cdeede}
+  .slot.full{opacity:.42;cursor:not-allowed}.slot.full::before{content:"✕"}
+  .cta{margin-top:26px;display:flex;justify-content:flex-end}
+  .btn{font-size:15px;font-weight:600;color:#fff;background:linear-gradient(90deg,#12a06f,#0b5e42,#caa53f);background-size:180% auto;border:none;padding:15px 32px;border-radius:99px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(18,160,111,.5)}
+  .btn:hover{transform:translateY(-2px)}
+</style>
+</head>
+<body>
+<a class="back" href="/previews/">← all directions</a>
+<div class="turf"></div><div class="sheen"></div><div class="mist"></div>
+<div class="shell">
+  <div class="tag"><span class="live"></span>Winged Pheasant Golf Links · Nashville, TN</div>
+  <h1>On the <span class="g">green.</span></h1>
+  <p class="lede">Freshly mown fairway underfoot. Pick your time and play — no account needed.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="logo"><div class="mark">W</div><div><b>Winged Pheasant</b><span>Powered by LinxTimes</span></div></div><div class="steps"><span class="step on">1 Time</span><span class="step">2 Details</span><span class="step">3 Pay</span></div></div>
+    <div class="body">
+      <div class="label">Choose your course</div>
+      <div class="chips"><span class="chip on">The Liberator · 18H</span><span class="chip">The Rock · 9H</span></div>
+      <div class="label">Available tee times · Tue, Jul 2</div>
+      <div class="slots">
+        <div class="slot sel"><div class="time">7:00</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">7:10</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">7:20</div><div class="price">$55 · weekday</div></div>
+        <div class="slot full"><div class="time">7:30</div><div class="price">Full</div></div>
+        <div class="slot"><div class="time">7:40</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">7:50</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">8:00</div><div class="price">$55 · weekday</div></div>
+        <div class="slot"><div class="time">8:10</div><div class="price">$55 · weekday</div></div>
+      </div>
+      <div class="cta"><button class="btn">Continue →</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Topographic / GPS — LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,900&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:#06140d;color:#dff3e8;min-height:100vh;overflow-x:hidden}
+  a.back{position:fixed;top:20px;left:20px;z-index:10;color:#7fd8a8;text-decoration:none;font-size:13px;background:rgba(0,0,0,.4);border:1px solid rgba(127,216,168,.3);padding:8px 14px;border-radius:99px;font-family:'Space Grotesk'}
+  .bg{position:fixed;inset:0;z-index:0;background:radial-gradient(120% 90% at 70% 10%,#0c2e1d,#06140d 70%)}
+  .topo{position:fixed;inset:0;z-index:1;opacity:.5}
+  .shell{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:88px 24px 60px}
+  .coords{font-family:'Space Grotesk';font-size:12px;letter-spacing:.1em;color:#5fae82;display:flex;gap:18px}
+  h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(42px,7.5vw,86px);line-height:.95;letter-spacing:-.03em;margin:18px 0 0}
+  h1 .hl{color:#39d98a}
+  .lede{color:#86b69e;font-size:18px;margin-top:16px;max-width:520px;line-height:1.6}
+  .panel{margin-top:44px;border-radius:20px;border:1px solid rgba(127,216,168,.22);background:rgba(7,26,17,.72);backdrop-filter:blur(14px);overflow:hidden}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px dashed rgba(127,216,168,.25);font-family:'Space Grotesk';font-size:13px;color:#7fd8a8}
+  .panel-h .live{display:flex;align-items:center;gap:8px}
+  .panel-h .live::before{content:"";width:8px;height:8px;border-radius:50%;background:#39d98a;box-shadow:0 0 10px #39d98a}
+  .body{padding:24px}
+  .label{font-family:'Space Grotesk';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5fae82}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px}
+  .slot{position:relative;border-radius:14px;border:1px solid rgba(127,216,168,.2);background:rgba(127,216,168,.04);padding:15px;cursor:pointer;transition:.25s}
+  .slot::before{content:"⛳";position:absolute;top:12px;right:12px;font-size:12px;opacity:.5}
+  .slot:hover{border-color:rgba(57,217,138,.6);transform:translateY(-3px)}
+  .slot .time{font-family:'Space Grotesk';font-size:21px;font-weight:600;color:#eafff3}
+  .slot .price{font-family:'Space Grotesk';color:#7fd8a8;font-size:12px;margin-top:5px;letter-spacing:.04em}
+  .slot.sel{border-color:#39d98a;background:rgba(57,217,138,.14);box-shadow:0 0 30px rgba(57,217,138,.2)}
+  .slot.full{opacity:.32;cursor:not-allowed}.slot.full::before{content:"✕"}
+  .cta{margin-top:26px;display:flex;justify-content:space-between;align-items:center}
+  .dist{font-family:'Space Grotesk';font-size:12px;color:#5fae82}
+  .btn{font-family:'Space Grotesk';font-size:14px;font-weight:600;letter-spacing:.04em;color:#06140d;background:#39d98a;border:none;padding:14px 28px;border-radius:99px;cursor:pointer}
+  .btn:hover{background:#5fffaf}
+</style>
+</head>
+<body>
+<a class="back" href="/previews/">← all directions</a>
+<div class="bg"></div>
+<svg class="topo" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 700">
+  <g fill="none" stroke="#1f6e47" stroke-width="1">
+    <path d="M-50,120 Q250,60 500,140 T1050,120"/><path d="M-50,180 Q250,120 500,200 T1050,180"/>
+    <path d="M-50,250 Q300,180 540,270 T1050,250"/><path d="M-50,330 Q280,260 520,350 T1050,330"/>
+    <path d="M-50,420 Q320,340 560,440 T1050,420"/><path d="M-50,510 Q300,430 540,530 T1050,510"/>
+    <path d="M-50,600 Q320,520 560,620 T1050,600"/>
+  </g>
+  <g fill="none" stroke="#2a8c5a" stroke-width="1" opacity="0.6">
+    <ellipse cx="640" cy="300" rx="120" ry="70"/><ellipse cx="640" cy="300" rx="80" ry="44"/><ellipse cx="640" cy="300" rx="40" ry="22"/>
+  </g>
+  <circle cx="640" cy="300" r="4" fill="#39d98a"/>
+</svg>
+<div class="shell">
+  <div class="coords"><span>36.1627° N</span><span>86.7816° W</span><span>ELEV 184m</span><span>PAR 72</span></div>
+  <h1>Navigate to<br>the <span class="hl">first tee.</span></h1>
+  <p class="lede">A booking experience mapped like the course itself — contours, coordinates, waypoints.</p>
+  <div class="panel">
+    <div class="panel-h"><span>WINGED-PHEASANT // THE-LIBERATOR // 18H</span><span class="live">LIVE TEE SHEET</span></div>
+    <div class="body">
+      <div class="label">Waypoints · Tue Jul 02</div>
+      <div class="slots">
+        <div class="slot sel"><div class="time">7:00</div><div class="price">$55 / WKDAY</div></div>
+        <div class="slot"><div class="time">7:10</div><div class="price">$55 / WKDAY</div></div>
+        <div class="slot"><div class="time">7:20</div><div class="price">$55 / WKDAY</div></div>
+        <div class="slot full"><div class="time">7:30</div><div class="price">FULL</div></div>
+        <div class="slot"><div class="time">7:40</div><div class="price">$55 / WKDAY</div></div>
+        <div class="slot"><div class="time">7:50</div><div class="price">$55 / WKDAY</div></div>
+        <div class="slot"><div class="time">8:00</div><div class="price">$55 / WKDAY</div></div>
+        <div class="slot"><div class="time">8:10</div><div class="price">$55 / WKDAY</div></div>
+      </div>
+      <div class="cta"><span class="dist">◎ 2 players · 18 holes · 6,742 yds</span><button class="btn">PLOT ROUTE →</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

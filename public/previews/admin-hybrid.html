@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin · Calendar-first hybrid — LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;color:#16211b;min-height:100vh;background:#f7f8f4}
+a.back{position:fixed;top:14px;right:16px;z-index:40;color:#16211b;text-decoration:none;font-size:13px;background:#fff;border:1px solid rgba(0,0,0,.06);padding:8px 14px;border-radius:99px;box-shadow:0 8px 20px -12px rgba(0,0,0,.3)}
+/* top nav (from #5) */
+.bar{position:sticky;top:0;z-index:20;background:rgba(247,248,244,.85);backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.05);padding:0 34px;display:flex;align-items:center;gap:26px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+.brand .m{width:30px;height:30px;border-radius:9px;background:#0d3522;color:#fff;display:grid;place-items:center;font-family:'Fraunces';font-size:13px}
+.tabs{display:flex;gap:4px}
+.tab{padding:8px 14px;border-radius:99px;font-size:14px;color:#69746b;cursor:pointer}
+.tab.on{background:#0d3522;color:#fff;font-weight:500}.tab:hover:not(.on){background:rgba(0,0,0,.04)}
+.main{max-width:1120px;margin:0 auto;padding:26px 34px 40px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px}
+h1{font-family:'Fraunces';font-size:34px;font-weight:600}.date{color:#69746b;margin-top:2px;font-size:14px}
+/* full-width bento stat row — balanced, present, but the calendar is still the hero */
+.stats{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{background:#fff;border-radius:20px;padding:18px 20px;box-shadow:0 18px 40px -34px rgba(16,50,34,.4);position:relative}
+.stat .k{font-size:12px;font-weight:500;color:#69746b}
+.stat .v{font-family:'Space Grotesk';font-size:32px;font-weight:600;margin-top:8px;line-height:1;color:#16211b}
+.stat .up{font-size:12px;font-weight:600;margin-top:8px;color:#2f8a63}
+.stat.accent .v{color:#0d3522}
+.stat.accent::before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:3px;border-radius:3px;background:#0d3522}
+.stat.accent{padding-left:24px}
+.spark{display:flex;align-items:flex-end;gap:4px;height:30px;margin-top:12px}
+.spark i{flex:1;background:rgba(13,53,34,.14);border-radius:3px}
+/* CALENDAR — the hero */
+.calwrap{margin-top:22px;background:#fff;border-radius:26px;box-shadow:0 40px 90px -50px rgba(16,50,34,.55);overflow:hidden}
+.calhead{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef1ec}
+.calhead .t{display:flex;align-items:center;gap:12px}
+.calhead h2{font-family:'Fraunces';font-size:20px;font-weight:600}
+.nav-arrows{display:flex;gap:6px}.arw{width:32px;height:32px;border-radius:10px;background:#f3f5f1;display:grid;place-items:center;cursor:pointer;color:#5a6a5e}
+.add{background:#0d3522;color:#fff;border:none;font-size:13px;font-weight:600;padding:9px 18px;border-radius:99px;cursor:pointer}
+.legend{display:flex;gap:16px;padding:12px 22px;font-size:12px;color:#69746b;border-bottom:1px solid #f4f6f2}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+/* grid: time gutter + 2 layout columns */
+.cal{display:grid;grid-template-columns:70px 1fr 1fr;max-height:560px;overflow:auto}
+.colhdr{position:sticky;top:0;background:#fff;z-index:2;padding:12px 16px;font-weight:600;font-size:14px;border-bottom:1px solid #eef1ec}
+.colhdr.sub{color:#8a938c;font-weight:400;font-size:12px}
+.gut{padding:10px 12px;font-family:'Space Grotesk';font-size:12px;color:#9aa39c;text-align:right;border-bottom:1px solid #f5f7f4}
+.cell{border-bottom:1px solid #f5f7f4;border-left:1px solid #f5f7f4;padding:6px;min-height:52px}
+.ev{border-radius:12px;padding:8px 10px;height:100%;font-size:13px}
+.ev b{font-weight:600}.ev span{display:block;font-size:11px;opacity:.8;margin-top:1px}
+.e-paid{background:#eef5f0;color:#2f6b4c;border:1px solid #dae8df}
+.e-cart{background:#eef5f0;color:#2f6b4c;border:1px solid #dae8df}
+.e-walk{background:#f5f3ec;color:#7a6a45;border:1px solid #e9e2d2}
+.open{height:100%;border:1.5px dashed #e3e8e0;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#c0c8bf;font-size:12px;cursor:pointer;transition:.2s}
+.open:hover{border-color:#0d3522;color:#0d3522;background:#f6faf7}
+</style></head><body>
+<a class="back" href="/previews/admin.html">← all directions</a>
+<div class="bar">
+  <div class="brand"><div class="m">W</div> Winged Pheasant</div>
+  <div class="tabs"><span class="tab on">Tee Sheet</span><span class="tab">Bookings</span><span class="tab">Members</span><span class="tab">Tee Times</span><span class="tab">Pricing</span><span class="tab">Settings</span></div>
+</div>
+<main class="main">
+  <div class="head">
+    <div><h1>Tee sheet</h1><div class="date">Tuesday, July 2 · 2026</div></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Bookings today</div><div class="v">42</div><div class="up">↑ 12% vs last Tue</div></div>
+    <div class="stat"><div class="k">Players today</div><div class="v">118</div><div class="up">↑ 8% vs last Tue</div></div>
+    <div class="stat accent"><div class="k">Revenue today</div><div class="v">$1,240</div><div class="up">↑ 15% vs last Tue</div></div>
+    <div class="stat"><div class="k">Next 7 days</div><div class="v">96</div>
+      <div class="spark"><i style="height:55%"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:85%"></i><i style="height:60%"></i><i style="height:95%"></i><i style="height:72%"></i></div>
+    </div>
+  </div>
+
+  <div class="calwrap">
+    <div class="calhead">
+      <div class="t"><div class="nav-arrows"><div class="arw">‹</div><div class="arw">›</div></div><h2>Tuesday, July 2</h2></div>
+      <button class="add">+ Add walk-in / phone</button>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:#2f6b4c"></span>Paid online</span>
+      <span><span class="dot" style="background:#a99659"></span>Walk-in / phone</span>
+      <span><span class="dot" style="background:#d7ddd4"></span>Open</span>
+    </div>
+    <div class="cal">
+      <div class="colhdr gut" style="text-align:right">&nbsp;</div>
+      <div class="colhdr">The Liberator <span class="sub">18 holes</span></div>
+      <div class="colhdr">The Rock <span class="sub">9 holes</span></div>
+
+      <div class="gut">7:00</div>
+      <div class="cell"><div class="ev e-cart"><b>Jane Golfer</b><span>2 · 18H · cart</span></div></div>
+      <div class="cell"><div class="ev e-paid"><b>A. Cole</b><span>2 · 9H</span></div></div>
+
+      <div class="gut">7:10</div>
+      <div class="cell"><div class="open">+ open</div></div>
+      <div class="cell"><div class="open">+ open</div></div>
+
+      <div class="gut">7:20</div>
+      <div class="cell"><div class="ev e-paid"><b>Mark Reyes</b><span>4 · 18H</span></div></div>
+      <div class="cell"><div class="open">+ open</div></div>
+
+      <div class="gut">7:30</div>
+      <div class="cell"><div class="open">+ open</div></div>
+      <div class="cell"><div class="ev e-walk"><b>D. Fenn</b><span>1 · 9H · phone</span></div></div>
+
+      <div class="gut">7:40</div>
+      <div class="cell"><div class="ev e-walk"><b>Tom Blair</b><span>1 · 9H · walk-in</span></div></div>
+      <div class="cell"><div class="open">+ open</div></div>
+
+      <div class="gut">7:50</div>
+      <div class="cell"><div class="ev e-paid"><b>K. Osei</b><span>3 · 18H</span></div></div>
+      <div class="cell"><div class="ev e-cart"><b>P. Lang</b><span>2 · 9H · cart</span></div></div>
+
+      <div class="gut">8:00</div>
+      <div class="cell"><div class="open">+ open</div></div>
+      <div class="cell"><div class="open">+ open</div></div>
+    </div>
+  </div>
+</main></body></html>

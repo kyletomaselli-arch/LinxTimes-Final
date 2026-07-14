@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin · Warm editorial — LinxTimes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;color:#22301f;min-height:100vh;background:#f6f3ea}
+a.back{position:fixed;top:16px;right:16px;z-index:30;color:#22301f;text-decoration:none;font-size:13px;border:1.5px solid #22301f;padding:7px 14px;background:#f6f3ea}
+.app{display:flex;min-height:100vh}
+.sb{width:220px;padding:26px 20px;border-right:1.5px solid rgba(34,48,31,.15)}
+.brand{font-family:'Fraunces';font-weight:900;font-size:20px;color:#0d3522;margin-bottom:26px}
+.brand span{display:block;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8a8270;margin-top:4px}
+.nav{padding:9px 0;font-size:15px;color:#5a5747;cursor:pointer;border-bottom:1px solid rgba(34,48,31,.08)}
+.nav.on{color:#0d3522;font-weight:600}
+.main{flex:1;padding:34px 44px}
+.kick{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#b8860b;font-weight:600}
+h1{font-family:'Fraunces',serif;font-size:52px;font-weight:900;letter-spacing:-.02em;line-height:1;margin-top:6px}
+.stats{margin-top:32px;display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid #0d3522;border-bottom:2px solid #0d3522}
+.stat{padding:22px 20px;border-right:1.5px solid rgba(34,48,31,.15)}
+.stat:last-child{border-right:0}
+.stat .v{font-family:'Fraunces';font-weight:900;font-size:40px;line-height:1;letter-spacing:-.02em}
+.stat .v em{font-style:italic;color:#b8860b}
+.stat .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a8270;margin-top:8px;font-weight:600}
+.sec{display:flex;align-items:center;gap:14px;margin:38px 0 14px}
+.sec .n{font-family:'Fraunces';font-weight:900;color:#b8860b;font-size:18px}.sec h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}.sec .line{flex:1;height:1.5px;background:rgba(34,48,31,.2)}
+.sheet{border:2px solid #0d3522}
+.slot{display:flex;align-items:center;gap:18px;padding:16px 20px;border-bottom:1.5px solid rgba(34,48,31,.12)}
+.slot:last-child{border:0}
+.time{font-family:'Fraunces';font-weight:900;font-size:26px;width:88px}
+.who{flex:1}.who b{font-weight:600}.who span{display:block;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#8a8270;margin-top:2px}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:#0d3522;border:1.5px solid #0d3522;padding:4px 10px}
+.open{flex:1;font-family:'Fraunces';font-size:22px;color:#c3bca8}
+.btn{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#f6f3ea;background:#0d3522;border:none;padding:12px 22px;cursor:pointer}
+</style></head><body>
+<a class="back" href="/previews/admin.html">← all directions</a>
+<div class="app">
+  <aside class="sb">
+    <div class="brand">Winged Pheasant<span>LinxTimes</span></div>
+    <div class="nav on">Overview</div><div class="nav">Bookings</div><div class="nav">Members</div><div class="nav">Tee Times</div><div class="nav">Pricing</div><div class="nav">Settings</div>
+  </aside>
+  <main class="main">
+    <div class="kick">Tuesday · July 2</div>
+    <h1>Overview</h1>
+    <div class="stats">
+      <div class="stat"><div class="v">42</div><div class="k">Bookings today</div></div>
+      <div class="stat"><div class="v">118</div><div class="k">Players today</div></div>
+      <div class="stat"><div class="v"><em>$1,240</em></div><div class="k">Revenue today</div></div>
+      <div class="stat"><div class="v">96</div><div class="k">Next 7 days</div></div>
+    </div>
+    <div class="sec"><span class="n">01</span><h2>The Liberator — today</h2><span class="line"></span><button class="btn">+ Walk-in</button></div>
+    <div class="sheet">
+      <div class="slot"><div class="time">7:00</div><div class="who"><b>Jane Golfer</b><span>2 players · 18 holes · cart</span></div><span class="tag">Paid</span></div>
+      <div class="slot"><div class="time">7:10</div><div class="open">Open</div></div>
+      <div class="slot"><div class="time">7:20</div><div class="who"><b>Mark Reyes</b><span>4 players · 18 holes</span></div><span class="tag">Paid</span></div>
+      <div class="slot"><div class="time">7:40</div><div class="who"><b>Tom Blair</b><span>1 player · 9 holes · walk-in</span></div><span class="tag" style="color:#8a8270;border-color:#c3bca8">Pay at course</span></div>
+    </div>
+  </main>
+</div></body></html>
