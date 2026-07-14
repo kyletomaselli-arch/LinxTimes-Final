@@ -1,6 +1,0 @@
--- AlterTable
-ALTER TABLE "bookings" ADD COLUMN     "memberCount" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "taxCents" INTEGER NOT NULL DEFAULT 0;
-
--- AlterTable
-ALTER TABLE "courses" ADD COLUMN     "taxRateBps" INTEGER NOT NULL DEFAULT 0;
