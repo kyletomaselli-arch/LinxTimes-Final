@@ -78,9 +78,10 @@ function CartTag({ on }: { on: boolean }) {
 }
 
 export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, inPersonFeePerPlayer }: { date: string; slots: Slot[]; layouts: { id: string; name: string }[]; shopItems: ShopItem[]; taxRateBps: number; inPersonFeePerPlayer: number }) {
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid">("grid");
   const [filter, setFilter] = useState("all");
   const [menu, setMenu] = useState<string | null>(null); // popover id
+  const [showPast, setShowPast] = useState(false);
   const [nowTime, setNowTime] = useState("");
 
   useEffect(() => {
@@ -101,7 +102,16 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
 
   const setViewP = (v: "list" | "grid") => { setView(v); localStorage.setItem("lx_teeview", v); };
 
-  const shown = slots.filter((s) => filter === "all" || s.layoutId === filter);
+  const isPastSlot = (time: string) => {
+    const now = new Date();
+    const [h, m] = time.split(":").map(Number);
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    return h * 60 + m < nowMins;
+  };
+
+  let shown = slots.filter((s) => filter === "all" || s.layoutId === filter);
+  if (!showPast) shown = shown.filter((s) => !isPastSlot(s.time));
+
   const groups = [
     { title: "Morning", slots: shown.filter((s) => s.ampm === "AM") },
     { title: "Afternoon", slots: shown.filter((s) => s.ampm === "PM") },
@@ -114,9 +124,14 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
           <button onClick={() => setFilter("all")} className={chip(filter === "all")}>All</button>
           {layouts.map((l) => <button key={l.id} onClick={() => setFilter(l.id)} className={chip(filter === l.id)}>{l.name}</button>)}
         </div>
-        <div className="ml-auto flex gap-1 rounded-full bg-black/[0.05] p-1">
-          <button onClick={() => setViewP("list")} className={chip(view === "list")}>▤ List</button>
-          <button onClick={() => setViewP("grid")} className={chip(view === "grid")}>▦ Grid</button>
+        <div className="ml-auto flex items-center gap-3">
+          <button onClick={() => setShowPast(!showPast)} className="text-xs font-medium text-foreground/55 transition hover:text-foreground/80">
+            {showPast ? "Hide past" : "Show past"}
+          </button>
+          <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+            <button onClick={() => setViewP("list")} className={chip(view === "list")}>▤ List</button>
+            <button onClick={() => setViewP("grid")} className={chip(view === "grid")}>▦ Grid</button>
+          </div>
         </div>
       </div>
 
@@ -285,7 +300,7 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
     : Math.min(remaining, Math.round((Number(collCustom) || 0) * 100));
   const isCard = collMethod === "terminal";
   const feeTotal = inPersonFeePerPlayer * booking.numPlayers;
-  const feeCents = isCard && booking.totalCents > 0 ? Math.round((feeTotal * baseAmount) / booking.totalCents) : 0;
+  const feeCents = isCard ? feeTotal : 0;
   const addonsCents = shopItems.reduce((n, it) => n + it.priceCents * (cart[it.id] ?? 0), 0);
   const taxableCents = addonsCents + (booking.taxCents > 0 ? 0 : baseAmount);
   const taxCents = Math.round((taxableCents * taxRateBps) / 10000);
@@ -427,12 +442,12 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
               </div>
             )}
 
-            <div className="mt-3 text-xs font-semibold text-foreground/70">How?</div>
-            <div className="mt-1 flex gap-2 text-xs">
+            <div className="mt-3 flex gap-2 text-xs">
               <label className="flex flex-1 items-center gap-2 rounded-lg border border-black/10 px-2 py-1.5"><input type="radio" name="method" value="terminal" checked={collMethod === "terminal"} onChange={() => setCollMethod("terminal")} /> Card reader</label>
               <label className="flex flex-1 items-center gap-2 rounded-lg border border-black/10 px-2 py-1.5"><input type="radio" name="method" value="cash" checked={collMethod === "cash"} onChange={() => setCollMethod("cash")} /> Cash</label>
             </div>
-            <input name="receiptEmail" type="email" defaultValue={booking.golferEmail || ""} placeholder="Email receipt to (optional)" className="mt-2 w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-[#12a06f]" />
+            <div className="mt-2 text-xs text-foreground/60">Email</div>
+            <input name="receiptEmail" type="email" defaultValue={booking.golferEmail || ""} placeholder="(optional)" className="mt-1 w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-[#12a06f]" />
 
             <div className="mt-2 space-y-0.5 border-t border-black/5 pt-2 text-[11px] text-foreground/60">
               {baseAmount > 0 && <div className="flex justify-between"><span>Green / cart</span><span>{formatCentsCompact(baseAmount)}</span></div>}
