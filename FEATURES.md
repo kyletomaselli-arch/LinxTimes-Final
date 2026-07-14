@@ -22,9 +22,9 @@ A running list of what LinxTimes does, written to help pitch a golf course. Kept
 - **Member badge** — see which groups include members.
 - **Check-in & no-show** — one tap to mark arrivals and no-shows.
 - **Walk-in & phone bookings** — add bookings at the counter, into any open slot.
-- **In-person payments** — charge walk-ins on a Stripe card reader (whole tee time, per player, split across cards, or custom amount); cash too.
+- **In-person payments** — charge walk-ins on a Stripe card reader (whole tee time, per player, split across cards, or custom amount); cash too. Spacious dialog (40% screen width) optimized for mobile card readers.
 - **In-person receipts** — the card reader charge emails the golfer a Stripe receipt (uses the booking's email or one entered at the counter).
-- **Pro-shop point-of-sale add-ons** — sell rentals, range balls, merch at the counter: staff tap items and the bill updates live with tax, charged on the same card reader or cash. Turns the tee sheet into a mini POS.
+- **Pro-shop point-of-sale add-ons** — sell rentals, range balls, merch at the counter: tap "Add ons" to reveal bubble-style squares for each item (name + price). Click a bubble to add, selected items appear in a summary with remove buttons. Charged on the same card reader or cash. Turns the tee sheet into a mini POS.
 - **Multi-group tee times** — add a second group to a partially-filled time (e.g., a twosome + a new twosome).
 - **Smart cancellations** — outside 24h cancels in one click and shows the refund amount; inside 24h asks for confirmation.
 - **Tournament / outing blocking** — close a whole time range (e.g., 8–11am) with a note, in one action.
@@ -36,8 +36,8 @@ A running list of what LinxTimes does, written to help pitch a golf course. Kept
 - **Own your money** — the course is the merchant of record; payouts go directly to their bank.
 - **Roles & revenue privacy** — owners/managers see revenue; front-desk staff don't.
 - **Team management** — invite staff with roles; owners control access.
-- **Operational dashboard** — bookings, players, fill rate, and revenue trends (14-day switchable chart with y-axis labels for easy reference).
-- **Financial report** — owner/manager-only, date-range: revenue, tax collected, platform fees, refunds, discounts, rain checks, and net to the course — everything the bookkeeper needs, plus CSV export.
+- **Operational dashboard** — quick view of daily bookings, players, fill rate for the selected day; upcoming 7-day forecast.
+- **Financial report** — owner/manager-only, date-range: revenue, tax collected, refunds, discounts, rain checks, and net to the course — everything the bookkeeper needs, plus 14-day trend chart and CSV export.
 - **Member management** — CRUD members, per-member rates, CSV import/export.
 - **Flexible pricing** — weekday/weekend/twilight rates, cart fees, 9-hole discounts, per-course fees.
 - **Configurable tax** — per-course sales-tax rate, collected and remitted by the course.
