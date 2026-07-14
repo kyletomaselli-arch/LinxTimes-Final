@@ -291,7 +291,7 @@ function AddRow({ slot, date, open, onToggle, onClose, grid }: { slot: Slot; dat
 }
 
 function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPersonFeePerPlayer }: { booking: SlotBooking; onClose: () => void; grid?: boolean; shopItems: ShopItem[]; taxRateBps: number; inPersonFeePerPlayer: number }) {
-  const [mode, setMode] = useState<"view" | "edit" | "cancel" | "collect">("view");
+  const [mode, setMode] = useState<"view" | "edit" | "cancel" | "collect" | "review" | "paying">("view");
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -301,6 +301,7 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
   const [collMethod, setCollMethod] = useState<"terminal" | "cash">("terminal");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showAddOns, setShowAddOns] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"processing" | "success" | "failed" | null>(null);
   const router = useRouter();
   const manual = booking.source !== "online";
   const remaining = Math.max(0, booking.totalCents - booking.amountPaidCents);
@@ -327,10 +328,13 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
     fd.set("bookingId", booking.id);
     fd.set("mode", collType);
     for (const [id, qty] of Object.entries(cart)) if (qty > 0) fd.set(`item_${id}`, String(qty));
+    setPaymentStatus("processing");
+    setMode("paying");
     startTransition(async () => {
       const res = await collectPayment(fd);
+      setPaymentStatus(res.ok ? "success" : "failed");
       setMsg(res.message);
-      if (res.ok) { onClose(); router.refresh(); }
+      if (res.ok) { setTimeout(() => { onClose(); router.refresh(); }, 2000); }
     });
   }
 
@@ -516,6 +520,40 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
               <button type="button" onClick={() => { setMode("view"); setShowAddOns(false); }} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
             </div>
           </form>
+        )}
+
+        {mode === "paying" && (
+          <div className="flex flex-col items-center gap-4 py-8 px-6">
+            {paymentStatus === "processing" && (
+              <>
+                <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#12a06f] border-t-transparent" />
+                <div className="text-center">
+                  <div className="font-semibold text-foreground">Processing payment...</div>
+                  <div className="text-sm text-foreground/60 mt-1">Charging {formatCentsCompact(chargeTotal)}</div>
+                  {collMethod === "terminal" && <div className="text-xs text-foreground/50 mt-2">Waiting for card reader...</div>}
+                </div>
+              </>
+            )}
+            {paymentStatus === "success" && (
+              <>
+                <div className="text-4xl">✓</div>
+                <div className="text-center">
+                  <div className="font-semibold text-[#2f855a] text-lg">Payment successful</div>
+                  <div className="text-sm text-foreground/60 mt-1">Charged {formatCentsCompact(chargeTotal)}</div>
+                </div>
+              </>
+            )}
+            {paymentStatus === "failed" && (
+              <>
+                <div className="text-4xl">✗</div>
+                <div className="text-center">
+                  <div className="font-semibold text-red-600 text-lg">Payment failed</div>
+                  {msg && <div className="text-sm text-foreground/60 mt-1">{msg}</div>}
+                  <button type="button" onClick={() => { setPaymentStatus(null); setMode("collect"); }} className="mt-3 rounded-full px-3 py-1.5 text-xs font-medium text-foreground/70 hover:bg-black/[0.04]">Try again</button>
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         {mode === "edit" && (
