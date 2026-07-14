@@ -118,7 +118,7 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
       </div>
 
       {/* colorful stat cards */}
-      <div className="mt-5 grid grid-cols-2 gap-3.5 lg:grid-cols-3">
+      <div className="mt-5 grid grid-cols-2 gap-3.5 md:grid-cols-4">
         <StatCard bg="#fdeee3" label="Fill rate" value={`${fillToday}%`} />
         <StatCard bg="#eaf7ef" label="Bookings" value={String(bookings)} trend={bkTrend} />
         <StatCard bg="#eaf1fb" label="Players" value={String(players)} />
