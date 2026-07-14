@@ -128,15 +128,16 @@ model Course {
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
-  layouts      Layout[]
-  members      Member[]
-  bookings     Booking[]
-  adminUsers   CourseAdmin[]
-  dailyOverrides DailyOverride[]
-  waitlist     Waitlist[]
-  promoCodes   PromoCode[]
-  rainChecks   RainCheck[]
-  shopItems    ShopItem[]
+  layouts            Layout[]
+  members            Member[]
+  membershipTiers    MembershipTier[]
+  bookings           Booking[]
+  adminUsers         CourseAdmin[]
+  dailyOverrides     DailyOverride[]
+  waitlist           Waitlist[]
+  promoCodes         PromoCode[]
+  rainChecks         RainCheck[]
+  shopItems          ShopItem[]
 
   @@map("courses")
 }
@@ -317,6 +318,25 @@ model Pricing {
   @@map("pricing")
 }
 
+// ─── Membership Tiers ───────────────────────────────────────────────────────────
+// Course-managed pricing tiers for membership enrollment at the counter.
+
+model MembershipTier {
+  id         String   @id @default(uuid())
+  courseId   String
+  name       String   // e.g. "Annual Member", "VIP"
+  priceCents Int      // total price including tax calculated at payment time
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  members Member[]
+
+  @@unique([courseId, name])
+  @@map("membership_tiers")
+}
+
 // ─── Members ─────────────────────────────────────────────────────────────────
 
 model Member {
@@ -328,6 +348,8 @@ model Member {
   email           String?
   phone           String?
   membershipType  MembershipType @default(full)
+  membershipTierId String?       // which tier they're enrolled in (if any)
+  membershipPaidAt DateTime?     // when they paid for current tier
   greenFeeOverride Int?          // null = use course-level memberFee
   cartIncluded    Boolean        @default(false)
   discountDays    DiscountDays   @default(all)
@@ -336,8 +358,9 @@ model Member {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  course   Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  course          Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  membershipTier  MembershipTier? @relation(fields: [membershipTierId], references: [id], onDelete: SetNull)
+  bookings        Booking[]
 
   @@unique([courseId, memberId])
   @@map("members")
