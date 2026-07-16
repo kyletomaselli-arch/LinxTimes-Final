@@ -383,6 +383,7 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
     const fd = new FormData(e.currentTarget);
     fd.set("bookingId", booking.id);
     fd.set("mode", collType);
+    fd.set("method", collMethod);
     for (const [id, qty] of Object.entries(cart)) if (qty > 0) fd.set(`item_${id}`, String(qty));
     setPaymentStatus("processing");
     setMode("paying");
