@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createWalkIn, editBooking, collectPayment, checkPaymentStatus, setBookingStatus } from "../actions";
+import { createWalkIn, editBooking, collectPayment, checkPaymentStatus, setBookingStatus, getLastPayment } from "../actions";
 import { cancelBookingAction } from "../actions";
 import { formatCentsCompact } from "@/lib/money";
 import { minutesToTime } from "@/lib/datetime";
+import { QuickChargePanel } from "./QuickChargePanel";
 
 export interface SlotBooking {
   id: string;
@@ -103,8 +104,20 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
 
   const setViewP = (v: "list" | "grid") => { setView(v); localStorage.setItem("lx_teeview", v); };
 
+  // Check if a slot time has already passed. Must compare date AND time, not just time of day.
+  // Bug fix: Previously only compared time-of-day, causing future dates to show no slots when
+  // current time (e.g. 22:24) was past all slot times (e.g. 7:00-18:00).
   const isPastSlot = (time: string) => {
     const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const today = `${year}-${month}-${day}`;
+
+    if (date < today) return true; // Viewing a past date: all slots are past
+    if (date > today) return false; // Viewing a future date: no slots are past yet
+
+    // Viewing today: check if the time of day has passed
     const [h, m] = time.split(":").map(Number);
     const nowMins = now.getHours() * 60 + now.getMinutes();
     return h * 60 + m < nowMins;
@@ -139,6 +152,8 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
           </div>
         </div>
       </div>
+
+      <QuickChargePanel shopItems={shopItems} taxRateBps={taxRateBps} />
 
       {groups.length > 0 && (
         <div className="mt-4 flex items-center gap-2 px-1 py-2 text-sm text-foreground/50">
@@ -266,22 +281,24 @@ function AddRow({ slot, date, open, onToggle, onClose, grid }: { slot: Slot; dat
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={onClose} />
-          <form onSubmit={add} className="absolute left-0 top-[calc(100%+4px)] z-20 w-60 rounded-xl border border-black/10 bg-white p-3.5 shadow-xl">
-            <div className="mb-2 text-xs font-semibold text-foreground/70">Add group · {slot.label} {slot.ampm}</div>
-            <input name="golferName" required placeholder="Golfer name" className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-[#12a06f]" />
-            <div className="mt-2 flex gap-2">
-              <select name="numPlayers" className="flex-1 rounded-lg border border-black/10 px-2 py-1.5 text-xs">
-                {Array.from({ length: slot.spotsLeft }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} player{n === 1 ? "" : "s"}</option>)}
-              </select>
-              <select name="holes" className="rounded-lg border border-black/10 px-2 py-1.5 text-xs"><option value="18">18H</option><option value="9">9H</option></select>
-            </div>
-            <select name="source" className="mt-2 w-full rounded-lg border border-black/10 px-2 py-1.5 text-xs"><option value="walkin">Walk-in</option><option value="phone">Phone</option></select>
-            <label className="mt-2 flex items-center gap-2 text-xs"><input type="checkbox" name="withCart" className="h-3.5 w-3.5" /> Cart</label>
-            {err && <p className="mt-2 text-xs font-medium text-red-600">{err}</p>}
-            <div className="mt-2.5 flex gap-2">
-              <button disabled={pending} className="flex-1 rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Adding…" : "Add"}</button>
-              <button type="button" onClick={onClose} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
+          <div className="fixed inset-0 z-40 bg-black/45" onClick={onClose} />
+          <form onSubmit={add} className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-[420px] rounded-xl border border-black/10 bg-white p-5 shadow-2xl">
+              <h3 className="text-sm font-semibold text-foreground mb-4">Add group · {slot.label} {slot.ampm}</h3>
+              <input name="golferName" required placeholder="Golfer name" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+              <div className="mt-3 flex gap-2">
+                <select name="numPlayers" className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs">
+                  {Array.from({ length: slot.spotsLeft }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} player{n === 1 ? "" : "s"}</option>)}
+                </select>
+                <select name="holes" className="rounded-lg border border-black/10 px-3 py-2 text-xs"><option value="18">18H</option><option value="9">9H</option></select>
+              </div>
+              <select name="source" className="mt-3 w-full rounded-lg border border-black/10 px-3 py-2 text-xs"><option value="walkin">Walk-in</option><option value="phone">Phone</option></select>
+              <label className="mt-3 flex items-center gap-2 text-xs"><input type="checkbox" name="withCart" className="h-3.5 w-3.5" /> Cart</label>
+              {err && <p className="mt-3 text-xs font-medium text-red-600">{err}</p>}
+              <div className="mt-4 flex gap-2">
+                <button disabled={pending} className="flex-1 rounded-full bg-[#12a06f] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Adding…" : "Add"}</button>
+                <button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
+              </div>
             </div>
           </form>
         </>
@@ -302,7 +319,15 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showAddOns, setShowAddOns] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"processing" | "success" | "failed" | null>(null);
+  const [lastPayment, setLastPayment] = useState<{ state: string; amountCents: number; method: string; createdAt: string } | null>(null);
   const router = useRouter();
+
+  // Fetch last payment when popover opens
+  useEffect(() => {
+    if (mode === "view") {
+      getLastPayment(booking.id).then(setLastPayment).catch(() => {});
+    }
+  }, [mode, booking.id]);
   const manual = booking.source !== "online";
   const remaining = Math.max(0, booking.totalCents - booking.amountPaidCents);
   const perPlayer = booking.numPlayers > 0 ? Math.round(booking.totalCents / booking.numPlayers) : booking.totalCents;
@@ -379,15 +404,24 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
     let elapsed = 0;
     const pollInterval = setInterval(async () => {
       elapsed += 1500;
-      if (elapsed > 30000) { // 30 second timeout
+
+      // Timeout escalation
+      if (elapsed > 120000) { // 2 minute hard stop
         setPaymentStatus("failed");
-        setMsg("Payment processing timed out. Check card reader and try again.");
+        setMsg("Payment processing took too long. Please try again or contact support.");
         clearInterval(pollInterval);
         return;
       }
+      if (elapsed > 90000) { // 90 second warning
+        setMsg("This is taking longer than expected. Tap the card again or try a different card.");
+      } else if (elapsed > 30000) { // 30 second notice
+        setMsg("Still processing payment...");
+      }
+
       const status = await checkPaymentStatus(booking.id);
       if (status.status !== "pending") {
         setPaymentStatus(status.status === "succeeded" ? "success" : status.status);
+        setMsg(null);
         if (status.status === "succeeded") {
           setTimeout(() => { onClose(); router.refresh(); }, 2000);
         }
@@ -400,30 +434,36 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
 
   return (
     <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className={`absolute z-20 ${mode === "collect" ? "w-[40vw] max-w-2xl" : "w-64"} rounded-xl border border-black/10 bg-white p-3.5 text-left shadow-xl ${grid ? "left-0" : "left-11"} top-[calc(100%+4px)]`}>
+      <div className="fixed inset-0 z-40 bg-black/45" onClick={onClose} />
+      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto`}>
+        <div className={`w-full ${mode === "collect" ? "max-w-[650px]" : "max-w-[420px]"} rounded-xl border border-black/10 bg-white shadow-2xl my-auto`}>
         {mode === "view" && (
-          <>
+          <div className="p-5 space-y-3">
             <div className="font-semibold">{booking.golferName}</div>
             <div className="text-xs text-foreground/50">{booking.golferEmail}</div>
             {booking.golferPhone && <div className="text-xs text-foreground/50">{booking.golferPhone}</div>}
-            <div className="mt-2 flex items-center justify-between text-xs text-foreground/70">
+            <div className="flex items-center justify-between text-xs text-foreground/70">
               <span>{booking.numPlayers} players · {booking.holes}H · {booking.withCart ? "🛺 Cart" : "🚶 Walking"}{booking.memberCount > 0 ? ` · ★ ${booking.memberCount} member${booking.memberCount === 1 ? "" : "s"}` : ""}</span>
               <span className="font-semibold">{formatCentsCompact(booking.totalCents)}</span>
             </div>
             {booking.amountPaidCents > 0 && remaining > 0 && (
-              <div className="mt-1 text-[11px] font-medium text-[#b7791f]">Paid {formatCentsCompact(booking.amountPaidCents)} · {formatCentsCompact(remaining)} due</div>
+              <div className="text-[11px] font-medium text-[#b7791f]">Paid {formatCentsCompact(booking.amountPaidCents)} · {formatCentsCompact(remaining)} due</div>
             )}
-            {isPaid && booking.paymentStatus !== "unpaid" && <div className="mt-1 text-[11px] font-medium text-[#2f855a]">Paid in full</div>}
+            {isPaid && booking.paymentStatus !== "unpaid" && <div className="text-[11px] font-medium text-[#2f855a]">Paid in full</div>}
+            {lastPayment && (
+              <div className={`rounded-lg p-2.5 text-[11px] font-medium ${lastPayment.state === "succeeded" ? "bg-[#eaf7ef] text-[#2f855a]" : lastPayment.state === "pending" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
+                {lastPayment.state === "succeeded" ? "✓" : lastPayment.state === "pending" ? "⏳" : "✗"} Last payment: {lastPayment.state} · {formatCentsCompact(lastPayment.amountCents)}
+              </div>
+            )}
             {booking.notes && (
-              <div className="mt-2 rounded-lg bg-[#fdf6e3] px-2.5 py-1.5 text-[11px] leading-snug text-[#8a6d3b]">
+              <div className="rounded-lg bg-[#fdf6e3] px-2.5 py-1.5 text-[11px] leading-snug text-[#8a6d3b]">
                 <span className="font-semibold">Request: </span>{booking.notes}
               </div>
             )}
-            {booking.status === "checked_in" && <div className="mt-1 text-[11px] font-semibold text-[#2b6cb0]">✓ Checked in</div>}
-            {booking.status === "no_show" && <div className="mt-1 text-[11px] font-semibold text-[#c0392b]">No-show</div>}
+            {booking.status === "checked_in" && <div className="text-[11px] font-semibold text-[#2b6cb0]">✓ Checked in</div>}
+            {booking.status === "no_show" && <div className="text-[11px] font-semibold text-[#c0392b]">No-show</div>}
             {booking.status !== "cancelled" && (
-              <div className="mt-3 space-y-2">
+              <div className="space-y-2 pt-2">
                 {!isPaid && (
                   <button onClick={() => { setMode("collect"); setMsg(null); }} className="w-full rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white">Collect payment · {formatCentsCompact(remaining)}</button>
                 )}
@@ -450,106 +490,139 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
                 {msg && <p className="text-[11px] font-medium text-foreground/60">{msg}</p>}
               </div>
             )}
-          </>
+          </div>
         )}
 
         {mode === "collect" && (
-          <form onSubmit={doCollect}>
-            <div className="mb-2 text-xs font-semibold text-foreground/70">Collect payment · {formatCentsCompact(remaining)} due</div>
-            <div className="space-y-1.5 text-xs">
-              <label className="flex items-center gap-2"><input type="radio" name="ct" checked={collType === "full"} onChange={() => setCollType("full")} /> Whole remaining · {formatCentsCompact(remaining)}</label>
-              <label className="flex items-center gap-2"><input type="radio" name="ct" checked={collType === "players"} onChange={() => setCollType("players")} /> By player ({formatCentsCompact(perPlayer)} each)</label>
-              <label className="flex items-center gap-2"><input type="radio" name="ct" checked={collType === "custom"} onChange={() => setCollType("custom")} /> Custom amount</label>
-            </div>
-            {collType === "players" && (
-              <label className="mt-2 block text-xs text-foreground/60">How many players?
-                <select name="players" value={collPlayers} onChange={(e) => setCollPlayers(Number(e.target.value))} className="ml-2 rounded-lg border border-black/10 px-2 py-1 text-xs">{Array.from({ length: booking.numPlayers }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}</select>
-              </label>
-            )}
-            {collType === "custom" && (
-              <div className="mt-2 flex items-center gap-1 text-xs"><span>$</span><input name="customAmount" value={collCustom} onChange={(e) => setCollCustom(e.target.value)} inputMode="decimal" placeholder="0.00" className="w-24 rounded-lg border border-black/10 px-2 py-1.5" /></div>
-            )}
+          <form onSubmit={doCollect} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="text-sm font-semibold text-foreground">Collect payment · {formatCentsCompact(remaining)} due</div>
 
-            {shopItems.length > 0 && (
-              <div className="mt-3">
-                <button type="button" onClick={() => setShowAddOns(!showAddOns)} className="text-xs font-semibold text-[#12a06f] hover:text-[#0d8659] transition">
-                  {showAddOns ? "▼ Add ons" : "▶ Add ons"}
+            {/* Collection type buttons */}
+            <div>
+              <div className="text-xs font-semibold text-foreground/70 mb-2">Collection type</div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCollType("full")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${collType === "full" ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                >
+                  Whole remaining
                 </button>
-                {showAddOns && (
-                  <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    {shopItems.map((it) => {
-                      const qty = cart[it.id] ?? 0;
-                      return (
-                        <button
-                          key={it.id}
-                          type="button"
-                          onClick={() => addQty(it.id, 1)}
-                          className={`flex flex-col items-center gap-1.5 rounded-2xl p-3 transition ${qty > 0 ? "bg-[#12a06f]/10 border-2 border-[#12a06f]" : "border-2 border-black/10 hover:border-black/20"}`}
-                        >
-                          <div className="text-2xl">🛍️</div>
-                          <div className="text-center">
-                            <div className="text-[11px] font-semibold text-foreground/80 line-clamp-2">{it.name}</div>
-                            <div className="text-[10px] text-foreground/60 mt-0.5">{formatCentsCompact(it.priceCents)}</div>
-                          </div>
-                          {qty > 0 && (
-                            <div className="mt-1 rounded-full bg-[#12a06f] px-2 py-0.5 text-[10px] font-bold text-white">
-                              {qty}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setCollType("players")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${collType === "players" ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                >
+                  By player
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCollType("custom")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${collType === "custom" ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                >
+                  Custom
+                </button>
+              </div>
+            </div>
+
+            {/* Player count for per-player mode */}
+            {collType === "players" && (
+              <div>
+                <label className="block text-xs font-semibold text-foreground/70 mb-2">Number of players ({formatCentsCompact(perPlayer)} each)</label>
+                <select name="players" value={collPlayers} onChange={(e) => setCollPlayers(Number(e.target.value))} className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs">
+                  {Array.from({ length: booking.numPlayers }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
               </div>
             )}
 
-            {/* Selected add-ons summary */}
-            {Object.entries(cart).some(([, qty]) => qty > 0) && (
-              <div className="mt-3 rounded-lg bg-black/[0.02] p-2 text-xs">
-                <div className="font-semibold text-foreground/70 mb-1.5">Selected:</div>
-                <div className="space-y-1">
+            {/* Custom amount */}
+            {collType === "custom" && (
+              <div>
+                <label className="block text-xs font-semibold text-foreground/70 mb-2">Amount</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium">$</span>
+                  <input name="customAmount" value={collCustom} onChange={(e) => setCollCustom(e.target.value)} inputMode="decimal" placeholder="0.00" className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+                </div>
+              </div>
+            )}
+
+            {/* Shop items grid */}
+            {shopItems.length > 0 && (
+              <div>
+                <div className="text-xs font-semibold text-foreground/70 mb-2">Add-ons</div>
+                <div className="grid grid-cols-4 gap-2">
                   {shopItems.map((it) => {
                     const qty = cart[it.id] ?? 0;
-                    if (qty <= 0) return null;
                     return (
-                      <div key={it.id} className="flex items-center justify-between">
-                        <span className="text-foreground/70">{it.name} × {qty}</span>
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">{formatCentsCompact(it.priceCents * qty)}</span>
-                          <button type="button" onClick={() => addQty(it.id, -1)} className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-red-600 hover:bg-red-50">Remove</button>
+                      <button
+                        key={it.id}
+                        type="button"
+                        onClick={() => addQty(it.id, 1)}
+                        className={`flex flex-col items-center gap-1 rounded-lg p-2 transition ${qty > 0 ? "bg-[#12a06f]/10 border-2 border-[#12a06f]" : "border-2 border-black/10 hover:border-black/20"}`}
+                      >
+                        <div className="text-center">
+                          <div className="text-[10px] font-semibold text-foreground/80 line-clamp-2">{it.name}</div>
+                          <div className="text-[9px] text-foreground/60 mt-0.5">{formatCentsCompact(it.priceCents)}</div>
                         </div>
-                      </div>
+                        {qty > 0 && (
+                          <div className="mt-1 rounded-full bg-[#12a06f] px-1.5 py-0.5 text-[9px] font-bold text-white">
+                            {qty}
+                          </div>
+                        )}
+                      </button>
                     );
                   })}
                 </div>
               </div>
             )}
 
-            <div className="mt-3 flex gap-2 text-xs">
-              <label className="flex flex-1 items-center gap-2 rounded-lg border border-black/10 px-2 py-1.5"><input type="radio" name="method" value="terminal" checked={collMethod === "terminal"} onChange={() => setCollMethod("terminal")} /> Card reader</label>
-              <label className="flex flex-1 items-center gap-2 rounded-lg border border-black/10 px-2 py-1.5"><input type="radio" name="method" value="cash" checked={collMethod === "cash"} onChange={() => setCollMethod("cash")} /> Cash</label>
+            {/* Payment method buttons */}
+            <div>
+              <div className="text-xs font-semibold text-foreground/70 mb-2">Payment method</div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCollMethod("terminal")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${collMethod === "terminal" ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                >
+                  Card reader
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCollMethod("cash")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${collMethod === "cash" ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                >
+                  Cash
+                </button>
+              </div>
             </div>
-            <div className="mt-2 text-xs text-foreground/60">Email</div>
-            <input name="receiptEmail" type="email" defaultValue={booking.golferEmail || ""} placeholder="(optional)" className="mt-1 w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-[#12a06f]" />
 
-            <div className="mt-2 space-y-0.5 border-t border-black/5 pt-2 text-[11px] text-foreground/60">
+            {/* Email field */}
+            <div>
+              <label className="block text-xs font-semibold text-foreground/70 mb-2">Email (receipt)</label>
+              <input name="receiptEmail" type="email" defaultValue={booking.golferEmail || ""} placeholder="(optional)" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+            </div>
+
+            {/* Price breakdown */}
+            <div className="rounded-lg bg-black/[0.02] p-3 text-xs space-y-1">
               {baseAmount > 0 && <div className="flex justify-between"><span>Green / cart</span><span>{formatCentsCompact(baseAmount)}</span></div>}
               {addonsCents > 0 && <div className="flex justify-between"><span>Pro shop items</span><span>{formatCentsCompact(addonsCents)}</span></div>}
-              {feeCents > 0 && <div className="flex justify-between"><span>Service fee</span><span>{formatCentsCompact(feeCents)}</span></div>}
-              {taxCents > 0 && <div className="flex justify-between"><span>Tax</span><span>{formatCentsCompact(taxCents)}</span></div>}
+              {feeCents + taxCents > 0 && <div className="flex justify-between"><span>Taxes and fees</span><span>{formatCentsCompact(feeCents + taxCents)}</span></div>}
+              <div className="border-t border-black/5 pt-1 flex justify-between font-semibold"><span>Total</span><span>{formatCentsCompact(chargeTotal)}</span></div>
             </div>
 
-            {msg && <p className="mt-2 text-xs font-medium text-red-600">{msg}</p>}
-            <div className="mt-3 flex gap-2">
-              <button disabled={pending || chargeTotal <= 0} className="flex-1 rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{pending ? "…" : `Continue · ${formatCentsCompact(chargeTotal)}`}</button>
-              <button type="button" onClick={() => { setMode("view"); setShowAddOns(false); }} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
+            {msg && <p className="text-xs font-medium text-red-600">{msg}</p>}
+
+            {/* Action buttons */}
+            <div className="flex gap-2 pt-2">
+              <button disabled={pending || chargeTotal <= 0} className="flex-1 rounded-full bg-[#12a06f] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "…" : `Continue · ${formatCentsCompact(chargeTotal)}`}</button>
+              <button type="button" onClick={() => { setMode("view"); setShowAddOns(false); }} className="rounded-full px-3 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
             </div>
           </form>
         )}
 
         {mode === "paying" && (
-          <div className="flex flex-col items-center gap-4 py-8 px-6">
+          <div className="p-5 flex flex-col items-center gap-4">
             {paymentStatus === "processing" && (
               <>
                 <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#12a06f] border-t-transparent" />
@@ -583,39 +656,40 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
         )}
 
         {mode === "edit" && (
-          <form onSubmit={save}>
-            <div className="mb-2 text-xs font-semibold text-foreground/70">Edit booking</div>
-            <input name="golferName" defaultValue={booking.golferName} required placeholder="Name" className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-[#12a06f]" />
-            <input name="golferPhone" defaultValue={booking.golferPhone ?? ""} placeholder="Phone" className="mt-2 w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-[#12a06f]" />
-            <div className="mt-2 flex gap-2">
-              <select name="numPlayers" defaultValue={booking.numPlayers} disabled={!manual} className="flex-1 rounded-lg border border-black/10 px-2 py-1.5 text-xs disabled:opacity-50">{[1,2,3,4].map((n)=><option key={n} value={n}>{n}p</option>)}</select>
-              <select name="holes" defaultValue={booking.holes} disabled={!manual} className="rounded-lg border border-black/10 px-2 py-1.5 text-xs disabled:opacity-50"><option value="18">18H</option><option value="9">9H</option></select>
+          <form onSubmit={save} className="p-5 space-y-3">
+            <div className="text-sm font-semibold text-foreground">Edit booking</div>
+            <input name="golferName" defaultValue={booking.golferName} required placeholder="Name" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+            <input name="golferPhone" defaultValue={booking.golferPhone ?? ""} placeholder="Phone" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+            <div className="flex gap-2">
+              <select name="numPlayers" defaultValue={booking.numPlayers} disabled={!manual} className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs disabled:opacity-50">{[1,2,3,4].map((n)=><option key={n} value={n}>{n}p</option>)}</select>
+              <select name="holes" defaultValue={booking.holes} disabled={!manual} className="rounded-lg border border-black/10 px-3 py-2 text-xs disabled:opacity-50"><option value="18">18H</option><option value="9">9H</option></select>
               <label className="flex items-center gap-1 text-xs"><input type="checkbox" name="withCart" defaultChecked={booking.withCart} disabled={!manual} className="h-3.5 w-3.5" />cart</label>
             </div>
-            {!manual && <p className="mt-1.5 text-[11px] text-foreground/45">Group size is locked for online (paid) bookings.</p>}
-            {msg && <p className="mt-2 text-xs font-medium text-red-600">{msg}</p>}
-            <div className="mt-2.5 flex gap-2">
-              <button disabled={pending} className="flex-1 rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Saving…" : "Save"}</button>
-              <button type="button" onClick={() => setMode("view")} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
+            {!manual && <p className="text-[11px] text-foreground/45">Group size is locked for online (paid) bookings.</p>}
+            {msg && <p className="text-xs font-medium text-red-600">{msg}</p>}
+            <div className="flex gap-2 pt-2">
+              <button disabled={pending} className="flex-1 rounded-full bg-[#12a06f] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Saving…" : "Save"}</button>
+              <button type="button" onClick={() => setMode("view")} className="rounded-full px-3 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
             </div>
           </form>
         )}
 
         {mode === "cancel" && (
-          <div>
-            <div className="mb-2 text-xs font-semibold text-foreground/70">Cancel this booking?</div>
-            <p className="mb-2 text-[11px] font-medium text-[#c0392b]">Within 24 hours of the tee time — this overrides the cancellation policy.</p>
+          <div className="p-5 space-y-3">
+            <div className="text-sm font-semibold text-foreground">Cancel this booking?</div>
+            <p className="text-[11px] font-medium text-[#c0392b]">Within 24 hours of the tee time — this overrides the cancellation policy.</p>
             {booking.refundCents > 0 && (
-              <p className="mb-2 text-[11px] font-medium text-[#2f855a]">This will refund the player {formatCentsCompact(booking.refundCents)} (LinxTimes fee kept).</p>
+              <p className="text-[11px] font-medium text-[#2f855a]">This will refund the player {formatCentsCompact(booking.refundCents)} (LinxTimes fee kept).</p>
             )}
-            <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (required)" className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-[#12a06f]" />
-            {msg && <p className="mt-2 text-xs font-medium text-red-600">{msg}</p>}
-            <div className="mt-2.5 flex gap-2">
-              <button onClick={doCancel} disabled={pending} className="flex-1 rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Cancelling…" : "Confirm cancel"}</button>
-              <button onClick={() => setMode("view")} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
+            <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (required)" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+            {msg && <p className="text-xs font-medium text-red-600">{msg}</p>}
+            <div className="flex gap-2 pt-2">
+              <button onClick={doCancel} disabled={pending} className="flex-1 rounded-full bg-red-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Cancelling…" : "Confirm cancel"}</button>
+              <button onClick={() => setMode("view")} className="rounded-full px-3 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Back</button>
             </div>
           </div>
         )}
+        </div>
       </div>
     </>
   );
