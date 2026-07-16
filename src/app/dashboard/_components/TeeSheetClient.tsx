@@ -262,12 +262,14 @@ function chip(active: boolean) {
 function AddRow({ slot, date, open, onToggle, onClose, grid }: { slot: Slot; date: string; open: boolean; onToggle: () => void; onClose: () => void; grid?: boolean }) {
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
+  const [withCart, setWithCart] = useState(false);
   const router = useRouter();
 
   function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     fd.set("layoutId", slot.layoutId); fd.set("date", date); fd.set("slotTime", slot.time);
+    fd.set("withCart", String(withCart));
     startTransition(async () => {
       const res = await createWalkIn(fd);
       if (res.ok) { onClose(); router.refresh(); } else setErr(res.message);
@@ -283,21 +285,50 @@ function AddRow({ slot, date, open, onToggle, onClose, grid }: { slot: Slot; dat
         <>
           <div className="fixed inset-0 z-40 bg-black/45" onClick={onClose} />
           <form onSubmit={add} className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-[420px] rounded-xl border border-black/10 bg-white p-5 shadow-2xl">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Add group · {slot.label} {slot.ampm}</h3>
-              <input name="golferName" required placeholder="Golfer name" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
-              <div className="mt-3 flex gap-2">
-                <select name="numPlayers" className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs">
-                  {Array.from({ length: slot.spotsLeft }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} player{n === 1 ? "" : "s"}</option>)}
-                </select>
-                <select name="holes" className="rounded-lg border border-black/10 px-3 py-2 text-xs"><option value="18">18H</option><option value="9">9H</option></select>
-              </div>
-              <select name="source" className="mt-3 w-full rounded-lg border border-black/10 px-3 py-2 text-xs"><option value="walkin">Walk-in</option><option value="phone">Phone</option></select>
-              <label className="mt-3 flex items-center gap-2 text-xs"><input type="checkbox" name="withCart" className="h-3.5 w-3.5" /> Cart</label>
-              {err && <p className="mt-3 text-xs font-medium text-red-600">{err}</p>}
-              <div className="mt-4 flex gap-2">
-                <button disabled={pending} className="flex-1 rounded-full bg-[#12a06f] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Adding…" : "Add"}</button>
-                <button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
+            <div className="w-full max-w-[420px] rounded-xl border border-black/10 bg-white shadow-2xl">
+              <div className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground">Add group · {slot.label} {slot.ampm}</h3>
+                  <button type="button" onClick={onClose} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold">✕</button>
+                </div>
+                <input name="golferName" required placeholder="Golfer name" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+                <div className="flex gap-2">
+                  <select name="numPlayers" className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs">
+                    {Array.from({ length: slot.spotsLeft }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} player{n === 1 ? "" : "s"}</option>)}
+                  </select>
+                  <select name="holes" className="rounded-lg border border-black/10 px-3 py-2 text-xs"><option value="18">18H</option><option value="9">9H</option></select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground/70 mb-2">Source</label>
+                  <select name="source" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs">
+                    <option value="walkin">Walk-in</option>
+                    <option value="phone">Phone</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground/70 mb-2">Transport</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setWithCart(false)}
+                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${!withCart ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                    >
+                      Walking
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWithCart(true)}
+                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${withCart ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                    >
+                      Cart
+                    </button>
+                  </div>
+                </div>
+                {err && <p className="text-xs font-medium text-red-600">{err}</p>}
+                <div className="flex gap-2 pt-2">
+                  <button disabled={pending} className="flex-1 rounded-full bg-[#12a06f] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Adding…" : "Add"}</button>
+                  <button type="button" onClick={onClose} className="rounded-full px-3 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
+                </div>
               </div>
             </div>
           </form>
@@ -495,7 +526,10 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
 
         {mode === "collect" && (
           <form onSubmit={doCollect} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
-            <div className="text-sm font-semibold text-foreground">Collect payment · {formatCentsCompact(remaining)} due</div>
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-foreground">Collect payment · {formatCentsCompact(remaining)} due</div>
+              <button type="button" onClick={() => { setMode("view"); setMsg(null); }} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold">✕</button>
+            </div>
 
             {/* Collection type buttons */}
             <div>
