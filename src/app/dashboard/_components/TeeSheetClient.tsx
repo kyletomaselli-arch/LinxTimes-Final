@@ -470,7 +470,10 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
         <div className={`w-full ${mode === "collect" ? "max-w-[650px]" : "max-w-[420px]"} rounded-xl border border-black/10 bg-white shadow-2xl my-auto`}>
         {mode === "view" && (
           <div className="p-5 space-y-3">
-            <div className="font-semibold">{booking.golferName}</div>
+            <div className="flex items-center justify-between">
+              <div className="font-semibold">{booking.golferName}</div>
+              <button type="button" onClick={onClose} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold leading-none">✕</button>
+            </div>
             <div className="text-xs text-foreground/50">{booking.golferEmail}</div>
             {booking.golferPhone && <div className="text-xs text-foreground/50">{booking.golferPhone}</div>}
             <div className="flex items-center justify-between text-xs text-foreground/70">
@@ -528,7 +531,7 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
           <form onSubmit={doCollect} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold text-foreground">Collect payment · {formatCentsCompact(remaining)} due</div>
-              <button type="button" onClick={() => { setMode("view"); setMsg(null); }} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold">✕</button>
+              <button type="button" onClick={onClose} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold leading-none">✕</button>
             </div>
 
             {/* Collection type buttons */}
