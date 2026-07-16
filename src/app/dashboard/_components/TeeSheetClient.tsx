@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createWalkIn, editBooking, collectPayment, checkPaymentStatus, setBookingStatus, getLastPayment } from "../actions";
+import { createWalkIn, editBooking, collectPayment, checkPaymentStatus, setBookingStatus, getLastPayment, cancelPendingPayment } from "../actions";
 import { cancelBookingAction } from "../actions";
 import { formatCentsCompact } from "@/lib/money";
 import { minutesToTime } from "@/lib/datetime";
@@ -395,6 +395,19 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
     });
   }
 
+  function doCancelStuckPayment() {
+    startTransition(async () => {
+      const res = await cancelPendingPayment(booking.id);
+      setMsg(res.message);
+      if (res.ok) {
+        setPaymentStatus(null);
+        if (mode === "paying") setMode("collect");
+        getLastPayment(booking.id).then(setLastPayment).catch(() => {});
+        router.refresh();
+      }
+    });
+  }
+
   function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -487,7 +500,14 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
             {isPaid && booking.paymentStatus !== "unpaid" && <div className="text-[11px] font-medium text-[#2f855a]">Paid in full</div>}
             {lastPayment && (
               <div className={`rounded-lg p-2.5 text-[11px] font-medium ${lastPayment.state === "succeeded" ? "bg-[#eaf7ef] text-[#2f855a]" : lastPayment.state === "pending" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
-                {lastPayment.state === "succeeded" ? "✓" : lastPayment.state === "pending" ? "⏳" : "✗"} Last payment: {lastPayment.state} · {formatCentsCompact(lastPayment.amountCents)}
+                <div className="flex items-center justify-between gap-2">
+                  <span>{lastPayment.state === "succeeded" ? "✓" : lastPayment.state === "pending" ? "⏳" : "✗"} Last payment: {lastPayment.state} · {formatCentsCompact(lastPayment.amountCents)}</span>
+                  {lastPayment.state === "pending" && lastPayment.method === "terminal" && (
+                    <button type="button" disabled={pending} onClick={doCancelStuckPayment} className="shrink-0 rounded-full border border-amber-700/30 px-2 py-0.5 text-[10px] font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50">
+                      {pending ? "Cancelling…" : "Cancel"}
+                    </button>
+                  )}
+                </div>
               </div>
             )}
             {booking.notes && (
@@ -686,7 +706,14 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
                 <div className="text-center">
                   <div className="font-semibold text-red-600 text-lg">Payment failed</div>
                   {msg && <div className="text-sm text-foreground/60 mt-1">{msg}</div>}
-                  <button type="button" onClick={() => { setPaymentStatus(null); setMode("collect"); }} className="mt-3 rounded-full px-3 py-1.5 text-xs font-medium text-foreground/70 hover:bg-black/[0.04]">Try again</button>
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
+                    <button type="button" onClick={() => { setPaymentStatus(null); setMode("collect"); }} className="rounded-full px-3 py-1.5 text-xs font-medium text-foreground/70 hover:bg-black/[0.04]">Try again</button>
+                    {msg?.toLowerCase().includes("already in progress") && (
+                      <button type="button" disabled={pending} onClick={doCancelStuckPayment} className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+                        {pending ? "Cancelling…" : "Cancel stuck payment"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </>
             )}
