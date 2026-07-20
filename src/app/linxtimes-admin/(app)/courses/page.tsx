@@ -42,7 +42,7 @@ export default async function CoursesPage() {
               </div>
               <div className="flex items-center gap-2">
                 <StatusPill status={c.status} />
-                {(c.status === "approved" || c.status === "pending") && !c.stripeAccountId && (
+                {c.status !== "suspended" && (
                   <form
                     action={async () => {
                       await removeWhitelistForm(c.id);
@@ -51,7 +51,7 @@ export default async function CoursesPage() {
                     <button
                       type="submit"
                       className="text-xs font-medium text-red-700 hover:text-red-900"
-                      title="Remove this course from whitelist (set back to pending)"
+                      title="Remove from whitelist (set to pending). Won't work if Stripe is connected."
                     >
                       Remove
                     </button>
