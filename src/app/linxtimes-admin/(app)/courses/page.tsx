@@ -1,13 +1,18 @@
 import { requireSuperAdmin } from "@/lib/super-session";
 import { prisma } from "@/lib/prisma";
 import { WhitelistForm } from "../../_components/WhitelistForm";
-import { updateCourse } from "../actions";
+import { updateCourse, removeFromWhitelist } from "../actions";
 
 const inp = "rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-sm outline-none transition focus:border-linx-green focus:ring-2 focus:ring-linx-green/25";
 
 async function updateCourseForm(formData: FormData) {
   "use server";
   await updateCourse(formData);
+}
+
+async function removeWhitelistForm(courseId: string) {
+  "use server";
+  return removeFromWhitelist(courseId);
 }
 
 export default async function CoursesPage() {
@@ -35,7 +40,24 @@ export default async function CoursesPage() {
                 </div>
                 <div className="text-xs text-foreground/50">{c.email ?? "—"} · {c._count.bookings} bookings · Stripe {c.stripeOnboarded ? "ready" : c.stripeAccountId ? "pending" : "not connected"}</div>
               </div>
-              <StatusPill status={c.status} />
+              <div className="flex items-center gap-2">
+                <StatusPill status={c.status} />
+                {(c.status === "approved" || c.status === "pending") && !c.stripeAccountId && (
+                  <form
+                    action={async () => {
+                      await removeWhitelistForm(c.id);
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className="text-xs font-medium text-red-700 hover:text-red-900"
+                      title="Remove this course from whitelist (set back to pending)"
+                    >
+                      Remove
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
             <form action={updateCourseForm} className="mt-3 flex flex-wrap items-end gap-3 border-t border-black/5 pt-3">
               <input type="hidden" name="courseId" value={c.id} />

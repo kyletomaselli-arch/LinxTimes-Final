@@ -110,6 +110,22 @@ export async function whitelistCourse(formData: FormData): Promise<AdminActionRe
   return { ok: true, message: `Whitelisted ${name}. They can now onboard at /onboard with ${email}.` };
 }
 
+/** Remove a whitelisted course (set status back to pending). */
+export async function removeFromWhitelist(courseId: string): Promise<AdminActionResult> {
+  await requireSuperAdmin();
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) return { ok: false, message: "Course not found." };
+  if (course.stripeAccountId) {
+    return { ok: false, message: "Cannot remove a course that's already connected Stripe. Suspend it instead." };
+  }
+  await prisma.course.update({
+    where: { id: courseId },
+    data: { status: "pending" },
+  });
+  revalidatePath("/linxtimes-admin/courses");
+  return { ok: true, message: `Removed ${course.name} from whitelist.` };
+}
+
 /** Edit a course's platform-controlled fields: online + in-person fee, status. */
 export async function updateCourse(formData: FormData): Promise<AdminActionResult> {
   await requireSuperAdmin();
