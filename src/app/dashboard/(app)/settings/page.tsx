@@ -15,7 +15,15 @@ export default async function SettingsPage() {
   const team = admin.role === "owner"
     ? await prisma.courseAdmin.findMany({ where: { courseId: course.id }, orderBy: { createdAt: "asc" } })
     : [];
-  const connectUrl = buildConnectUrl(course.id);
+  // buildConnectUrl reads Stripe Connect env vars and throws if any are
+  // missing. Don't let that crash the whole Settings page — degrade to a
+  // disabled "not configured" state so password/team/profile still work.
+  let connectUrl: string | null = null;
+  try {
+    connectUrl = buildConnectUrl(course.id);
+  } catch {
+    connectUrl = null;
+  }
   const connected = Boolean(course.stripeAccountId);
   const ready = course.stripeOnboarded;
 
@@ -39,12 +47,21 @@ export default async function SettingsPage() {
             <span className={`h-1.5 w-1.5 rounded-full ${ready ? "bg-green-600" : connected ? "bg-amber-500" : "bg-foreground/40"}`} />
             {ready ? "Connected & ready" : connected ? "Connected — finishing setup" : "Not connected"}
           </span>
-          <a
-            href={connectUrl}
-            className="rounded-full bg-linx-green px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
-          >
-            {connected ? "Reconnect Stripe" : "Connect Stripe"}
-          </a>
+          {connectUrl ? (
+            <a
+              href={connectUrl}
+              className="rounded-full bg-linx-green px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+            >
+              {connected ? "Reconnect Stripe" : "Connect Stripe"}
+            </a>
+          ) : (
+            <span
+              className="rounded-full bg-black/[0.06] px-4 py-2 text-sm font-medium text-foreground/50"
+              title="Stripe Connect isn't configured on the server yet (missing STRIPE_CLIENT_ID / APP_URL)."
+            >
+              Stripe not configured
+            </span>
+          )}
           {connected && !ready && (
             <form action={refreshStripeStatusForm}>
               <button className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-black/[0.04]">
