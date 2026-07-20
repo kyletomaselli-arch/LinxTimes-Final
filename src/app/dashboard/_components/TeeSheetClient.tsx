@@ -16,6 +16,7 @@ import {
 } from "../actions";
 import { formatCentsCompact } from "@/lib/money";
 import { minutesToTime, timeToMinutes, todayKeyInTz, nowMinutesInTz, formatTimeLabel } from "@/lib/datetime";
+import { QuickChargePanel } from "./QuickChargePanel";
 
 export interface SlotBooking {
   id: string;
