@@ -7,6 +7,7 @@ import {
   golferConfirmationEmail,
   adminNotificationEmail,
   cancellationEmail,
+  passwordResetEmail,
   type BookingEmailData,
 } from "./email-templates";
 
@@ -110,6 +111,22 @@ export async function sendBookingEmails(bookingId: string): Promise<void> {
     }
   } catch (err) {
     console.error("[email] sendBookingEmails failed", err);
+  }
+}
+
+/**
+ * Email a course admin a password-reset link. Never throws into the caller.
+ */
+export async function sendPasswordResetEmail(
+  to: string,
+  name: string,
+  resetUrl: string
+): Promise<void> {
+  try {
+    const email = passwordResetEmail(name, resetUrl);
+    await sendEmail({ to, subject: email.subject, html: email.html });
+  } catch (err) {
+    console.error("[email] sendPasswordResetEmail failed", err);
   }
 }
 

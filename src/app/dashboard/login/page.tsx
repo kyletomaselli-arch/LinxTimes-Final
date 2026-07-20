@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { login, type LoginState } from "./actions";
@@ -62,6 +63,12 @@ export default function CourseAdminLogin() {
           >
             {pending ? "Signing in…" : "Sign in"}
           </button>
+
+          <p className="text-center text-sm text-foreground/55">
+            <Link href="/dashboard/forgot" className="font-medium text-linx-green hover:underline">
+              Forgot your password?
+            </Link>
+          </p>
         </form>
       </div>
     </main>

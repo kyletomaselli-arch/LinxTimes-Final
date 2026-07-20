@@ -56,6 +56,36 @@ function shell(primary: string, inner: string): string {
 </body></html>`;
 }
 
+/**
+ * Course-admin password reset link. Not built on `shell()` because that footer
+ * refers to a booking — this is an account-security email, not a booking one.
+ */
+export function passwordResetEmail(
+  name: string,
+  resetUrl: string
+): { subject: string; html: string } {
+  const html = `<!doctype html><html><body style="margin:0;background:#eef5e9;padding:24px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0b2418;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+    <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 10px 40px -20px rgba(11,36,24,.4);">
+      <tr><td style="background:#0d3522;padding:22px 28px;">
+        <span style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:-.01em;">LinxTimes</span>
+      </td></tr>
+      <tr><td style="padding:28px;">
+        <h1 style="margin:0 0 12px;font-size:20px;color:#0b2418;">Reset your password</h1>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#33473d;">Hi ${escapeHtml(name)}, we received a request to reset the password for your LinxTimes course dashboard.</p>
+        <p style="margin:0 0 24px;"><a href="${resetUrl}" style="display:inline-block;background:#0d3522;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:999px;">Reset password</a></p>
+        <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#5a7a68;">This link expires in 1 hour and can only be used once.</p>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#5a7a68;">If you didn't request this, you can safely ignore this email — your password won't change.</p>
+      </td></tr>
+      <tr><td style="padding:18px 28px;background:#f4f9ef;color:#5a7a68;font-size:12px;line-height:1.6;">
+        This is a security email for your LinxTimes course dashboard account.
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+  return { subject: "Reset your LinxTimes password", html };
+}
+
 function detailRow(label: string, value: string): string {
   return `<tr>
     <td style="padding:6px 0;color:#5a7a68;font-size:14px;">${label}</td>
