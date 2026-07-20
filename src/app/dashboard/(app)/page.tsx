@@ -6,6 +6,7 @@ import {
   timeToMinutes, minutesToTime,
 } from "@/lib/datetime";
 import { hoursUntilTeeTime, refundableCents, CANCELLATION_WINDOW_HOURS } from "@/lib/cancellation";
+import { sweepAbandonedBookings } from "@/lib/booking-sweep";
 import { TeeSheetClient, type Slot } from "../_components/TeeSheetClient";
 import type { Booking } from "@/generated/prisma";
 
@@ -39,11 +40,24 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
     select: { id: true, name: true, priceCents: true },
   });
 
-  const [dayBookings, overrides, upcomingWeek, prevWeek] = await Promise.all([
+  // The tee sheet counts capacity directly, so release abandoned online
+  // checkouts here too (the public grid does this inside computeAvailability).
+  await sweepAbandonedBookings(course.id);
+
+  // Week strip window: two days back, four ahead of the selected day.
+  const stripStart = addDays(selected, -2);
+  const stripDays = Array.from({ length: 7 }, (_, i) => addDays(stripStart, i));
+
+  const [dayBookings, overrides, upcomingWeek, prevWeek, stripBooked] = await Promise.all([
     prisma.booking.findMany({ where: { courseId: course.id, bookingDate: selDate, status: { not: "cancelled" } } }),
     prisma.dailyOverride.findMany({ where: { courseId: course.id, overrideDate: selDate } }),
     prisma.booking.count({ where: { courseId: course.id, status: { not: "cancelled" }, bookingDate: { gt: fromDateKey(today), lte: fromDateKey(addDays(today, 7)) } } }),
     prisma.booking.findMany({ where: { courseId: course.id, bookingDate: fromDateKey(addDays(selected, -7)), status: { not: "cancelled" } } }),
+    prisma.booking.groupBy({
+      by: ["bookingDate"],
+      where: { courseId: course.id, status: { not: "cancelled" }, bookingDate: { gte: fromDateKey(stripDays[0]), lte: fromDateKey(stripDays[6]) } },
+      _sum: { numPlayers: true },
+    }),
   ]);
 
   // Daily player capacity from the weekly slot templates (for fill rate).
@@ -100,6 +114,23 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
   const niceDate = new Date(selected + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
   const qs = (d: string) => `/dashboard?date=${d}`;
 
+  // Fill % per strip day: booked players / template capacity for that weekday.
+  const stripBookedMap = new Map(stripBooked.map((r) => [toDateKey(r.bookingDate), r._sum.numPlayers ?? 0]));
+  const strip = stripDays.map((d) => {
+    const cap = capacityForDay(d);
+    const booked = stripBookedMap.get(d) ?? 0;
+    const fill = cap > 0 ? Math.min(100, Math.round((booked / cap) * 100)) : 0;
+    return {
+      key: d,
+      dow: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][dayOfWeek(d)],
+      num: Number(d.slice(8, 10)),
+      fill,
+      barColor: fill >= 90 ? "#e0533a" : fill >= 70 ? "#e8a13d" : "#12a06f",
+      selected: d === selected,
+      isToday: d === today,
+    };
+  });
+
   return (
     <div className="mx-auto max-w-5xl">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -125,17 +156,37 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
         <StatCard bg="#eef7e9" label="Next 7 days" value={String(upcomingWeek)} sub="upcoming" />
       </div>
 
-      {/* day navigation — the selected date is the focus; Today is a jump-back */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Link href={qs(addDays(selected, -1))} aria-label="Previous day" className="grid h-9 w-9 place-items-center rounded-[10px] border border-black/10 bg-white text-foreground/60 hover:bg-black/[0.03]">‹</Link>
-        <h2 className="min-w-[13rem] text-center text-lg font-bold">{niceDate}</h2>
-        <Link href={qs(addDays(selected, 1))} aria-label="Next day" className="grid h-9 w-9 place-items-center rounded-[10px] border border-black/10 bg-white text-foreground/60 hover:bg-black/[0.03]">›</Link>
+      {/* day navigation — a 7-day strip with fill bars around the selected day */}
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <h2 className="text-lg font-bold">{niceDate}</h2>
         {selected !== today && (
-          <Link href={qs(today)} className="ml-1 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold hover:bg-black/[0.03]">Jump to today</Link>
+          <Link href={qs(today)} className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-sm font-semibold hover:bg-black/[0.03]">Jump to today</Link>
         )}
       </div>
+      <div className="mt-3 flex items-stretch gap-1.5">
+        <Link href={qs(addDays(selected, -1))} aria-label="Previous day" className="grid w-8 shrink-0 place-items-center rounded-[10px] border border-black/10 bg-white text-foreground/60 hover:bg-black/[0.03]">‹</Link>
+        <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto">
+          {strip.map((d) => (
+            <Link
+              key={d.key}
+              href={qs(d.key)}
+              className={`min-w-[64px] flex-1 rounded-[10px] border px-1 py-1.5 text-center transition ${
+                d.selected ? "border-linx-green border-2 bg-white shadow-sm" : "border-black/10 bg-white hover:bg-black/[0.02]"
+              }`}
+            >
+              <div className={`text-[10px] font-semibold ${d.selected ? "text-linx-green" : "text-foreground/45"}`}>
+                {d.isToday ? "TODAY" : d.dow} {d.num}
+              </div>
+              <div className="mx-auto mt-1.5 h-[3px] w-4/5 overflow-hidden rounded-full bg-black/[0.07]">
+                <div className="h-full rounded-full" style={{ width: `${d.fill}%`, background: d.barColor }} />
+              </div>
+            </Link>
+          ))}
+        </div>
+        <Link href={qs(addDays(selected, 1))} aria-label="Next day" className="grid w-8 shrink-0 place-items-center rounded-[10px] border border-black/10 bg-white text-foreground/60 hover:bg-black/[0.03]">›</Link>
+      </div>
 
-      <TeeSheetClient date={selected} slots={slots} layouts={layouts.map((l) => ({ id: l.id, name: l.name }))} shopItems={shopItems} taxRateBps={course.taxRateBps} inPersonFeePerPlayer={course.linxtimesInPersonFee} />
+      <TeeSheetClient date={selected} slots={slots} layouts={layouts.map((l) => ({ id: l.id, name: l.name }))} shopItems={shopItems} taxRateBps={course.taxRateBps} inPersonFeePerPlayer={course.linxtimesInPersonFee} timezone={course.timezone} />
     </div>
   );
 }

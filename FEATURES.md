@@ -43,10 +43,18 @@ A running list of what LinxTimes does, written to help pitch a golf course. Kept
 - **Configurable tax** — per-course sales-tax rate, collected and remitted by the course.
 - **Discount codes** — run promos to fill slow days (% or $ off, expiry, usage caps).
 - **Announcement banner** — post a message on the booking page (frost delays, aeration, twilight rates) — set it in Settings, golfers see it before booking.
+- **Course photo hero** — upload a hero image in Settings and the booking page opens on your course, not a generic template.
+- **One-tap day strip** — golfers pick a day from a scrollable strip (sold-out days flagged) instead of a calendar popup; twilight times carry a visible badge with per-player pricing.
+- **Order summary at checkout** — the full price breakdown stays on screen while the golfer enters card details.
+- **Calendar files** — confirmations add to Google, Apple, or Outlook calendars (.ics download).
+- **Mobile dashboard** — the tee sheet, bookings, and members get a bottom tab bar on phones; a red "now" line marks the current time on the sheet, and a week strip shows each day's fill at a glance.
+- **Dashboard search** — ⌘K search across bookings (name, email, confirmation #) and members from anywhere in the dashboard.
+- **Member-rate collection** — at the counter, look up a member and collect their share at their own rate (overrides and cart-included honored).
 - **Rain checks / credits** — issue a golfer a credit (rained-out round, goodwill); they redeem the code at checkout. Single-use, tracked. Most booking tools handle weather poorly — this doesn't.
 
 ## Why LinxTimes is better
 - **Waitlist + auto-notify** — turns lost "sold out" traffic into recovered bookings. Rare in this space.
+- **Abandoned checkouts release their tee time** — if a golfer bails mid-payment, the slot (and any promo/rain-check code) is automatically freed after 30 minutes instead of blocking the sheet.
 - **Direct, split payouts** — money lands in the course's account automatically; no reconciliation or payout delays.
 - **Members + guests handled correctly** — member pricing can't leak to non-members; guests always pay full rate.
 - **Real in-person point-of-sale** — drives a Stripe reader, so the pro shop replaces its old terminal entirely.

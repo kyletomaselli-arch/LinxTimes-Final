@@ -1,92 +1,128 @@
-import { requireSuperAdmin } from "@/lib/super-session";
-import { prisma } from "@/lib/prisma";
+"use client";
+import { useState, useEffect } from "react";
 import { formatCentsCompact } from "@/lib/money";
 
-export default async function StatsPage() {
-  await requireSuperAdmin();
+export default function StatsPage() {
+  const [courses, setCourses] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("");
 
-  const [courses, revenueByCourse, cancelByCourse] = await Promise.all([
-    prisma.course.findMany({ select: { id: true, name: true, linxtimesFee: true } }),
-    // Fee earned + players on bookings LinxTimes collected on (paid or refunded —
-    // the convenience fee is kept even after a refund).
-    prisma.booking.groupBy({
-      by: ["courseId"],
-      where: { paymentStatus: { in: ["paid_online", "refunded"] } },
-      _sum: { bookingFeeCents: true, numPlayers: true },
-      _count: { _all: true },
-    }),
-    prisma.booking.groupBy({
-      by: ["courseId"],
-      where: { status: "cancelled" },
-      _sum: { bookingFeeCents: true },
-      _count: { _all: true },
-    }),
-  ]);
+  useEffect(() => {
+    fetchCourses();
+    fetchStats();
+  }, []);
 
-  const revMap = new Map(revenueByCourse.map((r) => [r.courseId, r]));
-  const cancelMap = new Map(cancelByCourse.map((r) => [r.courseId, r]));
+  const fetchCourses = async () => {
+    const res = await fetch("/api/admin/courses");
+    const data = await res.json();
+    setCourses(data);
+  };
 
-  const rows = courses
-    .map((c) => {
-      const rev = revMap.get(c.id);
-      const can = cancelMap.get(c.id);
-      return {
-        name: c.name,
-        bookings: rev?._count._all ?? 0,
-        players: rev?._sum.numPlayers ?? 0,
-        feeEarned: rev?._sum.bookingFeeCents ?? 0,
-        cancellations: can?._count._all ?? 0,
-        feesRetainedOnCancel: can?._sum.bookingFeeCents ?? 0,
-      };
-    })
-    .sort((a, b) => b.feeEarned - a.feeEarned);
+  const fetchStats = async () => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    if (selectedCourse) params.append("courseId", selectedCourse);
 
-  const totals = rows.reduce(
-    (t, r) => ({
-      bookings: t.bookings + r.bookings,
-      players: t.players + r.players,
-      feeEarned: t.feeEarned + r.feeEarned,
-      cancellations: t.cancellations + r.cancellations,
-    }),
-    { bookings: 0, players: 0, feeEarned: 0, cancellations: 0 }
-  );
+    const res = await fetch(`/api/admin/stats?${params}`);
+    const data = await res.json();
+    setStats(data);
+    setLoading(false);
+  };
+
+  const handleFilter = () => fetchStats();
+
+  if (!stats) return <div className="p-6">Loading...</div>;
+
+  const t = stats.totals;
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <h1 className="font-display text-3xl font-semibold text-foreground">Platform stats</h1>
-      <p className="mt-1 text-sm text-foreground/55">All-time across every course.</p>
+    <div className="mx-auto max-w-7xl p-6">
+      <h1 className="font-display text-4xl font-semibold text-foreground mb-2">Platform Stats</h1>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat bg="#fdeee3" label="LinxTimes revenue" value={formatCentsCompact(totals.feeEarned)} />
-        <Stat bg="#eaf7ef" label="Paid bookings" value={String(totals.bookings)} />
-        <Stat bg="#eaf1fb" label="Players charged" value={String(totals.players)} />
-        <Stat bg="#eef7e9" label="Cancellations" value={String(totals.cancellations)} />
+      {/* Filters */}
+      <div className="flex gap-4 mb-8">
+        <div>
+          <label className="block text-xs font-medium text-foreground/60 mb-2">Start date</label>
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="rounded border border-black/10 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-foreground/60 mb-2">End date</label>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="rounded border border-black/10 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-foreground/60 mb-2">Course</label>
+          <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="rounded border border-black/10 px-3 py-2 text-sm">
+            <option value="">All courses</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-end">
+          <button onClick={handleFilter} disabled={loading} className="rounded bg-linx-green text-white px-4 py-2 text-sm font-semibold disabled:opacity-50">
+            {loading ? "Loading..." : "Filter"}
+          </button>
+        </div>
       </div>
 
-      <h2 className="mt-9 font-display text-xl font-semibold text-foreground">By course</h2>
-      <div className="mt-3 overflow-hidden rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)]">
+      {/* Total Earned - Big Display */}
+      <div className="bg-gradient-to-br from-linx-green/10 to-linx-green/5 rounded-3xl p-8 mb-12 border border-linx-green/20">
+        <div className="text-sm font-medium text-foreground/60 mb-2">TOTAL FEES EARNED</div>
+        <div className="text-5xl font-bold text-linx-green">{formatCentsCompact(t.totalEarned)}</div>
+      </div>
+
+      {/* Fee Breakdown Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <StatCard label="Online Booking Fees" value={formatCentsCompact(t.onlineBookingFees)} bg="bg-blue-50" accent="text-blue-600" />
+        <StatCard label="In-Person Booking Fees" value={formatCentsCompact(t.inPersonBookingFees)} bg="bg-amber-50" accent="text-amber-600" />
+        <StatCard label="Online Cancelled (Retained)" value={formatCentsCompact(t.onlineCancelledFees)} bg="bg-red-50" accent="text-red-600" />
+        <StatCard label="In-Person Cancelled (Retained)" value={formatCentsCompact(t.inPersonCancelledFees)} bg="bg-orange-50" accent="text-orange-600" />
+      </div>
+
+      {/* Booking Counts */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        <CountCard label="Online Bookings" value={t.onlineBookings} />
+        <CountCard label="In-Person Bookings" value={t.inPersonBookings} />
+        <CountCard label="Cancelled Bookings" value={t.cancelBookings} />
+      </div>
+
+      {/* By Course Table */}
+      <h2 className="font-display text-2xl font-semibold text-foreground mb-4">Breakdown by Course</h2>
+      <div className="overflow-x-auto rounded-2xl bg-white shadow-lg">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/5 text-left text-xs uppercase tracking-wide text-foreground/45">
-              <th className="px-4 py-3 font-semibold">Course</th>
-              <th className="px-4 py-3 font-semibold">Bookings</th>
-              <th className="px-4 py-3 font-semibold">Players</th>
-              <th className="px-4 py-3 font-semibold">Fee earned</th>
-              <th className="px-4 py-3 font-semibold">Cancels</th>
-              <th className="px-4 py-3 font-semibold">Fees kept on cancel</th>
+            <tr className="border-b border-black/5 bg-black/[0.02] text-left text-xs uppercase tracking-wide text-foreground/60">
+              <th className="px-4 py-4 font-semibold">Course</th>
+              <th className="px-4 py-4 font-semibold text-right">Online Bookings</th>
+              <th className="px-4 py-4 font-semibold text-right">Online Fees</th>
+              <th className="px-4 py-4 font-semibold text-right">In-Person Bookings</th>
+              <th className="px-4 py-4 font-semibold text-right">In-Person Fees</th>
+              <th className="px-4 py-4 font-semibold text-right">Online Cancelled Fees</th>
+              <th className="px-4 py-4 font-semibold text-right">In-Person Cancelled Fees</th>
+              <th className="px-4 py-4 font-semibold text-right">Total</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.name} className="border-b border-black/[0.04] last:border-0">
-                <td className="px-4 py-3 font-medium">{r.name}</td>
-                <td className="px-4 py-3 text-foreground/70">{r.bookings}</td>
-                <td className="px-4 py-3 text-foreground/70">{r.players}</td>
-                <td className="px-4 py-3 font-medium">{formatCentsCompact(r.feeEarned)}</td>
-                <td className="px-4 py-3 text-foreground/70">{r.cancellations}</td>
-                <td className="px-4 py-3 text-foreground/70">{formatCentsCompact(r.feesRetainedOnCancel)}</td>
-              </tr>
-            ))}
+            {stats.rows.map((r: any, idx: number) => {
+              const rowTotal = r.onlineBookingFees + r.inPersonBookingFees + r.onlineCancelledFees + r.inPersonCancelledFees;
+              return (
+                <tr key={r.courseId} className={`border-b border-black/[0.04] ${idx % 2 === 0 ? 'bg-black/[0.02]' : ''}`}>
+                  <td className="px-4 py-3 font-medium">{r.courseName}</td>
+                  <td className="px-4 py-3 text-right">{r.onlineBookings}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-blue-600">{formatCentsCompact(r.onlineBookingFees)}</td>
+                  <td className="px-4 py-3 text-right">{r.inPersonBookings}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-amber-600">{formatCentsCompact(r.inPersonBookingFees)}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-red-600">{formatCentsCompact(r.onlineCancelledFees)}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-orange-600">{formatCentsCompact(r.inPersonCancelledFees)}</td>
+                  <td className="px-4 py-3 text-right font-bold">{formatCentsCompact(rowTotal)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -94,11 +130,20 @@ export default async function StatsPage() {
   );
 }
 
-function Stat({ label, value, bg }: { label: string; value: string; bg: string }) {
+function StatCard({ label, value, bg, accent }: { label: string; value: string; bg: string; accent: string }) {
   return (
-    <div className="rounded-2xl p-[18px]" style={{ background: bg }}>
-      <div className="text-xs font-medium text-[#6b7280]">{label}</div>
-      <div className="mt-2 font-mono text-2xl font-bold text-[#1c2430]">{value}</div>
+    <div className={`${bg} rounded-xl p-5 border border-black/5`}>
+      <div className="text-xs font-medium text-foreground/60 mb-2">{label}</div>
+      <div className={`text-2xl font-bold ${accent}`}>{value}</div>
+    </div>
+  );
+}
+
+function CountCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-gray-50 rounded-xl p-5 border border-black/5">
+      <div className="text-xs font-medium text-foreground/60 mb-2">{label}</div>
+      <div className="text-3xl font-bold text-foreground">{value}</div>
     </div>
   );
 }

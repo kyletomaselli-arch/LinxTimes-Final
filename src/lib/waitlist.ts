@@ -16,6 +16,24 @@ export interface WaitlistInput {
   phone?: string;
 }
 
+/**
+ * Clean up waitlist entries for tee times that have already passed. Called lazily
+ * from computeAvailability so old entries are purged as staff use the system.
+ */
+export async function cleanupExpiredWaitlistEntries(courseId: string, courseTimezone: string): Promise<void> {
+  const { todayKeyInTz } = await import("./datetime");
+  const today = todayKeyInTz(courseTimezone);
+  const { fromDateKey } = await import("./datetime");
+  const cutoffDate = fromDateKey(today);
+
+  await prisma.waitlist.deleteMany({
+    where: {
+      courseId,
+      bookingDate: { lt: cutoffDate },
+    },
+  });
+}
+
 /** Add a golfer to the waitlist for a specific (full) tee time. Idempotent per email+slot. */
 export async function joinWaitlist(
   course: Course,

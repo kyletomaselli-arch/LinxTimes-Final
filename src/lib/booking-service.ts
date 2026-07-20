@@ -16,6 +16,7 @@ import { Prisma } from "./../generated/prisma";
 export type BookingResult =
   | {
       ok: true;
+      bookingId: string;
       confirmationNo: string;
       paymentStatus: "unpaid" | "paid_online";
       // The client uses these with Stripe Elements to collect payment.
@@ -176,11 +177,15 @@ export async function createBooking(
   if (promoRes && breakdown.discountCents > 0) {
     await prisma.promoCode.update({ where: { id: promoRes.id }, data: { timesRedeemed: { increment: 1 } } });
   }
-  // Consume the rain check (single-use) once the booking is reserved.
+  // Rain checks are NOT consumed here — they're consumed only when payment succeeds
+  // (payment_intent.succeeded webhook). If payment times out or fails, the rain check
+  // stays available and can be used for another booking. The slotHeldUntil field tracks
+  // when the slot hold expires (10 min from when user opens payment form).
   if (creditRes && breakdown.creditCents > 0) {
-    await prisma.rainCheck.updateMany({
-      where: { id: creditRes.id, redeemedAt: null },
-      data: { redeemedAt: new Date(), redeemedBookingId: created.id, isActive: false },
+    // Store which rain check was used, so we can consume it on payment success
+    await prisma.booking.update({
+      where: { id: created.id },
+      data: { rainCheckCode: creditRes.code },
     });
   }
 
@@ -195,6 +200,7 @@ export async function createBooking(
     await sendBookingEmails(created.id);
     return {
       ok: true,
+      bookingId: created.id,
       confirmationNo: created.confirmationNo,
       paymentStatus: "paid_online",
       totalCents: 0,
@@ -233,6 +239,7 @@ export async function createBooking(
 
     return {
       ok: true,
+      bookingId: created.id,
       confirmationNo: created.confirmationNo,
       paymentStatus: "unpaid",
       clientSecret: intent.client_secret ?? undefined,

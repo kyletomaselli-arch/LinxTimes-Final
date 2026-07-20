@@ -11,6 +11,7 @@ import {
   nowMinutesInTz,
   BOOKING_LEAD_MINUTES,
 } from "./datetime";
+import { sweepAbandonedBookings } from "./booking-sweep";
 import type { Course, Layout, Pricing } from "../generated/prisma";
 
 export interface AvailableSlot {
@@ -50,6 +51,10 @@ export async function computeAvailability({
   layout,
   dateKey,
 }: ComputeArgs): Promise<AvailabilityResult> {
+  // Lazily release tee times held by abandoned online checkouts before
+  // counting capacity, so a dead unpaid booking can't block the grid.
+  await sweepAbandonedBookings(course.id);
+
   const empty: AvailabilityResult = {
     dateKey,
     layoutId: layout.id,

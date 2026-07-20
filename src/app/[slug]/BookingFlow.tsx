@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { formatCentsCompact } from "@/lib/money";
-import { formatTimeLabel, addDays } from "@/lib/datetime";
+import { formatTimeLabel, addDays, dayOfWeek } from "@/lib/datetime";
 import { PaymentStep, type PaymentData } from "./PaymentStep";
 
 interface LayoutOption {
@@ -19,6 +19,7 @@ interface Slot {
   reason?: string;
   maxPlayers: number;
   playersBooked: number;
+  spotsLeft: number;
   rateType: "weekday" | "weekend" | "twilight" | "member";
   fromPriceCents: number;
 }
@@ -101,8 +102,27 @@ export function BookingFlow({
   const selectedLayout = layouts.find((l) => l.id === layoutId);
   const cartAvailable = selectedLayout?.cartAvailable ?? false;
 
-  const minDate = today;
-  const maxDate = addDays(today, maxDaysAhead);
+  // Day strip: one chip per bookable day (capped at 60 so a 365-day window
+  // doesn't render hundreds of chips), annotated closed/full from a single
+  // lightweight summary request.
+  const dayKeys = Array.from({ length: Math.min(maxDaysAhead, 60) + 1 }, (_, i) => addDays(today, i));
+  const [daySummary, setDaySummary] = useState<Map<string, { closed: boolean; full: boolean }>>(new Map());
+  useEffect(() => {
+    if (!layoutId) return;
+    let cancelled = false;
+    fetch(`/api/courses/${slug}/days?layoutId=${layoutId}`)
+      .then((r) => r.json())
+      .then((data: { days?: { date: string; closed: boolean; full: boolean }[] }) => {
+        if (cancelled || !Array.isArray(data.days)) return;
+        setDaySummary(new Map(data.days.map((d) => [d.date, { closed: d.closed, full: d.full }])));
+      })
+      .catch(() => {
+        // Strip still works without annotations.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, layoutId]);
 
   // ── Fetch availability when layout/date changes ─────────────────────────────
   useEffect(() => {
@@ -224,6 +244,7 @@ export function BookingFlow({
         return;
       }
       setPaymentData({
+        bookingId: data.bookingId,
         clientSecret: data.clientSecret,
         publishableKey: data.publishableKey,
         confirmationNo: data.confirmationNo,
@@ -295,20 +316,33 @@ export function BookingFlow({
             <div>
               <FieldLabel>Players</FieldLabel>
               <div className="mt-2 flex gap-2">
-                {[1, 2, 3, 4].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setNumPlayers(n)}
-                    className={`h-11 w-11 rounded-xl text-sm font-semibold transition-all ${
-                      numPlayers === n
-                        ? "bg-course text-course-contrast shadow-md"
-                        : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.07]"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
+                {(() => {
+                  const slot = availability?.slots.find((s) => s.time === slotTime);
+                  const maxPlayers = slot?.spotsLeft ?? 4;
+                  return [1, 2, 3, 4].map((n) => (
+                    <button
+                      key={n}
+                      disabled={n > maxPlayers}
+                      onClick={() => setNumPlayers(n)}
+                      aria-pressed={numPlayers === n}
+                      className={`h-11 w-11 rounded-xl text-sm font-semibold transition-all ${
+                        numPlayers === n
+                          ? "bg-course text-course-contrast shadow-md"
+                          : n > maxPlayers
+                            ? "bg-black/[0.02] text-foreground/30 cursor-not-allowed"
+                            : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.07]"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ));
+                })()}
               </div>
+              {(() => {
+                const slot = availability?.slots.find((s) => s.time === slotTime);
+                if (!slot || slot.spotsLeft >= 4) return null;
+                return <p className="mt-2 text-xs text-amber-600 font-medium">Only {slot.spotsLeft} spot{slot.spotsLeft === 1 ? "" : "s"} available</p>;
+              })()}
             </div>
             <div>
               <FieldLabel>Holes</FieldLabel>
@@ -317,6 +351,7 @@ export function BookingFlow({
                   <button
                     key={h}
                     onClick={() => setHoles(h as 9 | 18)}
+                    aria-pressed={holes === h}
                     className={`h-11 flex-1 rounded-xl text-sm font-semibold transition-all ${
                       holes === h
                         ? "bg-course text-course-contrast shadow-md"
@@ -508,15 +543,44 @@ export function BookingFlow({
           )}
 
           <div className="mb-6">
-            <FieldLabel>Select a date</FieldLabel>
-            <input
-              type="date"
-              value={date}
-              min={minDate}
-              max={maxDate}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-2 w-full sm:w-auto rounded-xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition focus:border-course focus:ring-2 focus:ring-course/30"
-            />
+            <FieldLabel>Select a day</FieldLabel>
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
+              {dayKeys.map((key) => {
+                const info = daySummary.get(key);
+                const selected = key === date;
+                const dow = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][dayOfWeek(key)];
+                const dayNum = Number(key.slice(8, 10));
+                const monthShort = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][Number(key.slice(5, 7)) - 1];
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setDate(key)}
+                    aria-pressed={selected}
+                    className={`flex w-16 shrink-0 flex-col items-center rounded-xl border py-2.5 transition ${
+                      selected
+                        ? "border-course bg-course text-course-contrast shadow-md"
+                        : info?.closed
+                          ? "border-black/5 bg-black/[0.02] text-foreground/35"
+                          : "border-black/10 bg-white text-foreground/80 hover:border-course/50 hover:shadow-sm"
+                    }`}
+                  >
+                    <span className={`text-[10px] font-semibold tracking-wide ${selected ? "opacity-85" : "text-foreground/45"}`}>
+                      {key === today ? "TODAY" : dow}
+                    </span>
+                    <span className="text-base font-semibold leading-tight">{dayNum}</span>
+                    {info?.closed ? (
+                      <span className="text-[9px] font-medium opacity-70">Closed</span>
+                    ) : info?.full ? (
+                      <span className={`text-[9px] font-semibold ${selected ? "opacity-85" : "text-amber-600"}`}>Full</span>
+                    ) : dayNum === 1 || key === dayKeys[0] ? (
+                      <span className={`text-[9px] font-medium ${selected ? "opacity-70" : "text-foreground/40"}`}>{monthShort}</span>
+                    ) : (
+                      <span className="text-[9px] opacity-0">·</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <FieldLabel>Available tee times</FieldLabel>
@@ -527,7 +591,7 @@ export function BookingFlow({
               <EmptyState reason={availability?.closedReason} />
             ) : (
               (() => {
-                const slots = availability.slots;
+                const slots = availability.slots.filter((s) => !s.blocked);
                 const selIdx = slots.findIndex((s) => s.time === slotTime);
                 // Insert the drawer immediately after the ROW containing the
                 // selected slot, so the form opens right under the clicked
@@ -568,6 +632,15 @@ export function BookingFlow({
           slug={slug}
           payment={paymentData}
           onBack={() => setStep("select")}
+          summary={{
+            layoutName: selectedLayout?.name ?? "",
+            dateKey: date,
+            slotTime,
+            numPlayers,
+            holes,
+            withCart: withCart && cartAvailable,
+            quote,
+          }}
         />
       )}
 
@@ -737,6 +810,8 @@ function SlotCard({
   // A "full" slot (booked out, but not closed) is clickable to join the waitlist.
   const isFull = !slot.available && !slot.blocked;
   const disabled = slot.blocked;
+  const twilight = slot.rateType === "twilight";
+  const lastSpot = !isFull && !disabled && slot.spotsLeft === 1;
   return (
     <button
       disabled={disabled}
@@ -748,21 +823,41 @@ function SlotCard({
             ? "cursor-not-allowed border-black/5 bg-black/[0.02] text-foreground/30"
             : isFull
               ? "border-amber-300 bg-amber-50/60 hover:border-amber-400 hover:shadow-sm"
-              : "border-black/10 bg-white hover:border-course/50 hover:shadow-md hover:-translate-y-0.5"
+              : twilight
+                ? "border-amber-300/60 bg-[#fffdf4] hover:border-course/50 hover:shadow-md hover:-translate-y-0.5"
+                : "border-black/10 bg-white hover:border-course/50 hover:shadow-md hover:-translate-y-0.5"
       }`}
     >
-      <div className="flex w-full items-center justify-between">
+      <div className="flex w-full items-center justify-between gap-1.5">
         <span className="text-base font-semibold">{formatTimeLabel(slot.time)}</span>
-        <AvailabilityDot available={slot.available} blocked={slot.blocked} selected={selected} />
+        {twilight && !disabled ? (
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${selected ? "bg-white/20 text-course-contrast" : "bg-[#f7edd2] text-[#8a6d1c]"}`}>
+            Twilight
+          </span>
+        ) : (
+          <AvailabilityDot available={slot.available} blocked={slot.blocked} selected={selected} />
+        )}
       </div>
-      <span className={`mt-1 text-xs ${selected ? "opacity-80" : isFull ? "font-medium text-amber-700" : "opacity-60"}`}>
+      <span
+        className={`mt-1 text-xs ${
+          selected
+            ? "opacity-80"
+            : isFull
+              ? "font-medium text-amber-700"
+              : lastSpot
+                ? "font-semibold text-amber-600"
+                : "opacity-60"
+        }`}
+      >
         {disabled
           ? isFull
             ? "Full"
             : ""
           : isFull
             ? "Full · Join waitlist"
-            : `${formatCentsCompact(slot.fromPriceCents)} · ${slot.rateType}`}
+            : lastSpot
+              ? `1 spot left · ${formatCentsCompact(slot.fromPriceCents)}/player`
+              : `${slot.spotsLeft} spots · ${formatCentsCompact(slot.fromPriceCents)}/player`}
       </span>
     </button>
   );
@@ -818,7 +913,13 @@ function PriceSummary({
       {quote ? (
         <div className="space-y-1.5 text-sm">
           <SummaryRow
-            label={`Green fee${quote.memberApplied ? ` (${quote.memberCount} member${quote.memberCount === 1 ? "" : "s"})` : ""}`}
+            label={
+              quote.memberApplied
+                ? `Green fee (${quote.memberCount} member${quote.memberCount === 1 ? "" : "s"})`
+                : numPlayers > 1
+                  ? `Green fee (${numPlayers} × ${formatCentsCompact(quote.perPlayerGreenCents)}/player)`
+                  : "Green fee"
+            }
             value={formatCentsCompact(quote.greenFeeCents)}
           />
           {quote.cartFeeCents > 0 && (
@@ -922,23 +1023,6 @@ function PrimaryButton({
         animation: "lx-shine 8s linear infinite",
       }}
       className="rounded-full px-7 py-3 text-sm font-semibold text-course-contrast shadow-[0_16px_40px_-12px_color-mix(in_srgb,var(--course-primary)_50%,transparent)] transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:animate-none"
-    >
-      {children}
-    </button>
-  );
-}
-
-function GhostButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="rounded-full px-6 py-3 text-sm font-semibold text-foreground/60 transition hover:bg-black/[0.04]"
     >
       {children}
     </button>

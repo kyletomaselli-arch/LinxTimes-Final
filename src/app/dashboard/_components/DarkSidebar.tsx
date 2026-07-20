@@ -39,7 +39,7 @@ export function DarkSidebar({ courseName, logoUrl }: { courseName: string; logoU
   );
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[236px] shrink-0 flex-col bg-[#14181c] px-3.5 py-5 text-white">
+    <aside className="sticky top-0 hidden h-screen w-[236px] shrink-0 flex-col bg-[#14181c] px-3.5 py-5 text-white md:flex">
       <div className="flex items-center gap-2.5 px-2 pb-5">
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element

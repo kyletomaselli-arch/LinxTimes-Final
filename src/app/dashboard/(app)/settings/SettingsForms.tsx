@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { updateProfile, changePassword, registerReader, type SettingsResult } from "./actions";
 
@@ -38,8 +39,47 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
 
 export function ProfileForm({ c }: { c: CourseValues }) {
   const [state, action, pending] = useActionState(updateProfile, init);
+  const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [heroPreview, setHeroPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const handleFileSelect = (file: File | null, isHero: boolean) => {
+    if (!file || !file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be smaller than 5 MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (isHero) {
+        setHeroImageFile(file);
+        setHeroPreview(dataUrl);
+      } else {
+        setLogoFile(file);
+        setLogoPreview(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = (formData: FormData) => {
+    if (heroImageFile) {
+      // Base64 will be set by the file handler above, stored in the URL field
+      formData.set("heroImageUrl", heroPreview || "");
+    }
+    if (logoFile) {
+      formData.set("logoUrl", logoPreview || "");
+    }
+    action(formData);
+  };
+
   return (
-    <form action={action} className="rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
+    <form action={handleSubmit} className="rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
       <h2 className="font-display text-lg font-semibold text-foreground">Course profile</h2>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <F label="Course name"><input name="name" required defaultValue={c.name} className={inp} /></F>
@@ -51,8 +91,62 @@ export function ProfileForm({ c }: { c: CourseValues }) {
         <F label="ZIP"><input name="zip" defaultValue={c.zip ?? ""} className={inp} /></F>
         <F label="Timezone"><input name="timezone" defaultValue={c.timezone} className={inp} /></F>
         <F label="New-booking email"><input name="notificationEmail" type="email" defaultValue={c.notificationEmail ?? ""} className={inp} /></F>
-        <F label="Logo URL"><input name="logoUrl" defaultValue={c.logoUrl ?? ""} className={inp} /></F>
-        <F label="Hero image URL"><input name="heroImageUrl" defaultValue={c.heroImageUrl ?? ""} className={inp} /></F>
+      </div>
+
+      {/* Logo upload */}
+      <div className="mt-5 border-t border-black/[0.06] pt-5">
+        <F label="Logo image">
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, false)}
+                className="w-full text-sm"
+              />
+              <p className="mt-1 text-[11px] text-foreground/45">Upload a logo (max 5 MB) or paste a CDN URL below</p>
+            </div>
+            {(logoPreview || c.logoUrl) && (
+              <img src={logoPreview || c.logoUrl || undefined} alt="Logo" className="h-12 w-12 rounded-lg object-cover" />
+            )}
+          </div>
+          <input
+            name="logoUrl"
+            type="url"
+            placeholder="Or paste a CDN URL"
+            defaultValue={c.logoUrl ?? ""}
+            className={`${inp} mt-2`}
+          />
+        </F>
+      </div>
+
+      {/* Hero image upload */}
+      <div className="mt-5 border-t border-black/[0.06] pt-5">
+        <F label="Hero image (booking page background)">
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, true)}
+                  className="w-full text-sm"
+                />
+                <p className="mt-1 text-[11px] text-foreground/45">Upload a photo (max 5 MB) or paste a CDN URL below</p>
+              </div>
+              {(heroPreview || c.heroImageUrl) && (
+                <img src={heroPreview || c.heroImageUrl || undefined} alt="Hero" className="h-20 w-32 rounded-lg object-cover" />
+              )}
+            </div>
+            <input
+              name="heroImageUrl"
+              type="url"
+              placeholder="Or paste a CDN URL"
+              defaultValue={c.heroImageUrl ?? ""}
+              className={inp}
+            />
+          </div>
+        </F>
       </div>
       <div className="mt-4">
         <F label="Booking-page announcement (optional)">

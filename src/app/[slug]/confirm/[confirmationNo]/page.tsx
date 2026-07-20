@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { requireActiveCourse } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { courseThemeStyle } from "@/lib/theme";
 import { formatCentsCompact } from "@/lib/money";
 import { formatTimeLabel, toDateKey, teeTimeEpochMs } from "@/lib/datetime";
+import { refundableCents } from "@/lib/cancellation";
 import { AuroraBackground } from "@/components/AuroraBackground";
+import { PendingRefresher } from "./PendingRefresher";
 import type { Metadata } from "next";
 
 /** Build a Google Calendar "add event" link for the tee time (4-hour block). */
@@ -68,12 +71,60 @@ export default async function ConfirmationPage(
   const payAtCourse = booking.paymentStatus === "pay_at_course";
   const pending = booking.paymentStatus === "unpaid";
 
+  // A cancelled booking must never show the green "You're booked!" check —
+  // the golfer would drive to the course.
+  if (booking.status === "cancelled") {
+    const refunded = booking.paymentStatus === "refunded";
+    const refundCents = refunded ? refundableCents(booking.totalCents, booking.bookingFeeCents) : 0;
+    return (
+      <main style={themeStyle} className="relative flex min-h-screen items-center justify-center px-5 py-12">
+        <AuroraBackground />
+        <div className="relative z-10 w-full max-w-md animate-fade-up rounded-2xl p-7 shadow-[0_32px_84px_-34px_rgba(13,53,34,0.42)] lx-glass">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" /><path d="m15 9-6 6M9 9l6 6" />
+              </svg>
+            </div>
+            <h1 className="mt-4 font-display text-2xl font-semibold text-[#c0392b]">This booking was cancelled</h1>
+            <p className="mt-1.5 text-sm text-foreground/60">
+              {toDateKey(booking.bookingDate)} · {formatTimeLabel(booking.slotTime)} at {course.name}
+              {booking.cancelledAt ? ` — cancelled ${toDateKey(booking.cancelledAt)}` : ""}
+            </p>
+            {refunded && refundCents > 0 && (
+              <p className="mt-3 rounded-lg bg-[#eaf7ef] px-3 py-2 text-sm font-medium text-[#2f855a]">
+                {formatCentsCompact(refundCents)} was refunded to your card.
+              </p>
+            )}
+          </div>
+
+          <div className="my-6 rounded-xl bg-course/5 px-4 py-3 text-center ring-1 ring-course/10">
+            <div className="text-xs font-semibold uppercase tracking-wide text-foreground/45">Confirmation number</div>
+            <div className="mt-1 font-mono text-sm font-semibold text-foreground/50 break-all line-through">{booking.confirmationNo}</div>
+          </div>
+
+          <Link
+            href={`/${course.slug}`}
+            className="flex items-center justify-center rounded-full bg-course px-5 py-3 text-sm font-semibold text-course-contrast shadow-md transition hover:brightness-110"
+          >
+            Book a new tee time
+          </Link>
+
+          <p className="mt-6 text-center text-xs text-foreground/40">
+            Powered by <span className="font-semibold text-course">LinxTimes</span>
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main
       style={themeStyle}
       className="relative flex min-h-screen items-center justify-center px-5 py-12"
     >
       <AuroraBackground />
+      {pending && <PendingRefresher />}
       <div className="relative z-10 w-full max-w-md animate-fade-up rounded-2xl p-7 shadow-[0_32px_84px_-34px_rgba(13,53,34,0.42)] lx-glass">
         <div className="flex flex-col items-center text-center">
           <div className="lx-pop flex h-16 w-16 items-center justify-center rounded-full bg-course/10">
@@ -134,25 +185,36 @@ export default async function ConfirmationPage(
           />
         </dl>
 
-        <a
-          href={calendarUrl({
-            courseName: course.name,
-            layoutName: booking.layout.name,
-            dateKey: toDateKey(booking.bookingDate),
-            slotTime: booking.slotTime,
-            timezone: course.timezone,
-            confirmationNo: booking.confirmationNo,
-            address: [course.address, course.city, course.state].filter(Boolean).join(", ") || null,
-          })}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-6 flex items-center justify-center gap-2 rounded-full border border-course/20 bg-course/[0.06] px-5 py-3 text-sm font-semibold text-course transition hover:bg-course/10"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-          </svg>
-          Add to calendar
-        </a>
+        <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <a
+            href={`/${course.slug}/confirm/${booking.confirmationNo}/ics`}
+            className="flex items-center justify-center gap-2 rounded-full border border-course/20 bg-course/[0.06] px-4 py-3 text-sm font-semibold text-course transition hover:bg-course/10"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            Apple / Outlook calendar
+          </a>
+          <a
+            href={calendarUrl({
+              courseName: course.name,
+              layoutName: booking.layout.name,
+              dateKey: toDateKey(booking.bookingDate),
+              slotTime: booking.slotTime,
+              timezone: course.timezone,
+              confirmationNo: booking.confirmationNo,
+              address: [course.address, course.city, course.state].filter(Boolean).join(", ") || null,
+            })}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-2 rounded-full border border-course/20 bg-course/[0.06] px-4 py-3 text-sm font-semibold text-course transition hover:bg-course/10"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            Google Calendar
+          </a>
+        </div>
 
         <a
           href={directionsUrl}

@@ -124,8 +124,8 @@ export async function importMembers(rows: ImportRow[]): Promise<MemberActionResu
   return { ok: true, message: `Imported ${imported} member${imported === 1 ? "" : "s"}.` };
 }
 
-/** Enroll a new member with membership tier and payment (card reader or cash). */
-export async function enrollNewMember(formData: FormData): Promise<MemberActionResult> {
+/** Start membership enrollment and initiate payment. Returns paymentId to poll. */
+export async function enrollNewMember(formData: FormData): Promise<MemberActionResult & { paymentId?: string }> {
   const { course, admin } = await requireCourseAdmin();
 
   const firstName = String(formData.get("firstName") ?? "").trim();
@@ -133,7 +133,7 @@ export async function enrollNewMember(formData: FormData): Promise<MemberActionR
   const email = String(formData.get("email") ?? "").trim() || null;
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const tierId = String(formData.get("tierId") ?? "").trim();
-  const method = String(formData.get("method") ?? "terminal");
+  const method = String(formData.get("method") ?? "terminal") as "terminal" | "cash";
 
   if (!firstName || !lastName || !tierId) {
     return { ok: false, message: "First name, last name, and membership tier required." };
@@ -152,40 +152,126 @@ export async function enrollNewMember(formData: FormData): Promise<MemberActionR
 
   // Calculate fees: 2% capped at $10, plus tax
   const linxFee = Math.min(Math.round(tier.priceCents * 0.02), 1000);
-  const tax = Math.round((tier.priceCents * course.taxRateBps) / 10000);
-  const total = tier.priceCents + linxFee + tax;
+  const taxesAndFees = linxFee + Math.round((tier.priceCents * course.taxRateBps) / 10000);
+  const totalCents = tier.priceCents + taxesAndFees;
 
   try {
-    // TODO: For terminal payments, integrate with Stripe Terminal Payment Intent.
-    // For now, just record the cash/terminal payment as completed.
-    // In production, you'd call stripe.terminal.reader.processPayment() for card.
+    if (method === "cash") {
+      // Cash payment: create member immediately
+      await prisma.member.create({
+        data: {
+          courseId: course.id, memberId, firstName, lastName, email, phone,
+          membershipTierId: tierId, membershipPaidAt: new Date(), isActive: true,
+        },
+      });
+      // Log cash payment
+      await prisma.payment.create({
+        data: {
+          courseId: course.id, method: "cash", state: "succeeded",
+          amountCents: tier.priceCents, feeCents: 0, taxCents: taxesAndFees - linxFee,
+          description: `Membership ${memberId} - ${tier.name}`,
+          createdBy: admin.id,
+        },
+      });
+      revalidatePath("/dashboard/members");
+      return { ok: true, message: `${firstName} ${lastName} enrolled as member ${memberId}. Cash payment recorded.` };
+    }
 
-    const member = await prisma.member.create({
+    // Terminal payment: start payment intent, create member placeholder
+    if (!course.stripeAccountId || !course.stripeOnboarded) {
+      return { ok: false, message: "Connect the course's Stripe account first (Settings → Payments)." };
+    }
+    if (!course.stripeTerminalReaderId) {
+      return { ok: false, message: "Register a card reader first (Settings → Payments)." };
+    }
+
+    // Double-submit guard: one enrollment charge on the reader at a time.
+    const inFlight = await prisma.payment.findFirst({
+      where: {
+        courseId: course.id, method: "terminal", state: "pending", bookingId: null,
+        description: { startsWith: "Membership " },
+        createdAt: { gt: new Date(Date.now() - 2 * 60 * 1000) },
+      },
+      select: { id: true },
+    });
+    if (inFlight) {
+      return { ok: false, message: "A membership payment is already in progress on the reader — finish or cancel it first." };
+    }
+
+    const { getStripe } = await import("@/lib/stripe");
+    const stripe = getStripe();
+
+    // Create payment record in pending state
+    const payment = await prisma.payment.create({
       data: {
         courseId: course.id,
-        memberId,
-        firstName,
-        lastName,
-        email,
-        phone,
-        membershipTierId: tierId,
-        membershipPaidAt: new Date(),
-        isActive: true,
+        method: "terminal",
+        state: "pending",
+        amountCents: tier.priceCents,
+        feeCents: linxFee,
+        taxCents: taxesAndFees - linxFee,
+        description: `Membership ${memberId} - ${tier.name}`,
+        createdBy: admin.id,
+        metadata: { kind: "membership", firstName, lastName, email: email || "", phone: phone || "", tierId, memberId, courseId: course.id },
       },
     });
 
-    // Log the payment receipt (in a real system, this would be a Payment record)
-    // For now, the membership payment is implicit in membershipPaidAt
+    try {
+      // Create PaymentIntent
+      const intent = await stripe.paymentIntents.create(
+        {
+          amount: totalCents,
+          currency: "usd",
+          payment_method_types: ["card_present"],
+          capture_method: "automatic",
+          application_fee_amount: linxFee,
+          description: `Membership ${memberId} - ${tier.name}`,
+          receipt_email: email || undefined,
+          metadata: { kind: "membership", paymentId: payment.id, courseId: course.id },
+        },
+        { stripeAccount: course.stripeAccountId }
+      );
+      await prisma.payment.update({ where: { id: payment.id }, data: { stripePaymentIntentId: intent.id } });
 
-    revalidatePath("/dashboard/members");
-    return {
-      ok: true,
-      message: `${firstName} ${lastName} enrolled as member ${memberId}. Charged ${method === "terminal" ? "via card reader" : "cash"}.`,
-    };
+      // Push to reader
+      await stripe.terminal.readers.processPaymentIntent(
+        course.stripeTerminalReaderId,
+        { payment_intent: intent.id },
+        { stripeAccount: course.stripeAccountId }
+      );
+
+      revalidatePath("/dashboard/members");
+      return { ok: true, message: "Processing payment on terminal...", paymentId: payment.id };
+    } catch (e) {
+      // Don't leave a stuck pending row blocking the next enrollment.
+      await prisma.payment.update({ where: { id: payment.id }, data: { state: "failed" } });
+      throw e;
+    }
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return { ok: false, message: `Member ID "${memberId}" conflict. Try again.` };
     }
-    throw e;
+    console.error("Enrollment error:", e);
+    return { ok: false, message: "Payment processing failed. Check reader is online." };
   }
+}
+
+/** Check membership payment status by payment ID. */
+export async function checkMembershipPaymentStatus(
+  paymentId: string
+): Promise<{ status: "pending" | "succeeded" | "failed"; message?: string }> {
+  const { course } = await requireCourseAdmin();
+  const payment = await prisma.payment.findFirst({
+    where: { id: paymentId, courseId: course.id },
+  });
+
+  if (!payment) return { status: "failed", message: "Payment not found" };
+
+  if (payment.state === "succeeded") {
+    return { status: "succeeded", message: "Payment successful" };
+  }
+  if (payment.state === "failed") {
+    return { status: "failed", message: "Payment failed" };
+  }
+  return { status: "pending", message: "Waiting for payment..." };
 }

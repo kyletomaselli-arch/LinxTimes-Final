@@ -16,6 +16,8 @@ import { releaseBookingCodes } from "./booking-codes";
  *    refund totalCents − bookingFeeCents and keep the fee, with
  *    refund_application_fee:false + reverse_transfer:true so the money comes
  *    back out of the course's connected account, not LinxTimes'.
+ *  - The course's optional cancellation fee (set in basis points) is DEDUCTED
+ *    from the refund so the course absorbs no Stripe processing cost on the refund.
  *  - Walk-in / phone (or any not-paid-online) bookings issue no Stripe refund;
  *    the booking is simply marked cancelled.
  */
@@ -34,9 +36,17 @@ interface CancelArgs {
   override?: boolean;
 }
 
-/** The refundable portion — everything except the non-refundable LinxTimes fee. */
-export function refundableCents(totalCents: number, bookingFeeCents: number): number {
-  return Math.max(0, totalCents - bookingFeeCents);
+/** The refundable portion — everything except the non-refundable LinxTimes fee.
+ *  Optionally deducts the course's cancellation fee (in basis points).
+ */
+export function refundableCents(
+  totalCents: number,
+  bookingFeeCents: number,
+  cancellationFeeBps: number = 0
+): number {
+  const base = Math.max(0, totalCents - bookingFeeCents);
+  const cancellationFee = Math.round((base * cancellationFeeBps) / 10000);
+  return Math.max(0, base - cancellationFee);
 }
 
 /** Hours between now and the tee time, in the course's timezone. */
@@ -89,7 +99,7 @@ export async function cancelBooking(args: CancelArgs): Promise<CancelResult> {
   let refunded = false;
   let refundedCents = 0;
   if (booking.paymentStatus === "paid_online" && booking.stripePaymentIntentId) {
-    refundedCents = refundableCents(booking.totalCents, booking.bookingFeeCents);
+    refundedCents = refundableCents(booking.totalCents, booking.bookingFeeCents, booking.course.cancellationFeeBps);
     if (refundedCents > 0) {
       const stripe = getStripe();
       await stripe.refunds.create(

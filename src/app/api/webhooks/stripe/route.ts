@@ -74,6 +74,44 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent) {
     return;
   }
 
+  // Membership payment succeeded → create member and finalize payment
+  if (pi.metadata?.kind === "membership" && pi.metadata.paymentId) {
+    const payment = await prisma.payment.findUnique({ where: { id: pi.metadata.paymentId } });
+    if (!payment || !payment.metadata) return;
+
+    const meta = payment.metadata as Record<string, string>;
+    const { firstName, lastName, email, phone, tierId, memberId, courseId } = meta;
+
+    // Upsert makes this idempotent under Stripe's webhook retries. A real
+    // failure THROWS (→ 500 → Stripe retries) instead of being swallowed —
+    // money must never be captured with no member created and no alert.
+    await prisma.member.upsert({
+      where: { courseId_memberId: { courseId, memberId } },
+      update: { membershipTierId: tierId, membershipPaidAt: new Date(), isActive: true },
+      create: {
+        courseId,
+        memberId,
+        firstName,
+        lastName,
+        email: email || null,
+        phone: phone || null,
+        membershipTierId: tierId,
+        membershipPaidAt: new Date(),
+        isActive: true,
+      },
+    });
+
+    // Mark payment as succeeded only once the member is in place.
+    await prisma.payment.update({ where: { id: pi.metadata.paymentId }, data: { state: "succeeded" } });
+    return;
+  }
+
+  // Quick charge payment succeeded → just mark as succeeded
+  if (pi.metadata?.kind === "quick_charge" && pi.metadata.paymentId) {
+    await prisma.payment.updateMany({ where: { id: pi.metadata.paymentId, state: { not: "succeeded" } }, data: { state: "succeeded" } });
+    return;
+  }
+
   const bookingId = pi.metadata?.bookingId;
   if (!bookingId) return;
   const chargeId =
@@ -88,16 +126,47 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent) {
       paymentStatus: "paid_online",
       stripeChargeId: chargeId,
       status: "confirmed",
+      slotHeldUntil: null, // Payment succeeded, release the hold
     },
   });
 
   if (result.count === 1) {
+    // Consume the rain check now that payment succeeded. This is idempotent:
+    // if the webhook retries, the rain check is already marked redeemed.
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { courseId: true, rainCheckCode: true },
+    });
+    if (booking?.rainCheckCode) {
+      await prisma.rainCheck.updateMany({
+        where: {
+          code: booking.rainCheckCode,
+          courseId: booking.courseId,
+          redeemedAt: null, // Only consume once
+        },
+        data: {
+          redeemedAt: new Date(),
+          redeemedBookingId: bookingId,
+          isActive: false,
+        },
+      });
+    }
     await sendBookingEmails(bookingId);
   }
 }
 
 async function handlePaymentFailed(pi: Stripe.PaymentIntent) {
   if (pi.metadata?.kind === "in_person" && pi.metadata.paymentId) {
+    await prisma.payment.updateMany({ where: { id: pi.metadata.paymentId }, data: { state: "failed" } });
+    return;
+  }
+  // Membership payment failed — just mark the payment as failed
+  if (pi.metadata?.kind === "membership" && pi.metadata.paymentId) {
+    await prisma.payment.updateMany({ where: { id: pi.metadata.paymentId }, data: { state: "failed" } });
+    return;
+  }
+  // Quick charge payment failed — just mark as failed
+  if (pi.metadata?.kind === "quick_charge" && pi.metadata.paymentId) {
     await prisma.payment.updateMany({ where: { id: pi.metadata.paymentId }, data: { state: "failed" } });
     return;
   }
@@ -132,10 +201,34 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
       ? charge.payment_intent
       : charge.payment_intent?.id ?? null;
   if (!piId) return;
+
+  // Only a FULL refund flips state here. Partial refunds — including our own
+  // cancellation flow, which refunds total − LinxTimes fee — are recorded by
+  // the flow that issued them (cancelBooking sets paymentStatus itself).
+  if (!charge.refunded) return;
+
+  // Online bookings carry the PI on the booking row.
   await prisma.booking.updateMany({
     where: { stripePaymentIntentId: piId },
     data: { paymentStatus: "refunded" },
   });
+
+  // In-person (terminal) charges carry the PI on the Payment row — reflect a
+  // dashboard-issued refund there too, and recompute the booking's paid state.
+  const payments = await prisma.payment.findMany({
+    where: { stripePaymentIntentId: piId },
+    select: { id: true, bookingId: true },
+  });
+  if (payments.length > 0) {
+    await prisma.payment.updateMany({
+      where: { stripePaymentIntentId: piId },
+      data: { state: "refunded" },
+    });
+    const { refreshBookingPaid } = await import("@/lib/inperson-payment");
+    for (const p of payments) {
+      if (p.bookingId) await refreshBookingPaid(p.bookingId);
+    }
+  }
 }
 
 async function handleAccountUpdated(account: Stripe.Account) {

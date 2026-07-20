@@ -1,6 +1,6 @@
 import { requireCourseAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { todayKeyInTz, fromDateKey, toDateKey, addDays, timeToMinutes } from "@/lib/datetime";
+import { todayKeyInTz, fromDateKey, toDateKey, addDays, timeToMinutes, dayOfWeek } from "@/lib/datetime";
 import { MetricsChart } from "../../_components/MetricsChart";
 
 const usd = (c: number) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -103,7 +103,7 @@ export default async function ReportsPage(props: PageProps<"/dashboard/reports">
   });
 
   const capacityForDay = (dayKey: string) => {
-    const dayOfWk = Number(new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Mon" ? 1 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Tue" ? 2 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Wed" ? 3 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Thu" ? 4 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Fri" ? 5 : new Date(dayKey + "T00:00:00Z").toUTCString().split(" ")[0] === "Sat" ? 6 : 0);
+    const dayOfWk = dayOfWeek(dayKey);
     let cap = 0;
     for (const l of layouts) {
       const t = l.teeTimeSlots.find((s) => s.dayOfWeek === dayOfWk && s.isActive);

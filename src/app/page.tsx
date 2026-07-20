@@ -148,7 +148,7 @@ export default async function HomePage() {
         <Link href="/request" className="mt-8 inline-block rounded-full bg-linx-green px-8 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_-12px_rgba(13,53,34,0.5)] transition hover:-translate-y-0.5 hover:brightness-110">
           Request access
         </Link>
-        <p className="mt-16 text-xs text-foreground/40">© {new Date().getFullYear()} LinxTimes · Powered by Stripe</p>
+        <p className="mt-16 text-xs text-foreground/40">© {new Date().getFullYear()} LinxTimes · Powered by Stripe · <Link href="/linxtimes-admin/login" className="text-foreground/20 hover:text-foreground/40 transition">admin</Link></p>
       </section>
     </main>
   );
