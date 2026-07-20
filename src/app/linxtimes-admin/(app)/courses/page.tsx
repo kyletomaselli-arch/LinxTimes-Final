@@ -10,8 +10,9 @@ async function updateCourseForm(formData: FormData) {
   await updateCourse(formData);
 }
 
-async function removeWhitelistForm(courseId: string) {
+async function removeWhitelistFormAction(formData: FormData) {
   "use server";
+  const courseId = String(formData.get("courseId") ?? "");
   return removeFromWhitelist(courseId);
 }
 
@@ -43,11 +44,8 @@ export default async function CoursesPage() {
               <div className="flex items-center gap-2">
                 <StatusPill status={c.status} />
                 {c.status !== "suspended" && (
-                  <form
-                    action={async () => {
-                      await removeWhitelistForm(c.id);
-                    }}
-                  >
+                  <form action={removeWhitelistFormAction}>
+                    <input type="hidden" name="courseId" value={c.id} />
                     <button
                       type="submit"
                       className="text-xs font-medium text-red-700 hover:text-red-900"
