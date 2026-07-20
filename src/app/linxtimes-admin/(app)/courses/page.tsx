@@ -13,7 +13,7 @@ async function updateCourseForm(formData: FormData) {
 async function removeWhitelistFormAction(formData: FormData) {
   "use server";
   const courseId = String(formData.get("courseId") ?? "");
-  return removeFromWhitelist(courseId);
+  await removeFromWhitelist(courseId);
 }
 
 export default async function CoursesPage() {
