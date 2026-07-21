@@ -86,9 +86,9 @@ export async function declineRequest(formData: FormData): Promise<AdminActionRes
   return { ok: true, message: "Request declined." };
 }
 
-/** Path A: pre-create an approved course so the owner can onboard by email. */
+/** Path A: pre-create an approved course and email the owner an onboarding link. */
 export async function whitelistCourse(formData: FormData): Promise<AdminActionResult> {
-  await requireSuperAdmin();
+  const admin = await requireSuperAdmin();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const slugInput = String(formData.get("slug") ?? "").trim();
@@ -96,8 +96,9 @@ export async function whitelistCourse(formData: FormData): Promise<AdminActionRe
     return { ok: false, message: "Name and a valid email are required." };
   }
   const slug = await uniqueSlug(slugInput ? slugify(slugInput) : slugify(name));
+  let course;
   try {
-    await prisma.course.create({
+    course = await prisma.course.create({
       data: { slug, name, email, status: "approved", linxtimesFee: 100 },
     });
   } catch (e) {
@@ -106,8 +107,24 @@ export async function whitelistCourse(formData: FormData): Promise<AdminActionRe
     }
     throw e;
   }
+
+  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+  const token = await prisma.onboardingToken.create({
+    data: { courseId: course.id, email, expiresAt },
+  });
+
+  const link = `${serverEnv.APP_URL}/onboard?token=${token.token}`;
+  await sendEmail({
+    to: email,
+    subject: `You're approved — set up ${name} on LinxTimes`,
+    html: `<p>Hi there,</p>
+      <p><b>${escape(name)}</b> has been approved on LinxTimes. Click below to set up your account and booking page:</p>
+      <p><a href="${link}" style="display:inline-block;background:#0d3522;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:600;">Set up your course</a></p>
+      <p>This link expires in 14 days.</p>`,
+  });
+
   revalidatePath("/linxtimes-admin/courses");
-  return { ok: true, message: `Whitelisted ${name}. They can now onboard at /onboard with ${email}.` };
+  return { ok: true, message: `✓ Whitelisted ${name}. Setup email sent to ${email}.` };
 }
 
 /** Remove a whitelisted course (set status back to pending). */
