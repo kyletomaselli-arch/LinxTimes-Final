@@ -3,7 +3,7 @@ import { DarkSidebar } from "../_components/DarkSidebar";
 import { MobileTabBar } from "../_components/MobileTabBar";
 import { DashboardSearch } from "../_components/DashboardSearch";
 import { AccountMenu } from "../_components/AccountMenu";
-import { goLive } from "../actions";
+import { GoLiveButton } from "./_components/GoLiveButton";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { course, admin } = await requireCourseAdmin();
@@ -25,7 +25,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {course.status !== "active" && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-7 py-2.5">
             <p className="text-sm text-amber-900"><span className="font-semibold">Your course isn&apos;t live yet.</span> Finish setup in <a href="/dashboard/settings" className="underline">Settings</a>, then go live.</p>
-            <form action={goLive}><button className="rounded-full bg-linx-green px-4 py-1.5 text-xs font-semibold text-white transition hover:brightness-110">Go live</button></form>
+            <GoLiveButton />
           </div>
         )}
 

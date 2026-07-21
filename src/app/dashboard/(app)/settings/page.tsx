@@ -4,6 +4,7 @@ import { buildConnectUrl } from "@/lib/stripe-connect";
 import { ProfileForm, PasswordForm, ReaderForm } from "./SettingsForms";
 import { TeamManager } from "./TeamManager";
 import { refreshStripeStatus } from "./actions";
+import { TakeOfflineButton } from "./_components/TakeOfflineButton";
 
 async function refreshStripeStatusForm() {
   "use server";
@@ -115,6 +116,16 @@ export default async function SettingsPage() {
       {admin.role === "owner" && (
         <div className="mt-6">
           <TeamManager members={team.map((t) => ({ id: t.id, name: t.name, email: t.email, role: t.role, isSelf: t.id === admin.id }))} />
+        </div>
+      )}
+
+      {admin.role === "owner" && course.status === "active" && (
+        <div className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
+          <h2 className="font-display text-lg font-semibold text-foreground">Course status</h2>
+          <p className="mt-1 text-sm text-foreground/55">Your course is currently live. Golfers can book tee times on your public page.</p>
+          <p className="mt-3 text-sm text-foreground/70">
+            <TakeOfflineButton />
+          </p>
         </div>
       )}
     </div>

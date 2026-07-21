@@ -160,7 +160,7 @@ export async function setBookingStatus(
 }
 
 /** Flip a course live (status → active), making its public booking page open. */
-export async function goLive(): Promise<void> {
+export async function goLive(): Promise<{ ok: boolean; message: string }> {
   const { course } = await requireCourseAdmin();
   await prisma.course.update({
     where: { id: course.id },
@@ -168,6 +168,19 @@ export async function goLive(): Promise<void> {
   });
   revalidatePath("/dashboard");
   revalidatePath(`/${course.slug}`);
+  return { ok: true, message: "✓ Your course is now live!" };
+}
+
+/** Take a course offline (status → approved). */
+export async function takeOffline(): Promise<{ ok: boolean; message: string }> {
+  const { course } = await requireCourseAdmin();
+  await prisma.course.update({
+    where: { id: course.id },
+    data: { status: "approved" },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath(`/${course.slug}`);
+  return { ok: true, message: "✓ Your course is now offline." };
 }
 
 /**
