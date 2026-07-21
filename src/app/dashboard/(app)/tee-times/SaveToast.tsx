@@ -19,7 +19,7 @@ export function SaveToast() {
 
   if (!show) return null;
   return (
-    <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-800 shadow-lg animate-fade-up">
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-800 shadow-lg animate-fade-up">
       <span>✓</span> Saved
     </div>
   );
