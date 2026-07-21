@@ -2,6 +2,7 @@ import { requireCourseAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { toDateKey } from "@/lib/datetime";
 import { addLayout, updateLayout, saveSlots, addOverride, blockRange, deleteOverride } from "./actions";
+import { SaveToast } from "./SaveToast";
 
 const inp = "rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -22,6 +23,7 @@ export default async function TeeTimesPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
+      <SaveToast />
       <h1 className="font-display text-3xl font-semibold text-foreground">Tee Times</h1>
 
       {/* Add layout */}
