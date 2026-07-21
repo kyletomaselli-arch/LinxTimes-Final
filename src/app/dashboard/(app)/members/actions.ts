@@ -275,3 +275,107 @@ export async function checkMembershipPaymentStatus(
   }
   return { status: "pending", message: "Waiting for payment..." };
 }
+
+/** Renew an existing member's membership and charge them. */
+export async function renewMembership(memberId: string): Promise<MemberActionResult & { paymentId?: string }> {
+  const { course, admin } = await requireCourseAdmin();
+
+  const member = await prisma.member.findFirst({
+    where: { id: memberId, courseId: course.id },
+    include: { membershipTier: true },
+  });
+  if (!member) return { ok: false, message: "Member not found." };
+  if (!member.membershipTier) return { ok: false, message: "Member has no membership tier." };
+
+  const tier = member.membershipTier;
+
+  // Calculate fees: 2% capped at $10, plus tax
+  const linxFee = Math.min(Math.round(tier.priceCents * 0.02), 1000);
+  const taxesAndFees = linxFee + Math.round((tier.priceCents * course.taxRateBps) / 10000);
+  const totalCents = tier.priceCents + taxesAndFees;
+
+  try {
+    if (!course.stripeAccountId || !course.stripeOnboarded) {
+      return { ok: false, message: "Connect the course's Stripe account first (Settings → Payments)." };
+    }
+    if (!course.stripeTerminalReaderId) {
+      return { ok: false, message: "Register a card reader first (Settings → Payments)." };
+    }
+
+    // Double-submit guard: one renewal charge on the reader at a time.
+    const inFlight = await prisma.payment.findFirst({
+      where: {
+        courseId: course.id,
+        method: "terminal",
+        state: "pending",
+        bookingId: null,
+        description: { startsWith: `Renewal ${member.memberId}` },
+        createdAt: { gt: new Date(Date.now() - 2 * 60 * 1000) },
+      },
+      select: { id: true },
+    });
+    if (inFlight) {
+      return { ok: false, message: "A renewal payment is already in progress on the reader — finish or cancel it first." };
+    }
+
+    const { getStripe } = await import("@/lib/stripe");
+    const stripe = getStripe();
+
+    // Create payment record in pending state
+    const payment = await prisma.payment.create({
+      data: {
+        courseId: course.id,
+        method: "terminal",
+        state: "pending",
+        amountCents: tier.priceCents,
+        feeCents: linxFee,
+        taxCents: taxesAndFees - linxFee,
+        description: `Renewal ${member.memberId} - ${tier.name}`,
+        createdBy: admin.id,
+        metadata: {
+          kind: "renewal",
+          memberId: member.id,
+          tierId: tier.id,
+          courseId: course.id,
+          firstName: member.firstName,
+          lastName: member.lastName,
+        },
+      },
+    });
+
+    try {
+      // Create PaymentIntent
+      const intent = await stripe.paymentIntents.create(
+        {
+          amount: totalCents,
+          currency: "usd",
+          payment_method_types: ["card_present"],
+          capture_method: "automatic",
+          application_fee_amount: linxFee,
+          description: `Renewal ${member.memberId} - ${tier.name}`,
+          receipt_email: member.email || undefined,
+          metadata: { kind: "renewal", paymentId: payment.id, courseId: course.id },
+        },
+        { stripeAccount: course.stripeAccountId }
+      );
+      await prisma.payment.update({ where: { id: payment.id }, data: { stripePaymentIntentId: intent.id } });
+
+      // Push to reader
+      await stripe.terminal.readers.processPaymentIntent(
+        course.stripeTerminalReaderId,
+        { payment_intent: intent.id },
+        { stripeAccount: course.stripeAccountId }
+      );
+
+      revalidatePath("/dashboard/members");
+      return { ok: true, message: "Processing renewal payment on terminal...", paymentId: payment.id };
+    } catch (e) {
+      // Don't leave a stuck pending row blocking the next renewal.
+      await prisma.payment.update({ where: { id: payment.id }, data: { state: "failed" } });
+      throw e;
+    }
+  } catch (e) {
+    console.error("Renewal error:", e);
+    return { ok: false, message: "Payment processing failed. Check reader is online." };
+  }
+}

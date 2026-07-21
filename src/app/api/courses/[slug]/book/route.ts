@@ -37,7 +37,21 @@ export async function POST(
     return NextResponse.json({ error: "Invalid booking details" }, { status: 400 });
   }
 
-  const result = await createBooking(tenant.course, parsed.data);
+  // Any unexpected failure in the booking path (e.g. the database is
+  // momentarily overloaded) becomes a clean, retryable message instead of a
+  // raw 500 error page. A booking that throws never reserved a slot, so
+  // retrying is always safe — this can't cause a double-booking.
+  let result;
+  try {
+    result = await createBooking(tenant.course, parsed.data);
+  } catch (e) {
+    console.error("Booking failed unexpectedly:", e);
+    return NextResponse.json(
+      { error: "We couldn't complete that booking right now — please try again." },
+      { status: 503 }
+    );
+  }
+
   if (!result.ok) {
     return NextResponse.json({ error: result.reason }, { status: result.status });
   }

@@ -106,6 +106,25 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent) {
     return;
   }
 
+  // Renewal payment succeeded → update member and finalize payment
+  if (pi.metadata?.kind === "renewal" && pi.metadata.paymentId) {
+    const payment = await prisma.payment.findUnique({ where: { id: pi.metadata.paymentId } });
+    if (!payment || !payment.metadata) return;
+
+    const meta = payment.metadata as Record<string, string>;
+    const { memberId, tierId } = meta;
+
+    // Update the member's membership tier and paid date
+    await prisma.member.update({
+      where: { id: memberId },
+      data: { membershipTierId: tierId, membershipPaidAt: new Date(), isActive: true },
+    });
+
+    // Mark payment as succeeded only once the member is updated.
+    await prisma.payment.update({ where: { id: pi.metadata.paymentId }, data: { state: "succeeded" } });
+    return;
+  }
+
   // Quick charge payment succeeded → just mark as succeeded
   if (pi.metadata?.kind === "quick_charge" && pi.metadata.paymentId) {
     await prisma.payment.updateMany({ where: { id: pi.metadata.paymentId, state: { not: "succeeded" } }, data: { state: "succeeded" } });

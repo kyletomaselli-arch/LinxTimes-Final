@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { upsertMember, deleteMember, importMembers, type ImportRow } from "./actions";
+import { upsertMember, deleteMember, importMembers, renewMembership, type ImportRow } from "./actions";
 
 export interface MemberRow {
   id: string;
@@ -52,6 +52,13 @@ export function MembersManager({ members }: { members: MemberRow[] }) {
       const res = await deleteMember(id);
       setMsg({ ok: res.ok, text: res.message });
       if (res.ok) router.refresh();
+    });
+  }
+
+  function renew(id: string) {
+    startTransition(async () => {
+      const res = await renewMembership(id);
+      setMsg({ ok: res.ok, text: res.message });
     });
   }
 
@@ -150,6 +157,7 @@ export function MembersManager({ members }: { members: MemberRow[] }) {
                   <td className="px-4 py-3">{m.isActive ? <span className="text-green-700">●</span> : <span className="text-foreground/30">●</span>}</td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <button onClick={() => { setEditing(m); setMsg(null); }} className="rounded-full border border-black/10 px-3 py-1 text-xs font-medium text-foreground/70 transition hover:bg-black/[0.04]">Edit</button>
+                    <button onClick={() => { setMsg(null); renew(m.id); }} disabled={pending} className="ml-1.5 rounded-full border border-blue-200 px-3 py-1 text-xs font-medium text-blue-600 transition hover:bg-blue-50 disabled:opacity-50">Renew</button>
                     <button onClick={() => remove(m.id)} className="ml-1.5 rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50">Delete</button>
                   </td>
                 </tr>
