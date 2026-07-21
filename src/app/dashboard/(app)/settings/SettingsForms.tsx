@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useActionState } from "react";
 import { updateProfile, changePassword, registerReader, type SettingsResult } from "./actions";
 
@@ -25,9 +25,20 @@ export interface CourseValues {
 }
 
 function Note({ state }: { state: SettingsResult }) {
-  if (!state.message) return null;
+  const [show, setShow] = useState(true);
+
+  useEffect(() => {
+    if (state.ok && state.message) {
+      const timer = setTimeout(() => setShow(false), 2000);
+      return () => clearTimeout(timer);
+    }
+    setShow(true);
+  }, [state.message, state.ok]);
+
+  if (!state.message || !show) return null;
   return (
-    <p className={`mt-3 rounded-lg px-3 py-2 text-sm font-medium ${state.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+    <p className={`mt-3 rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-2 ${state.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+      {state.ok && <span>✓</span>}
       {state.message}
     </p>
   );
