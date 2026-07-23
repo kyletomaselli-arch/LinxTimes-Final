@@ -235,7 +235,7 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
                               {menu === b.id && <DetailsPopover booking={b} slotTime={s.time} bookingDate={date} onClose={() => setMenu(null)} shopItems={shopItems} taxRateBps={taxRateBps} inPersonFeePerPlayer={inPersonFeePerPlayer} timezone={timezone} nowMins={nowMins} />}
                             </div>
                           ))}
-                          {s.spotsLeft > 0 && <AddRow slot={s} date={date} open={menu === s.key} onToggle={() => setMenu(menu === s.key ? null : s.key)} onClose={() => setMenu(null)} />}
+                          {s.spotsLeft > 0 && <AddRow slot={s} date={date} open={menu === s.key} onToggle={() => setMenu(menu === s.key ? null : s.key)} onClose={() => setMenu(null)} timezone={timezone} nowMins={nowMins} />}
                         </>
                       )}
                     </div>
