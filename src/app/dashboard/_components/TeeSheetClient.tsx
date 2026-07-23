@@ -274,10 +274,10 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
                                   {b.paymentStatus === "paid_online" ? "Paid" : b.paymentStatus === "paid_in_person" ? "Paid · counter" : b.paymentStatus === "partially_paid" ? "Part-paid" : b.paymentStatus === "refunded" ? "Refunded" : "Unpaid"}
                                 </span>
                               </button>
-                              {menu === b.id && <DetailsPopover booking={b} onClose={() => setMenu(null)} shopItems={shopItems} taxRateBps={taxRateBps} inPersonFeePerPlayer={inPersonFeePerPlayer} grid />}
+                              {menu === b.id && <DetailsPopover booking={b} slotTime={s.time} bookingDate={date} onClose={() => setMenu(null)} shopItems={shopItems} taxRateBps={taxRateBps} inPersonFeePerPlayer={inPersonFeePerPlayer} grid timezone={timezone} nowMins={nowMins} />}
                             </div>
                           ))}
-                          {s.spotsLeft > 0 && <AddRow slot={s} date={date} open={menu === s.key} onToggle={() => setMenu(menu === s.key ? null : s.key)} onClose={() => setMenu(null)} grid />}
+                          {s.spotsLeft > 0 && <AddRow slot={s} date={date} open={menu === s.key} onToggle={() => setMenu(menu === s.key ? null : s.key)} onClose={() => setMenu(null)} grid timezone={timezone} nowMins={nowMins} />}
                         </>
                       )}
                     </div>
@@ -297,11 +297,31 @@ function chip(active: boolean) {
   return `rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${active ? "bg-white text-[#14181c] shadow-sm" : "text-foreground/55"}`;
 }
 
-function AddRow({ slot, date, open, onToggle, onClose, grid }: { slot: Slot; date: string; open: boolean; onToggle: () => void; onClose: () => void; grid?: boolean }) {
+function AddRow({ slot, date, open, onToggle, onClose, grid, timezone, nowMins }: { slot: Slot; date: string; open: boolean; onToggle: () => void; onClose: () => void; grid?: boolean; timezone: string; nowMins: number }) {
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [withCart, setWithCart] = useState(false);
+  const [showPastWarning, setShowPastWarning] = useState(false);
+  const [confirmedPast, setConfirmedPast] = useState(false);
   const router = useRouter();
+
+  // Check if slot is in the past
+  const slotMins = timeToMinutes(slot.time);
+  const isPast = nowMins > 0 && slotMins < nowMins;
+
+  function handleToggle() {
+    if (isPast && !confirmedPast) {
+      setShowPastWarning(true);
+    } else {
+      onToggle();
+    }
+  }
+
+  function confirmPast() {
+    setConfirmedPast(true);
+    setShowPastWarning(false);
+    onToggle();
+  }
 
   function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -311,15 +331,35 @@ function AddRow({ slot, date, open, onToggle, onClose, grid }: { slot: Slot; dat
     if (withCart) fd.set("withCart", "on"); else fd.delete("withCart");
     startTransition(async () => {
       const res = await createWalkIn(fd);
-      if (res.ok) { onClose(); router.refresh(); } else setErr(res.message);
+      if (res.ok) { onClose(); setConfirmedPast(false); router.refresh(); } else setErr(res.message);
     });
   }
 
   return (
     <div className="relative">
-      <button onClick={onToggle} className={`${grid ? "w-full text-xs" : "text-xs"} rounded-md border border-dashed border-[#cdd6cf] px-2 py-1 font-semibold text-[#12a06f] transition hover:bg-[#f2fbf6]`}>
+      <button onClick={handleToggle} className={`${grid ? "w-full text-xs" : "text-xs"} rounded-md border border-dashed border-[#cdd6cf] px-2 py-1 font-semibold text-[#12a06f] transition hover:bg-[#f2fbf6]`}>
         + Add group · {slot.spotsLeft} spot{slot.spotsLeft === 1 ? "" : "s"}
       </button>
+      {showPastWarning && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/45" onClick={() => setShowPastWarning(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-[400px] rounded-xl border border-black/10 bg-white shadow-2xl">
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <h3 className="text-sm font-semibold text-foreground">Past Tee Time</h3>
+                </div>
+                <p className="text-xs text-foreground/70">This tee time ({slot.label} {slot.ampm}) is in the past. You can still add a golfer, but this will be a retroactive booking.</p>
+                <div className="flex gap-2 pt-2">
+                  <button onClick={confirmPast} className="flex-1 rounded-full bg-[#12a06f] px-3 py-2 text-xs font-semibold text-white">Proceed</button>
+                  <button onClick={() => setShowPastWarning(false)} className="rounded-full px-3 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       {open && (
         <>
           <div className="fixed inset-0 z-40 bg-black/45" onClick={onClose} />
@@ -377,8 +417,9 @@ function AddRow({ slot, date, open, onToggle, onClose, grid }: { slot: Slot; dat
   );
 }
 
-function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPersonFeePerPlayer }: { booking: SlotBooking; onClose: () => void; grid?: boolean; shopItems: ShopItem[]; taxRateBps: number; inPersonFeePerPlayer: number }) {
+function DetailsPopover({ booking, slotTime, bookingDate, onClose, grid, shopItems, taxRateBps, inPersonFeePerPlayer, timezone, nowMins }: { booking: SlotBooking; slotTime: string; bookingDate: string; onClose: () => void; grid?: boolean; shopItems: ShopItem[]; taxRateBps: number; inPersonFeePerPlayer: number; timezone: string; nowMins: number }) {
   const [mode, setMode] = useState<"view" | "edit" | "cancel" | "collect" | "review" | "paying">("view");
+  const [showPastPaymentWarning, setShowPastPaymentWarning] = useState(false);
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -406,6 +447,10 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
       // TODO: Re-enable after launch
     }
   }, [mode, booking.id]);
+  // Check if this booking's tee time is in the past
+  const slotMins = timeToMinutes(slotTime);
+  const isBookingPast = nowMins > 0 && slotMins < nowMins;
+
   const manual = booking.source !== "online";
   const remaining = Math.max(0, booking.totalCents - booking.amountPaidCents);
   const perPlayer = booking.numPlayers > 0 ? Math.round(booking.totalCents / booking.numPlayers) : booking.totalCents;
@@ -581,6 +626,26 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
 
   return (
     <>
+      {showPastPaymentWarning && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/45" onClick={() => setShowPastPaymentWarning(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-[400px] rounded-xl border border-black/10 bg-white shadow-2xl">
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <h3 className="text-sm font-semibold text-foreground">Past Tee Time</h3>
+                </div>
+                <p className="text-xs text-foreground/70">This is a retroactive booking for a tee time that has already passed. Proceeding will take payment for this past round.</p>
+                <div className="flex gap-2 pt-2">
+                  <button onClick={() => { setShowPastPaymentWarning(false); setMode("collect"); setMsg(null); }} className="flex-1 rounded-full bg-[#12a06f] px-3 py-2 text-xs font-semibold text-white">Proceed</button>
+                  <button onClick={() => setShowPastPaymentWarning(false)} className="rounded-full px-3 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       <div className="fixed inset-0 z-40 bg-black/45" onClick={onClose} />
       <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto`}>
         <div className={`w-full ${mode === "collect" ? "max-w-[650px]" : "max-w-[420px]"} rounded-xl border border-black/10 bg-white shadow-2xl my-auto`}>
@@ -622,7 +687,7 @@ function DetailsPopover({ booking, onClose, grid, shopItems, taxRateBps, inPerso
             {booking.status !== "cancelled" && (
               <div className="space-y-2 pt-2">
                 {!isPaid && (
-                  <button onClick={() => { setMode("collect"); setMsg(null); }} className="w-full rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white">Collect payment · {formatCentsCompact(remaining)}</button>
+                  <button onClick={() => { isBookingPast ? setShowPastPaymentWarning(true) : (setMode("collect"), setMsg(null)); }} className="w-full rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white">Collect payment · {formatCentsCompact(remaining)}</button>
                 )}
                 <div className="flex gap-2">
                   {booking.status === "checked_in" || booking.status === "no_show" ? (
