@@ -16,9 +16,10 @@ const parseRole = (v: FormDataEntryValue | null): CourseRole =>
   ROLES.includes(String(v) as CourseRole) ? (String(v) as CourseRole) : "staff";
 
 /**
- * Register a Stripe Terminal reader to this course (owner-only). The staff read
- * the 3-word registration code off the reader screen and enter it here. Needs
- * the course's Stripe account connected.
+ * Register a Stripe Terminal reader to LinxTimes platform account (owner-only).
+ * The staff read the 3-word registration code off the reader screen and enter it here.
+ * The reader is registered to the platform account but associated with this course,
+ * so payments go through LinxTimes → course's connected account.
  */
 export async function registerReader(_prev: SettingsResult, formData: FormData): Promise<SettingsResult> {
   const { admin, course } = await requireCourseAdmin();
@@ -30,40 +31,31 @@ export async function registerReader(_prev: SettingsResult, formData: FormData):
   try {
     const { getStripe } = await import("@/lib/stripe");
     const stripe = getStripe();
-    const opts = { stripeAccount: course.stripeAccountId } as const;
+    // No stripeAccount param — reader is registered to platform account (LinxTimes)
 
-    // Every Terminal reader must belong to a Terminal Location. Reuse the
-    // course's existing location if it has one, otherwise create it from the
-    // course address so the pro shop never has to think about this.
-    const locations = await stripe.terminal.locations.list({ limit: 1 }, opts);
+    // Every Terminal reader must belong to a Terminal Location on the platform.
+    // Reuse the platform's location if it exists, otherwise create one.
+    const locations = await stripe.terminal.locations.list({ limit: 1 });
     let locationId = locations.data[0]?.id;
     if (!locationId) {
-      const location = await stripe.terminal.locations.create(
-        {
-          display_name: course.name,
-          address: {
-            line1: course.address ?? course.name,
-            city: course.city ?? undefined,
-            state: course.state ?? undefined,
-            postal_code: course.zip ?? undefined,
-            country: "US",
-          },
-        },
-        opts
-      );
+      const location = await stripe.terminal.locations.create({
+        display_name: "LinxTimes",
+        address: { line1: "LinxTimes HQ", city: "USA", state: "US", postal_code: "00000", country: "US" },
+      });
       locationId = location.id;
     }
 
-    const reader = await stripe.terminal.readers.create(
-      { registration_code: code, label, location: locationId },
-      opts
-    );
+    const reader = await stripe.terminal.readers.create({
+      registration_code: code,
+      label: `${course.name} — ${label}`,
+      location: locationId,
+    });
     await prisma.course.update({ where: { id: course.id }, data: { stripeTerminalReaderId: reader.id } });
   } catch {
     return { ok: false, message: "Couldn't register that reader — check the code and that Stripe is set up." };
   }
   revalidatePath("/dashboard/settings");
-  return { ok: true, message: "Card reader connected." };
+  return { ok: true, message: "Card reader connected to LinxTimes." };
 }
 
 /**
