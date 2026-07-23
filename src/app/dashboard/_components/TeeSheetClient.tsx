@@ -687,7 +687,7 @@ function DetailsPopover({ booking, slotTime, bookingDate, onClose, grid, shopIte
             {booking.status !== "cancelled" && (
               <div className="space-y-2 pt-2">
                 {!isPaid && (
-                  <button onClick={() => { isBookingPast ? setShowPastPaymentWarning(true) : (setMode("collect"), setMsg(null)); }} className="w-full rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white">Collect payment · {formatCentsCompact(remaining)}</button>
+                  <button onClick={() => { if (isBookingPast) setShowPastPaymentWarning(true); else { setMode("collect"); setMsg(null); } }} className="w-full rounded-full bg-[#12a06f] px-3 py-1.5 text-xs font-semibold text-white">Collect payment · {formatCentsCompact(remaining)}</button>
                 )}
                 <div className="flex gap-2">
                   {booking.status === "checked_in" || booking.status === "no_show" ? (
