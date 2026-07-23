@@ -628,8 +628,8 @@ function DetailsPopover({ booking, slotTime, bookingDate, onClose, grid, shopIte
     <>
       {showPastPaymentWarning && (
         <>
-          <div className="fixed inset-0 z-50 bg-black/45" onClick={() => setShowPastPaymentWarning(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[60] bg-black/45" onClick={() => setShowPastPaymentWarning(false)} />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <div className="w-full max-w-[400px] rounded-xl border border-black/10 bg-white shadow-2xl">
               <div className="p-5 space-y-4">
                 <div className="flex items-center gap-3">
