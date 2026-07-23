@@ -7,7 +7,7 @@ import { cancelBooking } from "@/lib/cancellation";
 import { computePricing } from "@/lib/pricing";
 import { computeAvailability } from "@/lib/availability";
 import { buildConfirmationNo } from "@/lib/confirmation";
-import { fromDateKey, toDateKey } from "@/lib/datetime";
+import { fromDateKey, toDateKey, timeToMinutes, nowMinutesInTz } from "@/lib/datetime";
 import { planCharge, withAddons, recordManualPayment, startTerminalPayment, type ChargeMode } from "@/lib/inperson-payment";
 import { Prisma } from "@/generated/prisma";
 
@@ -240,10 +240,18 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
   const availability = await computeAvailability({ course, layout, dateKey: date });
   const slot = availability.slots.find((s) => s.time === slotTime);
   if (!slot) return { ok: false, message: "That time isn't on the schedule for this date." };
-  // Staff can add walk-ins to past slots (for late arrivals, makeup rounds). They've already
-  // confirmed via the warning modal, so skip the blocked check entirely for walk-ins.
-  if (!slot.available) return { ok: false, message: "That tee time is full." };
-  if (numPlayers > slot.spotsLeft) return { ok: false, message: `Only ${slot.spotsLeft} spot${slot.spotsLeft === 1 ? "" : "s"} left at this time.` };
+
+  // Check if this slot is in the past
+  const slotMins = timeToMinutes(slotTime);
+  const nowMins = nowMinutesInTz(course.timezone);
+  const isPast = nowMins > 0 && slotMins < nowMins && fromDateKey(date).toDateString() === new Date().toDateString();
+
+  // For past slots, staff can add walk-ins without capacity restrictions (retroactive bookings).
+  // For current/future slots, enforce normal availability rules.
+  if (!isPast) {
+    if (!slot.available) return { ok: false, message: "That tee time is full." };
+    if (numPlayers > slot.spotsLeft) return { ok: false, message: `Only ${slot.spotsLeft} spot${slot.spotsLeft === 1 ? "" : "s"} left at this time.` };
+  }
 
   const breakdown = computePricing({
     course, pricing: layout.pricing, dateKey: date, slotTime,
