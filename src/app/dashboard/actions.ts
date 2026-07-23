@@ -240,9 +240,8 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
   const availability = await computeAvailability({ course, layout, dateKey: date });
   const slot = availability.slots.find((s) => s.time === slotTime);
   if (!slot) return { ok: false, message: "That time isn't on the schedule for this date." };
-  // Staff can add walk-ins to past slots (for late arrivals, makeup rounds). Reject other
-  // blocking reasons (tournaments, overrides, etc) unless staff has already confirmed.
-  if (slot.blocked && slot.reason) return { ok: false, message: slot.reason };
+  // Staff can add walk-ins to past slots (for late arrivals, makeup rounds). They've already
+  // confirmed via the warning modal, so skip the blocked check entirely for walk-ins.
   if (!slot.available) return { ok: false, message: "That tee time is full." };
   if (numPlayers > slot.spotsLeft) return { ok: false, message: `Only ${slot.spotsLeft} spot${slot.spotsLeft === 1 ? "" : "s"} left at this time.` };
 
