@@ -26,7 +26,7 @@ export const CANCELLATION_WINDOW_HOURS = 24;
 
 export type CancelResult =
   | { ok: true; refundedCents: number; refunded: boolean }
-  | { ok: false; code: "not_found" | "already_cancelled" | "within_window" | "needs_reason"; message: string };
+  | { ok: false; code: "not_found" | "already_cancelled" | "within_window" | "needs_reason" | "insufficient_funds"; message: string };
 
 interface CancelArgs {
   bookingId: string;
@@ -102,18 +102,32 @@ export async function cancelBooking(args: CancelArgs): Promise<CancelResult> {
     refundedCents = refundableCents(booking.totalCents, booking.bookingFeeCents, booking.course.cancellationFeeBps);
     if (refundedCents > 0) {
       const stripe = getStripe();
-      await stripe.refunds.create(
-        {
-          payment_intent: booking.stripePaymentIntentId,
-          amount: refundedCents,
-          // Keep the LinxTimes application fee; pull the refund from the course.
-          refund_application_fee: false,
-          reverse_transfer: true,
-          metadata: { confirmationNo: booking.confirmationNo, reason: reason ?? "" },
-        },
-        { idempotencyKey: `${booking.confirmationNo}-refund` }
-      );
-      refunded = true;
+      try {
+        await stripe.refunds.create(
+          {
+            payment_intent: booking.stripePaymentIntentId,
+            amount: refundedCents,
+            // Keep the LinxTimes application fee; pull the refund from the course.
+            refund_application_fee: false,
+            reverse_transfer: true,
+            metadata: { confirmationNo: booking.confirmationNo, reason: reason ?? "" },
+          },
+          { idempotencyKey: `${booking.confirmationNo}-refund` }
+        );
+        refunded = true;
+      } catch (err: any) {
+        // Refund failed — likely insufficient funds in course's Stripe account
+        const errCode = err.code || err.type || "unknown";
+        if (errCode.includes("insufficient") || err.message.includes("insufficient")) {
+          return {
+            ok: false,
+            code: "insufficient_funds",
+            message: "Refund failed: Insufficient funds in the course's Stripe account. The course must deposit funds or manually refund the golfer.",
+          };
+        }
+        // Other refund errors
+        throw err;
+      }
     }
   }
 
