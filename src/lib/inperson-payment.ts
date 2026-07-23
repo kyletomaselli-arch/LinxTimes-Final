@@ -180,20 +180,22 @@ export async function startTerminalPayment(args: {
         payment_method_types: ["card_present"],
         capture_method: "automatic",
         application_fee_amount: plan.feeCents,
+        transfer_data: { destination: course.stripeAccountId },
         description: `Counter payment ${booking.confirmationNo}`,
         ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
         metadata: { kind: "in_person", paymentId: payment.id, bookingId: booking.id },
-      },
-      { stripeAccount: course.stripeAccountId }
+      }
+      // Payment created on platform account (no stripeAccount param)
     );
     await prisma.payment.update({ where: { id: payment.id }, data: { stripePaymentIntentId: intent.id } });
 
     // Push the payment to the physical reader — it prompts the golfer to tap.
+    // Reader is now registered to platform account, not course account.
     console.log(`[TERMINAL_PAYMENT] Pushing to reader ${course.stripeTerminalReaderId} for payment ${payment.id}`);
     const readerResponse = await stripe.terminal.readers.processPaymentIntent(
       course.stripeTerminalReaderId,
-      { payment_intent: intent.id },
-      { stripeAccount: course.stripeAccountId }
+      { payment_intent: intent.id }
+      // No stripeAccount param — reader is on platform account
     );
 
     console.log(`[TERMINAL_PAYMENT] Reader response:`, readerResponse);
