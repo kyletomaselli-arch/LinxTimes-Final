@@ -232,7 +232,7 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
                                   <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillCls(b.paymentStatus)}`}>{pillLabel(b)}</span>
                                 </span>
                               </button>
-                              {menu === b.id && <DetailsPopover booking={b} onClose={() => setMenu(null)} shopItems={shopItems} taxRateBps={taxRateBps} inPersonFeePerPlayer={inPersonFeePerPlayer} />}
+                              {menu === b.id && <DetailsPopover booking={b} slotTime={s.time} bookingDate={date} onClose={() => setMenu(null)} shopItems={shopItems} taxRateBps={taxRateBps} inPersonFeePerPlayer={inPersonFeePerPlayer} timezone={timezone} nowMins={nowMins} />}
                             </div>
                           ))}
                           {s.spotsLeft > 0 && <AddRow slot={s} date={date} open={menu === s.key} onToggle={() => setMenu(menu === s.key ? null : s.key)} onClose={() => setMenu(null)} />}
