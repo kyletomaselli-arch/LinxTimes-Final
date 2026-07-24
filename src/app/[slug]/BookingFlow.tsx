@@ -493,14 +493,14 @@ export function BookingFlow({
             type="checkbox"
             checked={agreedToTerms}
             onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="mt-0.5 h-5 w-5 cursor-pointer accent-[var(--course-primary)]"
-            id="agreeTerms"
+            onClick={(e) => setAgreedToTerms(!agreedToTerms)}
+            className="mt-0.5 h-5 w-5 cursor-pointer accent-[var(--course-primary)] flex-shrink-0"
           />
-          <label htmlFor="agreeTerms" className="cursor-pointer">
+          <span className="cursor-pointer" onClick={() => setAgreedToTerms(!agreedToTerms)}>
             I agree to the{" "}
             <a href="/terms" target="_blank" rel="noreferrer" className="font-medium text-course underline underline-offset-2">Terms of Service</a>,{" "}
             <a href="/privacy" target="_blank" rel="noreferrer" className="font-medium text-course underline underline-offset-2">Privacy Policy</a>, and the course&apos;s cancellation policy.
-          </label>
+          </span>
         </div>
 
         <div className="lg:col-span-2 flex justify-end">
