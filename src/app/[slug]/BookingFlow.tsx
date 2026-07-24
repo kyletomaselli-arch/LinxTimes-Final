@@ -206,7 +206,7 @@ export function BookingFlow({
   // pay-at-course, jump straight to the confirmation page.
   const handleBook = useCallback(async () => {
     // Read agreement directly from the DOM to bypass any state sync issues
-    const agreeCheckbox = document.querySelector('input[type="checkbox"]');
+    const agreeCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
     const agreedFromDOM = agreeCheckbox?.checked ?? false;
 
     setBooking(true);
