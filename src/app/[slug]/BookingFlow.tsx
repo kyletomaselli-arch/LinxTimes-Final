@@ -205,6 +205,10 @@ export function BookingFlow({
   // Create the booking server-side, then either show Stripe payment or, for
   // pay-at-course, jump straight to the confirmation page.
   const handleBook = useCallback(async () => {
+    // Read agreement directly from the DOM to bypass any state sync issues
+    const agreeCheckbox = document.querySelector('input[type="checkbox"]');
+    const agreedFromDOM = agreeCheckbox?.checked ?? false;
+
     setBooking(true);
     setBookError(null);
     try {
@@ -219,7 +223,7 @@ export function BookingFlow({
           holes,
           withCart: withCart && cartAvailable,
           memberIds: appliedCodes,
-          agreedToTerms,
+          agreedToTerms: agreedFromDOM,
           golferName: golferName.trim(),
           golferEmail: golferEmail.trim(),
           golferPhone: golferPhone.trim() || "",
