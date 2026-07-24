@@ -488,19 +488,20 @@ export function BookingFlow({
           </p>
         )}
 
-        <label className="lg:col-span-2 flex items-start gap-3 text-sm text-foreground/70">
+        <div className="lg:col-span-2 flex items-start gap-3 text-sm text-foreground/70">
           <input
             type="checkbox"
             checked={agreedToTerms}
             onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="mt-0.5 h-5 w-5 accent-[var(--course-primary)]"
+            className="mt-0.5 h-5 w-5 cursor-pointer accent-[var(--course-primary)]"
+            id="agreeTerms"
           />
-          <span>
+          <label htmlFor="agreeTerms" className="cursor-pointer">
             I agree to the{" "}
             <a href="/terms" target="_blank" rel="noreferrer" className="font-medium text-course underline underline-offset-2">Terms of Service</a>,{" "}
             <a href="/privacy" target="_blank" rel="noreferrer" className="font-medium text-course underline underline-offset-2">Privacy Policy</a>, and the course&apos;s cancellation policy.
-          </span>
-        </label>
+          </label>
+        </div>
 
         <div className="lg:col-span-2 flex justify-end">
           <PrimaryButton disabled={!canBook || booking} onClick={handleBook}>
