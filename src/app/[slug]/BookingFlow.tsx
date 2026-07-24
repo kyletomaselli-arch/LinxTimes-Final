@@ -89,7 +89,6 @@ export function BookingFlow({
   const [memberIds, setMemberIds] = useState<string[]>([""]);
   const [appliedCodes, setAppliedCodes] = useState<string[]>([]);
   const [memberChecked, setMemberChecked] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [waitlistSlot, setWaitlistSlot] = useState<Slot | null>(null);
 
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -195,7 +194,7 @@ export function BookingFlow({
 
   const validEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(golferEmail);
   const canBook =
-    !!slotTime && golferName.trim().length > 1 && validEmail && numPlayers >= 1 && agreedToTerms;
+    !!slotTime && golferName.trim().length > 1 && validEmail && numPlayers >= 1;
 
   // Tracks how many columns the tee-time grid currently renders (matches the
   // grid-cols-2 / sm:3 / lg:4 classes) so the inline drawer can be inserted
@@ -495,16 +494,13 @@ export function BookingFlow({
         <div className="lg:col-span-2 flex items-start gap-3 text-sm text-foreground/70">
           <input
             type="checkbox"
-            checked={agreedToTerms}
-            onChange={(e) => setAgreedToTerms(e.target.checked)}
-            onClick={(e) => setAgreedToTerms(!agreedToTerms)}
             className="mt-0.5 h-5 w-5 cursor-pointer accent-[var(--course-primary)] flex-shrink-0"
           />
-          <span className="cursor-pointer" onClick={() => setAgreedToTerms(!agreedToTerms)}>
+          <label className="cursor-pointer">
             I agree to the{" "}
             <a href="/terms" target="_blank" rel="noreferrer" className="font-medium text-course underline underline-offset-2">Terms of Service</a>,{" "}
             <a href="/privacy" target="_blank" rel="noreferrer" className="font-medium text-course underline underline-offset-2">Privacy Policy</a>, and the course&apos;s cancellation policy.
-          </span>
+          </label>
         </div>
 
         <div className="lg:col-span-2 flex justify-end">
