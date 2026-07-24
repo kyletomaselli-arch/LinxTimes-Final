@@ -222,7 +222,12 @@ export async function createBooking(
       {
         amount: totalCents,
         currency: "usd",
-        application_fee_amount: bookingFeeCents,
+        // NB: application_fee_amount and transfer_data.amount are mutually
+        // exclusive in Stripe. We use an explicit transfer amount so the course
+        // (not the platform) absorbs the Stripe processing fee. The platform's
+        // LinxTimes fee is what remains on the platform after the transfer:
+        // total − transferAmount = estStripeFee + bookingFeeCents, and Stripe
+        // then deducts the real processing fee, leaving ~bookingFeeCents net.
         transfer_data: { destination: course.stripeAccountId!, amount: transferAmount },
         automatic_payment_methods: { enabled: true },
         description: `Tee time ${created.confirmationNo}`,

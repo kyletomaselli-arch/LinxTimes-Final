@@ -183,7 +183,9 @@ export async function startTerminalPayment(args: {
         currency: "usd",
         payment_method_types: ["card_present"],
         capture_method: "automatic",
-        application_fee_amount: plan.feeCents,
+        // application_fee_amount and transfer_data.amount are mutually exclusive
+        // in Stripe. Use an explicit transfer amount so the course absorbs the
+        // Stripe fee; the LinxTimes in-person fee is what stays on the platform.
         transfer_data: { destination: course.stripeAccountId, amount: transferAmount },
         description: `Counter payment ${booking.confirmationNo}`,
         ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
