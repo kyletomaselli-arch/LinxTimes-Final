@@ -173,6 +173,10 @@ export async function startTerminalPayment(args: {
 
   try {
     const stripe = getStripe(); // throws if Stripe keys aren't configured yet
+    // Estimate Stripe processing fee for card_present: 2.7% + $0.05 (lower for terminal)
+    const estimatedStripeFee = Math.round(plan.chargeTotalCents * 0.027) + 5;
+    const transferAmount = Math.max(0, plan.chargeTotalCents - estimatedStripeFee - plan.feeCents);
+
     const intent = await stripe.paymentIntents.create(
       {
         amount: plan.chargeTotalCents,
@@ -180,7 +184,7 @@ export async function startTerminalPayment(args: {
         payment_method_types: ["card_present"],
         capture_method: "automatic",
         application_fee_amount: plan.feeCents,
-        transfer_data: { destination: course.stripeAccountId },
+        transfer_data: { destination: course.stripeAccountId, amount: transferAmount },
         description: `Counter payment ${booking.confirmationNo}`,
         ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
         metadata: { kind: "in_person", paymentId: payment.id, bookingId: booking.id },

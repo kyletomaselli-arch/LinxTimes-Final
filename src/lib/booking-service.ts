@@ -208,19 +208,22 @@ export async function createBooking(
     };
   }
 
-  // Online: create a destination charge. LinxTimes is the platform; the
-  // application fee is withheld automatically and the remainder is transferred
-  // to the course's connected account. on_behalf_of makes the course the
-  // settlement merchant so it bears the Stripe processing fee on its portion.
+  // Online: platform charge model. LinxTimes charges the customer on its own
+  // account, deducts the application fee, and transfers the remainder to the
+  // course's connected account. The course absorbs Stripe's processing fees
+  // (2.9% + $0.30 est), so the transfer is reduced by that amount.
   const stripe = getStripe();
   try {
+    // Estimate Stripe processing fee: 2.9% + $0.30 (typical card rate)
+    const estimatedStripeFee = Math.round(totalCents * 0.029) + 30;
+    const transferAmount = Math.max(0, totalCents - estimatedStripeFee - bookingFeeCents);
+
     const intent = await stripe.paymentIntents.create(
       {
         amount: totalCents,
         currency: "usd",
         application_fee_amount: bookingFeeCents,
-        on_behalf_of: course.stripeAccountId!,
-        transfer_data: { destination: course.stripeAccountId! },
+        transfer_data: { destination: course.stripeAccountId!, amount: transferAmount },
         automatic_payment_methods: { enabled: true },
         description: `Tee time ${created.confirmationNo}`,
         metadata: {
