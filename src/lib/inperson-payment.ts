@@ -152,6 +152,17 @@ export async function startTerminalPayment(args: {
     return { ok: false, message: "Card reader ID is invalid or empty. Check Settings → Payments." };
   }
 
+  try {
+    const stripe = getStripe();
+    // Verify the course's Stripe account has transfers enabled.
+    const account = await stripe.accounts.retrieve(course.stripeAccountId!);
+    if (!account.capabilities?.transfers || account.capabilities.transfers !== "active") {
+      return { ok: false, message: "Course Stripe account is not ready for payments. Contact Stripe support to enable transfers in Connect settings." };
+    }
+  } catch (err) {
+    return { ok: false, message: "Could not verify Stripe setup. Try again in a moment." };
+  }
+
   // Guard against a double-tap: if a terminal charge for this booking is already
   // in flight, don't start a second one (which would strand an orphan PI).
   const inFlight = await prisma.payment.findFirst({
@@ -172,7 +183,7 @@ export async function startTerminalPayment(args: {
   });
 
   try {
-    const stripe = getStripe(); // throws if Stripe keys aren't configured yet
+    const stripe = getStripe();
     // Estimate Stripe processing fee for card_present: 2.7% + $0.05 (lower for terminal)
     const estimatedStripeFee = Math.round(plan.chargeTotalCents * 0.027) + 5;
     const transferAmount = Math.max(0, plan.chargeTotalCents - estimatedStripeFee - plan.feeCents);

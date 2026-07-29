@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
-import { requireCourseAdmin } from "@/lib/session";
+import { requireCourseAdmin, isSuspended, SUSPENDED_MESSAGE } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { Prisma, type CourseRole } from "@/generated/prisma";
 
@@ -23,6 +23,7 @@ const parseRole = (v: FormDataEntryValue | null): CourseRole =>
  */
 export async function registerReader(_prev: SettingsResult, formData: FormData): Promise<SettingsResult> {
   const { admin, course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   if (admin.role !== "owner") return { ok: false, message: "Only owners can set up the card reader." };
   if (!course.stripeAccountId || !course.stripeOnboarded) return { ok: false, message: "Connect the course's Stripe account first." };
   const code = String(formData.get("code") ?? "").trim();
@@ -85,6 +86,7 @@ export async function refreshStripeStatus(): Promise<SettingsResult> {
 /** Add a team member login (owner-only). Managers/owners see revenue; staff don't. */
 export async function inviteAdmin(_prev: SettingsResult, formData: FormData): Promise<SettingsResult> {
   const { admin, course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   if (admin.role !== "owner") return { ok: false, message: "Only owners can add team members." };
 
   const name = String(formData.get("name") ?? "").trim();
@@ -109,6 +111,7 @@ export async function inviteAdmin(_prev: SettingsResult, formData: FormData): Pr
 /** Change a team member's role (owner-only; can't demote the last owner). */
 export async function setAdminRole(formData: FormData): Promise<SettingsResult> {
   const { admin, course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   if (admin.role !== "owner") return { ok: false, message: "Only owners can change roles." };
   const id = String(formData.get("id") ?? "");
   const role = parseRole(formData.get("role"));
@@ -126,6 +129,7 @@ export async function setAdminRole(formData: FormData): Promise<SettingsResult> 
 /** Remove a team member (owner-only; can't remove yourself or the last owner). */
 export async function removeAdmin(formData: FormData): Promise<SettingsResult> {
   const { admin, course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   if (admin.role !== "owner") return { ok: false, message: "Only owners can remove team members." };
   const id = String(formData.get("id") ?? "");
   if (id === admin.id) return { ok: false, message: "You can't remove yourself." };
@@ -148,6 +152,7 @@ const hex = (v: FormDataEntryValue | null, dflt: string) => {
 
 export async function updateProfile(_prev: SettingsResult, formData: FormData): Promise<SettingsResult> {
   const { course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { ok: false, message: "Course name is required." };
 

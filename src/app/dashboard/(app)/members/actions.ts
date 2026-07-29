@@ -218,28 +218,26 @@ export async function enrollNewMember(formData: FormData): Promise<MemberActionR
 
     try {
       // Create PaymentIntent
-      const intent = await stripe.paymentIntents.create(
-        {
-          amount: totalCents,
-          currency: "usd",
-          payment_method_types: ["card_present"],
-          capture_method: "automatic",
-          application_fee_amount: linxFee,
-          description: `Membership ${memberId} - ${tier.name}`,
-          receipt_email: email || undefined,
-          metadata: { kind: "membership", paymentId: payment.id, courseId: course.id },
-        },
-        { stripeAccount: course.stripeAccountId }
-      );
+      // Create PaymentIntent on platform account with on_behalf_of.
+      // The course absorbs Stripe's processing fee; LinxTimes keeps the flat fee.
+      const intent = await stripe.paymentIntents.create({
+        amount: totalCents,
+        currency: "usd",
+        payment_method_types: ["card_present"],
+        capture_method: "automatic",
+        on_behalf_of: course.stripeAccountId!,
+        application_fee_amount: linxFee,
+        description: `Membership ${memberId} - ${tier.name}`,
+        receipt_email: email || undefined,
+        metadata: { kind: "membership", paymentId: payment.id, courseId: course.id },
+      });
       await prisma.payment.update({ where: { id: payment.id }, data: { stripePaymentIntentId: intent.id } });
 
-      // Push to reader
+      // Push to reader (reader lives on platform account, not course account)
       await stripe.terminal.readers.processPaymentIntent(
         course.stripeTerminalReaderId,
-        { payment_intent: intent.id },
-        { stripeAccount: course.stripeAccountId }
+        { payment_intent: intent.id }
       );
-
       revalidatePath("/dashboard/members");
       return { ok: true, message: "Processing payment on terminal...", paymentId: payment.id };
     } catch (e) {
@@ -344,27 +342,25 @@ export async function renewMembership(memberId: string): Promise<MemberActionRes
     });
 
     try {
-      // Create PaymentIntent
-      const intent = await stripe.paymentIntents.create(
-        {
-          amount: totalCents,
-          currency: "usd",
-          payment_method_types: ["card_present"],
-          capture_method: "automatic",
-          application_fee_amount: linxFee,
-          description: `Renewal ${member.memberId} - ${tier.name}`,
-          receipt_email: member.email || undefined,
-          metadata: { kind: "renewal", paymentId: payment.id, courseId: course.id },
-        },
-        { stripeAccount: course.stripeAccountId }
-      );
+      // Create PaymentIntent on platform account with on_behalf_of.
+      // The course absorbs Stripe's processing fee; LinxTimes keeps the flat fee.
+      const intent = await stripe.paymentIntents.create({
+        amount: totalCents,
+        currency: "usd",
+        payment_method_types: ["card_present"],
+        capture_method: "automatic",
+        on_behalf_of: course.stripeAccountId!,
+        application_fee_amount: linxFee,
+        description: `Renewal ${member.memberId} - ${tier.name}`,
+        receipt_email: member.email || undefined,
+        metadata: { kind: "renewal", paymentId: payment.id, courseId: course.id },
+      });
       await prisma.payment.update({ where: { id: payment.id }, data: { stripePaymentIntentId: intent.id } });
 
-      // Push to reader
+      // Push to reader (reader lives on platform account, not course account)
       await stripe.terminal.readers.processPaymentIntent(
         course.stripeTerminalReaderId,
-        { payment_intent: intent.id },
-        { stripeAccount: course.stripeAccountId }
+        { payment_intent: intent.id }
       );
 
       revalidatePath("/dashboard/members");

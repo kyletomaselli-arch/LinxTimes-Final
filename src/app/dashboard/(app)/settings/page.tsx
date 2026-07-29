@@ -5,6 +5,7 @@ import { ProfileForm, PasswordForm, ReaderForm } from "./SettingsForms";
 import { TeamManager } from "./TeamManager";
 import { refreshStripeStatus } from "./actions";
 import { TakeOfflineButton } from "./_components/TakeOfflineButton";
+import { GoLiveChecklist } from "./_components/GoLiveChecklist";
 
 async function refreshStripeStatusForm() {
   "use server";
@@ -31,6 +32,9 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="font-display text-3xl font-semibold text-foreground">Settings</h1>
+
+      {/* Go-live checklist — only while the course isn't live yet (owner only) */}
+      {admin.role === "owner" && course.status !== "active" && <GoLiveChecklist course={course} />}
 
       {/* Stripe connection */}
       <div className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
@@ -123,9 +127,9 @@ export default async function SettingsPage() {
         <div className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
           <h2 className="font-display text-lg font-semibold text-foreground">Course status</h2>
           <p className="mt-1 text-sm text-foreground/55">Your course is currently live. Golfers can book tee times on your public page.</p>
-          <p className="mt-3 text-sm text-foreground/70">
+          <div className="mt-3 text-sm text-foreground/70">
             <TakeOfflineButton />
-          </p>
+          </div>
         </div>
       )}
     </div>

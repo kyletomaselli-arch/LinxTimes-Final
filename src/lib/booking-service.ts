@@ -208,27 +208,29 @@ export async function createBooking(
     };
   }
 
-  // Online: platform charge model. LinxTimes charges the customer on its own
-  // account, deducts the application fee, and transfers the remainder to the
-  // course's connected account. The course absorbs Stripe's processing fees
-  // (2.9% + $0.30 est), so the transfer is reduced by that amount.
+  // Online: platform charge model with on_behalf_of. LinxTimes charges the
+  // customer, keeps its flat application fee, and the course absorbs the actual
+  // Stripe processing fee. With on_behalf_of, the course becomes the merchant
+  // of record, so Stripe deducts its fee from what transfers to them. This
+  // eliminates fee-estimation guessing and ensures LinxTimes' fee is exact.
   const stripe = getStripe();
   try {
-    // Estimate Stripe processing fee: 2.9% + $0.30 (typical card rate)
-    const estimatedStripeFee = Math.round(totalCents * 0.029) + 30;
-    const transferAmount = Math.max(0, totalCents - estimatedStripeFee - bookingFeeCents);
+    // Verify the course's Stripe account has transfers enabled.
+    const account = await stripe.accounts.retrieve(course.stripeAccountId!);
+    if (!account.capabilities?.transfers || account.capabilities.transfers !== "active") {
+      return {
+        ok: false,
+        status: 402,
+        reason: "Course Stripe account is not ready for payments. Contact the course to enable transfers in Stripe Connect settings.",
+      };
+    }
 
     const intent = await stripe.paymentIntents.create(
       {
         amount: totalCents,
         currency: "usd",
-        // NB: application_fee_amount and transfer_data.amount are mutually
-        // exclusive in Stripe. We use an explicit transfer amount so the course
-        // (not the platform) absorbs the Stripe processing fee. The platform's
-        // LinxTimes fee is what remains on the platform after the transfer:
-        // total − transferAmount = estStripeFee + bookingFeeCents, and Stripe
-        // then deducts the real processing fee, leaving ~bookingFeeCents net.
-        transfer_data: { destination: course.stripeAccountId!, amount: transferAmount },
+        on_behalf_of: course.stripeAccountId!,
+        application_fee_amount: bookingFeeCents,
         automatic_payment_methods: { enabled: true },
         description: `Tee time ${created.confirmationNo}`,
         metadata: {

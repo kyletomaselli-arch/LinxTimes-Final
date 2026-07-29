@@ -119,7 +119,7 @@ export function QuickChargePanel({ shopItems, taxRateBps }: { shopItems: ShopIte
           }}
           className="rounded-full bg-course px-4 py-2 text-sm font-semibold text-course-contrast"
         >
-          💳 Quick charge
+          <i className="ti ti-credit-card" aria-hidden="true" /> Quick charge
         </button>
       </div>
     );

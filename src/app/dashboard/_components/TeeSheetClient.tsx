@@ -89,7 +89,7 @@ function CartTag({ on }: { on: boolean }) {
   if (!on) return null;
   return (
     <span title="Riding — cart" aria-label="cart" className="inline-flex items-center gap-1 rounded-full bg-[#eef4ff] px-2 py-1 text-[11px] font-semibold text-[#2b6cb0]">
-      🛺 Cart
+      <i className="ti ti-car" style={{ fontSize: "12px" }} aria-hidden="true" /> Cart
     </span>
   );
 }
@@ -269,7 +269,7 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
                                 <span className="truncate text-foreground/80">{b.golferName.split(" ")[0]}</span>
                                 <span className="text-[10px] text-foreground/60">·</span>
                                 <span className="shrink-0 text-foreground/70">{b.numPlayers}p</span>
-                                {b.withCart && <span className="ml-auto shrink-0" title="Riding — cart" aria-label="cart">🛺</span>}
+                                {b.withCart && <i className="ml-auto shrink-0 ti ti-car" title="Riding — cart" aria-label="cart" style={{ fontSize: "12px" }} aria-hidden="true" />}
                                 <span className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${pillCls(b.paymentStatus)}`}>
                                   {b.paymentStatus === "paid_online" ? "Paid" : b.paymentStatus === "paid_in_person" ? "Paid · counter" : b.paymentStatus === "partially_paid" ? "Part-paid" : b.paymentStatus === "refunded" ? "Refunded" : "Unpaid"}
                                 </span>
@@ -658,7 +658,7 @@ function DetailsPopover({ booking, slotTime, bookingDate, onClose, grid, shopIte
             <div className="text-xs text-foreground/50">{booking.golferEmail}</div>
             {booking.golferPhone && <div className="text-xs text-foreground/50">{booking.golferPhone}</div>}
             <div className="flex items-center justify-between text-xs text-foreground/70">
-              <span>{booking.numPlayers} players · {booking.holes}H · {booking.withCart ? "🛺 Cart" : "🚶 Walking"}{booking.memberCount > 0 ? ` · ★ ${booking.memberCount} member${booking.memberCount === 1 ? "" : "s"}` : ""}</span>
+              <span>{booking.numPlayers} players · {booking.holes}H · {booking.withCart ? <><i className="ti ti-car" style={{ fontSize: "12px", marginRight: "2px" }} aria-hidden="true" /> Cart</> : <><i className="ti ti-walk" style={{ fontSize: "12px", marginRight: "2px" }} aria-hidden="true" /> Walking</>}{booking.memberCount > 0 ? ` · ★ ${booking.memberCount} member${booking.memberCount === 1 ? "" : "s"}` : ""}</span>
               <span className="font-semibold">{formatCentsCompact(booking.totalCents)}</span>
             </div>
             {booking.amountPaidCents > 0 && remaining > 0 && (
@@ -668,7 +668,7 @@ function DetailsPopover({ booking, slotTime, bookingDate, onClose, grid, shopIte
             {lastPayment && (
               <div className={`rounded-lg p-2.5 text-[11px] font-medium ${lastPayment.state === "succeeded" ? "bg-[#eaf7ef] text-[#2f855a]" : lastPayment.state === "pending" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span>{lastPayment.state === "succeeded" ? "✓" : lastPayment.state === "pending" ? "⏳" : "✗"} Last payment: {lastPayment.state} · {formatCentsCompact(lastPayment.amountCents)}</span>
+                  <span>{lastPayment.state === "succeeded" ? "✓" : lastPayment.state === "pending" ? <i className="ti ti-clock" aria-hidden="true" /> : "✗"} Last payment: {lastPayment.state} · {formatCentsCompact(lastPayment.amountCents)}</span>
                   {lastPayment.state === "pending" && lastPayment.method === "terminal" && (
                     <button type="button" disabled={pending} onClick={doCancelStuckPayment} className="shrink-0 rounded-full border border-amber-700/30 px-2 py-0.5 text-[10px] font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50">
                       {pending ? "Cancelling…" : "Cancel"}

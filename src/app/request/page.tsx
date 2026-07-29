@@ -21,7 +21,7 @@ export default function RequestPage() {
 
         {state.ok ? (
           <div className="mt-6 rounded-xl bg-green-50 p-5 text-center">
-            <div className="text-3xl">⛳</div>
+            <i className="ti ti-check text-3xl text-green-800" aria-hidden="true" />
             <p className="mt-2 font-medium text-green-800">{state.message}</p>
           </div>
         ) : (

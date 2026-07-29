@@ -143,7 +143,7 @@ export default async function BookingsPage(props: PageProps<"/dashboard/bookings
                       <td className="px-4 py-3">
                         <div className="font-medium">{b.golferName}</div>
                         <div className="text-xs text-foreground/45">
-                          {b.confirmationNo} · {b.numPlayers}p · {b.holes}H · {b.withCart ? "🛺 Cart" : "🚶 Walk"}
+                          {b.confirmationNo} · {b.numPlayers}p · {b.holes}H · {b.withCart ? <><i className="ti ti-car" aria-hidden="true" /> Cart</> : <><i className="ti ti-walk" aria-hidden="true" /> Walk</>}
                           {b.memberCount > 0 ? ` · ★ ${b.memberCount} member${b.memberCount === 1 ? "" : "s"}` : ""}
                         </div>
                       </td>

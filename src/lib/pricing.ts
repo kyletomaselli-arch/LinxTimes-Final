@@ -138,9 +138,9 @@ export function computePricing(input: PricingInput): PriceBreakdown {
   const creditCents = credit ? Math.min(Math.max(0, credit.amountCents), afterPromo) : 0;
   const netCourse = afterPromo - creditCents;
 
-  // Sales tax on (green + cart − discount − credit) + convenience fee (bundled
-  // with the fee in the UI as "Taxes & fees"). The course remits it.
-  const taxableCents = netCourse + bookingFeeCents;
+  // Sales tax on (green + cart − discount − credit) only. The LinxTimes convenience
+  // fee is not taxable (it's a service, not a golf fee). Shown as "Taxes & fees" in UI.
+  const taxableCents = netCourse;
   const taxCents = Math.round((taxableCents * (course.taxRateBps ?? 0)) / 10000);
 
   const totalCents = netCourse + bookingFeeCents + taxCents;

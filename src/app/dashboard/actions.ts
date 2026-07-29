@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireCourseAdmin } from "@/lib/session";
+import { requireCourseAdmin, isSuspended, SUSPENDED_MESSAGE } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { cancelBooking } from "@/lib/cancellation";
 import { computePricing } from "@/lib/pricing";
@@ -40,6 +40,7 @@ async function logPaymentError(courseId: string, bookingId: string, errorType: s
  */
 export async function collectPayment(formData: FormData): Promise<ActionResult & { paymentId?: string }> {
   const { admin, course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   const bookingId = String(formData.get("bookingId") ?? "");
   const modeStr = String(formData.get("mode") ?? "full");
   const isMemberMode = modeStr === "member";
@@ -159,9 +160,26 @@ export async function setBookingStatus(
   };
 }
 
-/** Flip a course live (status → active), making its public booking page open. */
+/**
+ * Flip a course live (status → active), making its public booking page open.
+ * Refuses unless every essential setup step is done (tee times, pricing, Stripe
+ * connected + verified, transfers enabled) — see getCourseReadiness. This is the
+ * authoritative gate; the Settings checklist just mirrors the same result.
+ */
 export async function goLive(): Promise<{ ok: boolean; message: string }> {
   const { course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
+
+  const { getCourseReadiness } = await import("@/lib/readiness");
+  const readiness = await getCourseReadiness(course);
+  if (!readiness.ready) {
+    const missing = readiness.checks.filter((c) => !c.ok).map((c) => c.label);
+    return {
+      ok: false,
+      message: `Finish setup before going live: ${missing.join(", ")}.`,
+    };
+  }
+
   await prisma.course.update({
     where: { id: course.id },
     data: { status: "active", onboardedAt: course.onboardedAt ?? new Date() },
@@ -214,6 +232,7 @@ export async function adminAvailableSlots(
  */
 export async function createWalkIn(formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
 
   const layoutId = String(formData.get("layoutId") ?? "");
   const date = String(formData.get("date") ?? "");
@@ -314,6 +333,7 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
  */
 export async function editBooking(formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   const id = String(formData.get("bookingId") ?? "");
   const golferName = String(formData.get("golferName") ?? "").trim();
   const golferPhone = String(formData.get("golferPhone") ?? "").trim() || null;
@@ -488,20 +508,18 @@ export async function cancelPendingPayment(bookingId: string): Promise<ActionRes
   }
 
   // Best-effort: stop the physical reader and void the intent on Stripe.
-  if (course.stripeAccountId) {
-    try {
-      const { getStripe } = await import("@/lib/stripe");
-      const stripe = getStripe();
-      const opts = { stripeAccount: course.stripeAccountId } as const;
-      if (course.stripeTerminalReaderId) {
-        await stripe.terminal.readers.cancelAction(course.stripeTerminalReaderId, {}, opts).catch(() => {});
-      }
-      if (payment.stripePaymentIntentId) {
-        await stripe.paymentIntents.cancel(payment.stripePaymentIntentId, {}, opts).catch(() => {});
-      }
-    } catch (err) {
-      console.error("[cancelPendingPayment] Stripe cancel failed", err);
+  // Both reader and PI are on the platform account.
+  try {
+    const { getStripe } = await import("@/lib/stripe");
+    const stripe = getStripe();
+    if (course.stripeTerminalReaderId) {
+      await stripe.terminal.readers.cancelAction(course.stripeTerminalReaderId).catch(() => {});
     }
+    if (payment.stripePaymentIntentId) {
+      await stripe.paymentIntents.cancel(payment.stripePaymentIntentId).catch(() => {});
+    }
+  } catch (err) {
+    console.error("[cancelPendingPayment] Stripe cancel failed", err);
   }
 
   // Clear the lock. A succeeded webhook can still override this back to succeeded.
@@ -674,6 +692,7 @@ export async function searchDashboard(query: string): Promise<DashboardSearchRes
 /** Charge for add-ons or custom amount without a booking (Quick Charge). */
 export async function chargeQuick(formData: FormData): Promise<ActionResult & { paymentId?: string }> {
   const { course, admin } = await requireCourseAdmin();
+  if (isSuspended(course)) return { ok: false, message: SUSPENDED_MESSAGE };
   const email = String(formData.get("email") ?? "").trim();
   const method = String(formData.get("method")) === "cash" ? "cash" : "terminal";
   const amountCents = Math.max(0, Math.round(Number(formData.get("amountCents") ?? 0)));
@@ -682,8 +701,8 @@ export async function chargeQuick(formData: FormData): Promise<ActionResult & { 
     return { ok: false, message: "Email and amount are required." };
   }
 
-  // $0.50 fee if charge is over $5
-  const feeCents = amountCents > 500 ? 50 : 0;
+  // $0.50 fee on every transaction
+  const feeCents = 50;
   // Calculate tax on the amount (fee is not taxed)
   const taxCents = Math.round((amountCents * course.taxRateBps) / 10000);
   const totalCents = amountCents + feeCents + taxCents;
@@ -749,27 +768,26 @@ export async function chargeQuick(formData: FormData): Promise<ActionResult & { 
     });
 
     try {
-      // Create PaymentIntent
-      const intent = await stripe.paymentIntents.create(
-        {
-          amount: totalCents,
-          currency: "usd",
-          payment_method_types: ["card_present"],
-          capture_method: "automatic",
-          application_fee_amount: feeCents,
-          description: "Quick charge",
-          ...(email ? { receipt_email: email } : {}),
-          metadata: { kind: "quick_charge", paymentId: payment.id, courseId: course.id },
-        },
-        { stripeAccount: course.stripeAccountId }
-      );
+      // Create PaymentIntent on platform account with on_behalf_of.
+      // The course absorbs Stripe's processing fee; LinxTimes keeps the flat fee.
+      // The reader is registered on the platform account.
+      const intent = await stripe.paymentIntents.create({
+        amount: totalCents,
+        currency: "usd",
+        payment_method_types: ["card_present"],
+        capture_method: "automatic",
+        on_behalf_of: course.stripeAccountId!,
+        application_fee_amount: feeCents,
+        description: "Quick charge",
+        ...(email ? { receipt_email: email } : {}),
+        metadata: { kind: "quick_charge", paymentId: payment.id, courseId: course.id },
+      });
       await prisma.payment.update({ where: { id: payment.id }, data: { stripePaymentIntentId: intent.id } });
 
-      // Push to reader
+      // Push to reader (reader lives on platform account, not course account)
       await stripe.terminal.readers.processPaymentIntent(
         course.stripeTerminalReaderId,
-        { payment_intent: intent.id },
-        { stripeAccount: course.stripeAccountId }
+        { payment_intent: intent.id }
       );
 
       return { ok: true, message: "Processing payment on terminal...", paymentId: payment.id };

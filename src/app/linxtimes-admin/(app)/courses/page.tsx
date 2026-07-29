@@ -1,5 +1,6 @@
 import { requireSuperAdmin } from "@/lib/super-session";
 import { prisma } from "@/lib/prisma";
+import { getCourseReadiness, type Readiness } from "@/lib/readiness";
 import { WhitelistForm } from "../../_components/WhitelistForm";
 import { updateCourse, removeFromWhitelist } from "../actions";
 
@@ -23,6 +24,20 @@ export default async function CoursesPage() {
     include: { _count: { select: { bookings: true } } },
   });
 
+  // Compute go-live readiness for every course that isn't already live, so the
+  // operator sees what's missing before manually flipping it to Active. Only
+  // non-active courses are checked (live ones need no warning), and the Stripe
+  // transfers call inside getCourseReadiness only fires for stripe-connected
+  // accounts — so this stays cheap at the current course count.
+  const readinessById = new Map<string, Readiness>();
+  await Promise.all(
+    courses
+      .filter((c) => c.status !== "active")
+      .map(async (c) => {
+        readinessById.set(c.id, await getCourseReadiness(c));
+      })
+  );
+
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="font-display text-3xl font-semibold text-foreground">Courses</h1>
@@ -31,7 +46,12 @@ export default async function CoursesPage() {
       <div className="mt-6"><WhitelistForm /></div>
 
       <div className="mt-6 space-y-3">
-        {courses.map((c) => (
+        {courses.map((c) => {
+          const readiness = readinessById.get(c.id);
+          const missing = readiness && !readiness.ready
+            ? readiness.checks.filter((chk) => !chk.ok).map((chk) => chk.label)
+            : [];
+          return (
           <div key={c.id} className="rounded-2xl bg-white p-4 shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -57,6 +77,12 @@ export default async function CoursesPage() {
                 )}
               </div>
             </div>
+            {missing.length > 0 && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                <span className="font-semibold">⚠️ Not ready to go live.</span> Setting this course to{" "}
+                <span className="font-medium">Active</span> will open its public page before setup is complete. Missing: {missing.join(", ")}.
+              </div>
+            )}
             <form action={updateCourseForm} className="mt-3 flex flex-wrap items-end gap-3 border-t border-black/5 pt-3">
               <input type="hidden" name="courseId" value={c.id} />
               <label className="block"><span className={lbl}>Online fee ($/player)</span><input name="fee" inputMode="decimal" defaultValue={(c.linxtimesFee / 100).toFixed(2)} className={`${inp} w-28`} /></label>
@@ -73,7 +99,8 @@ export default async function CoursesPage() {
               <button className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium text-foreground/70 hover:bg-black/[0.04]">Save</button>
             </form>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

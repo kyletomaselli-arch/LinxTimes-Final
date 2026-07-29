@@ -22,12 +22,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </div>
 
-        {course.status !== "active" && (
+        {course.status === "suspended" ? (
+          <div className="border-b border-red-200 bg-red-50 px-7 py-2.5">
+            <p className="text-sm text-red-900">
+              <span className="font-semibold">Your account is suspended.</span> Existing bookings are still viewable so you can honor them, but new bookings, payments and settings are locked. Contact <a href="mailto:support@linxtimes.com" className="underline">LinxTimes</a> to reactivate.
+            </p>
+          </div>
+        ) : course.status !== "active" ? (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-7 py-2.5">
             <p className="text-sm text-amber-900"><span className="font-semibold">Your course isn&apos;t live yet.</span> Finish setup in <a href="/dashboard/settings" className="underline">Settings</a>, then go live.</p>
             <GoLiveButton />
           </div>
-        )}
+        ) : null}
 
         <main className="min-w-0 flex-1 p-4 pb-24 sm:p-7 md:pb-7">{children}</main>
       </div>

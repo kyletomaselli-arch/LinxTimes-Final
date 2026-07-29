@@ -382,7 +382,7 @@ export function BookingFlow({
                       : "border-black/10 text-foreground/60 hover:bg-black/[0.02]"
                   }`}
                 >
-                  <span aria-hidden>🛺</span> Ride (cart)
+                  <i className="ti ti-car" aria-hidden="true" /> Ride (cart)
                 </button>
                 <button
                   type="button"
@@ -394,7 +394,7 @@ export function BookingFlow({
                       : "border-black/10 text-foreground/60 hover:bg-black/[0.02]"
                   }`}
                 >
-                  <span aria-hidden>🚶</span> Walking
+                  <i className="ti ti-walk" aria-hidden="true" /> Walking
                 </button>
               </div>
             </div>
@@ -1043,7 +1043,7 @@ function SlotSkeleton() {
 function EmptyState({ reason }: { reason?: string }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 py-12 text-center">
-      <div className="text-3xl">⛳</div>
+      <i className="ti ti-layout-board text-3xl text-foreground/40" aria-hidden="true" />
       <p className="mt-3 text-sm font-medium text-foreground/70">
         No tee times available
       </p>

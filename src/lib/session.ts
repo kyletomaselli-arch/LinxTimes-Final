@@ -59,3 +59,16 @@ export async function requireCourseAdmin(): Promise<{ admin: CourseAdmin; course
 
   return { admin, course };
 }
+
+/**
+ * Shown to a suspended course's staff and returned by blocked mutations.
+ * Suspended courses keep READ access (they can still see existing/upcoming
+ * bookings and honor them) but every money/new-booking/settings mutation is
+ * refused — see isSuspended usage across the dashboard actions.
+ */
+export const SUSPENDED_MESSAGE =
+  "Your account is suspended. Existing bookings are still viewable, but new bookings, payments and settings are locked. Contact LinxTimes to reactivate.";
+
+export function isSuspended(course: Pick<Course, "status">): boolean {
+  return course.status === "suspended";
+}
