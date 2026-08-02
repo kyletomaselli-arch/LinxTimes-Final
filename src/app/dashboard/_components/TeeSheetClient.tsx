@@ -188,11 +188,20 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#12a06f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto opacity-70" aria-hidden="true">
             <path d="M6 21V3l12 4.5L6 12" /><circle cx="15" cy="20" r="1.6" />
           </svg>
-          <p className="mt-4 text-sm font-medium text-foreground/70">No tee times scheduled for this day</p>
-          <p className="mt-1 text-xs text-foreground/45">Set a weekly schedule for this course and its tee times will appear here.</p>
-          <Link href="/dashboard/tee-times" className="mt-5 inline-block rounded-full bg-[#12a06f] px-5 py-2 text-xs font-semibold text-white transition hover:brightness-110">
-            Set up tee times
-          </Link>
+          {slots.length === 0 ? (
+            <>
+              <p className="mt-4 text-sm font-medium text-foreground/70">No tee times scheduled for this day</p>
+              <p className="mt-1 text-xs text-foreground/45">Set a weekly schedule for this course and its tee times will appear here.</p>
+              <Link href="/dashboard/tee-times" className="mt-5 inline-block rounded-full bg-[#12a06f] px-5 py-2 text-xs font-semibold text-white transition hover:brightness-110">
+                Set up tee times
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="mt-4 text-sm font-medium text-foreground/70">All tee times for today have passed</p>
+              <p className="mt-1 text-xs text-foreground/45">Check back tomorrow or click "Show past" to see earlier slots.</p>
+            </>
+          )}
         </div>
       )}
 
