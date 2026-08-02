@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useActionState } from "react";
 import { updateProfile, changePassword, registerReader, type SettingsResult } from "./actions";
+import { SaveButton } from "../_components/SaveButton";
 
 const inp = "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
 const init: SettingsResult = { ok: false, message: "" };
@@ -170,7 +171,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
         <F label="Secondary color"><input name="secondaryColor" type="color" defaultValue={c.secondaryColor} className="h-10 w-16 rounded-lg border border-black/10" /></F>
       </div>
       <Note state={state} />
-      <button disabled={pending} className="mt-4 rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast disabled:opacity-50">{pending ? "Saving…" : "Save profile"}</button>
+      <SaveButton label="Save profile" pending={pending} state={state} />
     </form>
   );
 }
@@ -182,9 +183,7 @@ export function ReaderForm({ hasReader }: { hasReader: boolean }) {
       <div className="flex flex-wrap items-end gap-2">
         <F label="Registration code"><input name="code" placeholder="quick-brown-fox" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-course" /></F>
         <F label="Label"><input name="label" placeholder="Pro shop reader" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-course" /></F>
-        <button disabled={pending} className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-black/[0.04] disabled:opacity-50">
-          {pending ? "Connecting…" : hasReader ? "Replace reader" : "Connect reader"}
-        </button>
+        <SaveButton label={hasReader ? "Replace reader" : "Connect reader"} pending={pending} state={state} className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-black/[0.04] disabled:opacity-50" />
       </div>
       <Note state={state} />
     </form>
@@ -201,7 +200,7 @@ export function PasswordForm() {
         <F label="New password"><input name="next" type="password" autoComplete="new-password" required className={inp} /></F>
       </div>
       <Note state={state} />
-      <button disabled={pending} className="mt-4 rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast disabled:opacity-50">{pending ? "Updating…" : "Update password"}</button>
+      <SaveButton label="Update password" pending={pending} state={state} />
     </form>
   );
 }

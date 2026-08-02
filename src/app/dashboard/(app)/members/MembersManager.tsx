@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { upsertMember, deleteMember, importMembers, renewMembership, type ImportRow } from "./actions";
 
@@ -29,9 +29,18 @@ const BLANK: Partial<MemberRow> = {
 export function MembersManager({ members }: { members: MemberRow[] }) {
   const [editing, setEditing] = useState<Partial<MemberRow> | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (msg?.ok) {
+      setShowSaved(true);
+      const timer = setTimeout(() => setShowSaved(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [msg?.ok]);
 
   function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -122,7 +131,14 @@ export function MembersManager({ members }: { members: MemberRow[] }) {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isActive" defaultChecked={editing.isActive ?? true} className="h-4 w-4 accent-[var(--course-primary)]" /> Active</label>
           </div>
           <div className="mt-4 flex gap-2">
-            <button disabled={pending} className="rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast disabled:opacity-50">{pending ? "Saving…" : "Save member"}</button>
+            <div className="flex items-center gap-2">
+              <button disabled={pending} className="rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast disabled:opacity-50">{pending ? "Saving…" : "Save member"}</button>
+              {showSaved && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 animate-fade-out">
+                  <i className="ti ti-check" aria-hidden="true" /> Saved
+                </span>
+              )}
+            </div>
             <button type="button" onClick={() => setEditing(null)} className="rounded-full px-4 py-2 text-sm font-medium text-foreground/60 hover:bg-black/[0.04]">Cancel</button>
           </div>
         </form>
