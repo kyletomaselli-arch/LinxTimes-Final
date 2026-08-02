@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireCourseAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { buildConnectUrl } from "@/lib/stripe-connect";
@@ -31,7 +32,12 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="font-display text-3xl font-semibold text-foreground">Settings</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-3xl font-semibold text-foreground">Settings</h1>
+        <Link href="/dashboard/settings/refunds-cancellations" className="text-sm font-medium text-linx-green hover:text-linx-green/80 transition">
+          Refunds & cancellations →
+        </Link>
+      </div>
 
       {/* Go-live checklist — only while the course isn't live yet (owner only) */}
       {admin.role === "owner" && course.status !== "active" && <GoLiveChecklist course={course} />}
