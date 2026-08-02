@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useActionState } from "react";
 import { updateProfile, changePassword, registerReader, type SettingsResult } from "./actions";
-import { SaveButton } from "../_components/SaveButton";
+import { SaveButton } from "../../_components/SaveButton";
 
 const inp = "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
 const init: SettingsResult = { ok: false, message: "" };
