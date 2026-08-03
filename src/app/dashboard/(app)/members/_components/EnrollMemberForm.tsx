@@ -160,6 +160,7 @@ export function EnrollMemberForm({ course, membershipTiers }: { course: Course; 
       <h2 className="font-display text-lg font-semibold text-foreground">Enroll new member</h2>
       <form onSubmit={submit} className="mt-4 space-y-4" onReset={() => { setOpen(false); setMsg(null); }}>
         <div className="grid grid-cols-2 gap-3">
+          <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Member ID *</span><input name="memberId" required placeholder="e.g., GOLD-001, M-42" className={inp} /><p className="mt-1 text-[10px] text-foreground/45">You create this format</p></label>
           <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">First name</span><input name="firstName" required placeholder="John" className={inp} /></label>
           <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Last name</span><input name="lastName" required placeholder="Doe" className={inp} /></label>
           <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Email</span><input name="email" type="email" placeholder="john@example.com" className={inp} /></label>
