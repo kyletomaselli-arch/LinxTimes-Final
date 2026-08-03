@@ -107,7 +107,7 @@ export function MembersManager({ members }: { members: MemberRow[] }) {
         <form onSubmit={save} className="mt-4 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5 animate-fade-up">
           <input type="hidden" name="id" value={editing.id ?? ""} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <F label="Member ID *"><input name="memberId" required defaultValue={editing.memberId ?? ""} className={inp} /></F>
+            <F label="Member ID *"><input name="memberId" required defaultValue={editing.memberId ?? ""} placeholder="e.g., GOLD-001, M-42, ABC123" className={inp} /><p className="mt-1 text-xs text-foreground/45">You create this — use any format (e.g., membership #, initials, or custom code)</p></F>
             <F label="First name *"><input name="firstName" required defaultValue={editing.firstName ?? ""} className={inp} /></F>
             <F label="Last name *"><input name="lastName" required defaultValue={editing.lastName ?? ""} className={inp} /></F>
             <F label="Email"><input name="email" type="email" defaultValue={editing.email ?? ""} className={inp} /></F>
@@ -118,7 +118,7 @@ export function MembersManager({ members }: { members: MemberRow[] }) {
                 <option value="junior">Junior</option><option value="senior">Senior</option><option value="social">Social</option>
               </select>
             </F>
-            <F label="Green fee override ($)"><input name="greenFeeOverride" inputMode="decimal" placeholder="blank = course rate" defaultValue={editing.greenFeeOverride != null ? (editing.greenFeeOverride / 100).toFixed(2) : ""} className={inp} /></F>
+            <F label="Green fee override ($)"><input name="greenFeeOverride" inputMode="decimal" placeholder="blank = course rate" defaultValue={editing.greenFeeOverride != null ? (editing.greenFeeOverride / 100).toFixed(2) : ""} className={inp} /><p className="mt-1 text-xs text-foreground/45">Leave blank to use the course default rate</p></F>
             <F label="Discount days">
               <select name="discountDays" defaultValue={editing.discountDays ?? "all"} className={inp}>
                 <option value="all">All days</option><option value="mon_thu">Mon–Thu only</option>

@@ -161,10 +161,10 @@ export function ProfileForm({ c }: { c: CourseValues }) {
         </F>
       </div>
       <div className="mt-4">
-        <F label="Booking-page announcement (optional)">
+        <F label="Booking page banner (optional)">
           <textarea name="announcement" rows={2} maxLength={280} defaultValue={c.announcement ?? ""} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
         </F>
-        <p className="mt-1 text-xs text-foreground/45">Shown as a banner on your public booking page. Leave blank to hide.</p>
+        <p className="mt-1 text-xs text-foreground/45">Shown at the top of your public booking page. Leave blank to hide.</p>
       </div>
       <div className="mt-4 flex gap-5">
         <F label="Primary color"><input name="primaryColor" type="color" defaultValue={c.primaryColor} className="h-10 w-16 rounded-lg border border-black/10" /></F>

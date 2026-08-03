@@ -129,21 +129,27 @@ export function BookingFlow({
     let cancelled = false;
     setLoadingSlots(true);
     setSlotTime("");
-    fetch(
-      `/api/courses/${slug}/availability?layoutId=${layoutId}&date=${date}`
-    )
-      .then((r) => r.json())
-      .then((data: AvailabilityResult) => {
-        if (!cancelled) setAvailability(data);
-      })
-      .catch(() => {
-        if (!cancelled) setAvailability({ bookable: false, slots: [], closedReason: "Could not load tee times" });
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingSlots(false);
-      });
+    const fetchAvailability = () => {
+      fetch(
+        `/api/courses/${slug}/availability?layoutId=${layoutId}&date=${date}`
+      )
+        .then((r) => r.json())
+        .then((data: AvailabilityResult) => {
+          if (!cancelled) setAvailability(data);
+        })
+        .catch(() => {
+          if (!cancelled) setAvailability({ bookable: false, slots: [], closedReason: "Could not load tee times" });
+        })
+        .finally(() => {
+          if (!cancelled) setLoadingSlots(false);
+        });
+    };
+    fetchAvailability();
+    // Poll every second to show live availability
+    const interval = setInterval(fetchAvailability, 1000);
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [slug, layoutId, date]);
 
