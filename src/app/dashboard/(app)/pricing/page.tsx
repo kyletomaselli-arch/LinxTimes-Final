@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { updatePricing, updateBookingWindow, createMembershipTier, deleteMembershipTier } from "./actions";
 
 const inp = "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
-const timeOpts = Array.from({ length: 24 }, (_, i) => ({ val: i, label: `${i === 0 ? 12 : i > 12 ? i - 12 : i}:00 ${i < 12 ? "AM" : "PM"}` }));
 
 function dollars(cents: number | undefined): string {
   return cents != null ? (cents / 100).toFixed(2) : "";
@@ -60,13 +59,6 @@ export default async function PricingPage() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="twilightEnabled" defaultChecked={l.pricing?.twilightEnabled ?? true} className="h-4 w-4 accent-[var(--course-primary)]" /> Twilight pricing</label>
           </div>
           <button className="mt-4 rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast">Save {l.name} pricing</button>
-
-          {/* Pricing tiers - Coming soon after migration */}
-          <div className="mt-6 border-t border-black/5 pt-6">
-          <h3 className="font-semibold text-foreground mb-1">Time-based pricing tiers</h3>
-          <p className="text-xs text-foreground/60 mb-4">Set different rates for different times of day (e.g., early bird, peak, twilight) - Activate after database migration</p>
-          <p className="text-xs text-amber-600">🔄 Feature ready for deployment - Database migration pending</p>
-          </div>
         </form>
       ))}
 
