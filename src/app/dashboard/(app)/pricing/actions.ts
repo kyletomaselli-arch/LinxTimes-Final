@@ -52,7 +52,7 @@ export async function updatePricing(_prevState: ActionResult, formData: FormData
 }
 
 /** Update the course-wide booking window. */
-export async function updateBookingWindow(formData: FormData): Promise<ActionResult> {
+export async function updateBookingWindow(formData: FormData): Promise<void> {
   const { course } = await requireCourseAdmin();
   const maxDaysAhead = toInt(formData.get("maxDaysAhead"), 1, 365, 14);
   await prisma.course.update({
@@ -61,7 +61,6 @@ export async function updateBookingWindow(formData: FormData): Promise<ActionRes
   });
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
-  return { ok: true, message: `Booking window updated to ${maxDaysAhead} days.` };
 }
 
 /** Add or update a pricing tier. */
