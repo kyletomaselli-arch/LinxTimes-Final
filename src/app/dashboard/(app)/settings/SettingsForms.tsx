@@ -121,7 +121,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
           </button>
         </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <F label="Course name"><input name="name" required defaultValue={c.name} onChange={(e) => setFormValues(prev => ({ ...prev, name: e.target.value }))} className={inp} /></F>
+        <F label="Course name"><input name="name" required value={formValues.name} onChange={(e) => setFormValues(prev => ({ ...prev, name: e.target.value }))} className={inp} /></F>
         <F label="Phone"><input name="phone" defaultValue={c.phone ?? ""} className={inp} /></F>
         <F label="Website"><input name="website" defaultValue={c.website ?? ""} className={inp} /></F>
         <F label="Address"><input name="address" defaultValue={c.address ?? ""} className={inp} /></F>
@@ -153,7 +153,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
             name="logoUrl"
             type="url"
             placeholder="https://cdn.example.com/logo.png"
-            defaultValue={c.logoUrl ?? ""}
+            value={formValues.logoUrl ?? ""}
             onChange={(e) => setFormValues(prev => ({ ...prev, logoUrl: e.target.value || null }))}
             className={`${inp} mt-2`}
           />
@@ -182,7 +182,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
               name="heroImageUrl"
               type="url"
               placeholder="https://cdn.example.com/hero.jpg"
-              defaultValue={c.heroImageUrl ?? ""}
+              value={formValues.heroImageUrl ?? ""}
               onChange={(e) => setFormValues(prev => ({ ...prev, heroImageUrl: e.target.value || null }))}
               className={inp}
             />
@@ -191,7 +191,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
       </div>
       <div className="mt-4">
         <F label="Booking page banner (optional)">
-          <textarea name="announcement" rows={2} maxLength={280} defaultValue={c.announcement ?? ""} onChange={(e) => setFormValues(prev => ({ ...prev, announcement: e.target.value || null }))} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
+          <textarea name="announcement" rows={2} maxLength={280} value={formValues.announcement ?? ""} onChange={(e) => setFormValues(prev => ({ ...prev, announcement: e.target.value || null }))} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
         </F>
         <p className="mt-1 text-xs text-foreground/45">Shown at the top of your public booking page. Leave blank to hide.</p>
       </div>
