@@ -80,13 +80,8 @@ export function ProfileForm({ c }: { c: CourseValues }) {
   };
 
   const handleSubmit = (formData: FormData) => {
-    if (heroImageFile) {
-      // Base64 will be set by the file handler above, stored in the URL field
-      formData.set("heroImageUrl", heroPreview || "");
-    }
-    if (logoFile) {
-      formData.set("logoUrl", logoPreview || "");
-    }
+    // Don't send base64 images — they're too large for the database.
+    // Preview only; only CDN URLs are saved.
     action(formData);
   };
 
@@ -116,7 +111,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                 onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, false)}
                 className="w-full text-sm"
               />
-              <p className="mt-1 text-[11px] text-foreground/45">Upload a logo (max 5 MB) or paste a CDN URL below</p>
+              <p className="mt-1 text-[11px] text-foreground/45">Preview only. To save, paste a CDN URL below (Cloudinary, imgur, etc.)</p>
             </div>
             {(logoPreview || c.logoUrl) && (
               <img src={logoPreview || c.logoUrl || undefined} alt="Logo" className="h-12 w-12 rounded-lg object-cover" />
@@ -125,7 +120,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
           <input
             name="logoUrl"
             type="url"
-            placeholder="Or paste a CDN URL"
+            placeholder="https://cdn.example.com/logo.png"
             defaultValue={c.logoUrl ?? ""}
             className={`${inp} mt-2`}
           />
@@ -144,7 +139,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                   onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, true)}
                   className="w-full text-sm"
                 />
-                <p className="mt-1 text-[11px] text-foreground/45">Upload a photo (max 5 MB) or paste a CDN URL below</p>
+                <p className="mt-1 text-[11px] text-foreground/45">Preview only. To save, paste a CDN URL below (Cloudinary, imgur, etc.)</p>
               </div>
               {(heroPreview || c.heroImageUrl) && (
                 <img src={heroPreview || c.heroImageUrl || undefined} alt="Hero" className="h-20 w-32 rounded-lg object-cover" />
@@ -153,7 +148,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
             <input
               name="heroImageUrl"
               type="url"
-              placeholder="Or paste a CDN URL"
+              placeholder="https://cdn.example.com/hero.jpg"
               defaultValue={c.heroImageUrl ?? ""}
               className={inp}
             />
