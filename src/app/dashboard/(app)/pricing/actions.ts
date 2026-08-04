@@ -13,8 +13,13 @@ const toInt = (v: FormDataEntryValue | null, min: number, max: number, dflt: num
   return Number.isFinite(n) && n >= min && n <= max ? n : dflt;
 };
 
+export interface ActionResult {
+  ok: boolean;
+  message: string;
+}
+
 /** Update pricing for one layout (scoped to the admin's course). */
-export async function updatePricing(formData: FormData): Promise<void> {
+export async function updatePricing(formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
   const layoutId = String(formData.get("layoutId") ?? "");
 
@@ -22,7 +27,7 @@ export async function updatePricing(formData: FormData): Promise<void> {
     where: { id: layoutId, courseId: course.id },
     include: { pricing: true },
   });
-  if (!layout) return;
+  if (!layout) return { ok: false, message: "Layout not found." };
 
   const data = {
     weekdayFee: toCents(formData.get("weekdayFee")),
@@ -43,21 +48,24 @@ export async function updatePricing(formData: FormData): Promise<void> {
   });
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
+  return { ok: true, message: `${layout.name} pricing saved.` };
 }
 
 /** Update the course-wide booking window. */
-export async function updateBookingWindow(formData: FormData): Promise<void> {
+export async function updateBookingWindow(formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
+  const maxDaysAhead = toInt(formData.get("maxDaysAhead"), 1, 365, 14);
   await prisma.course.update({
     where: { id: course.id },
-    data: { maxDaysAhead: toInt(formData.get("maxDaysAhead"), 1, 365, 14) },
+    data: { maxDaysAhead },
   });
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
+  return { ok: true, message: `Booking window updated to ${maxDaysAhead} days.` };
 }
 
 /** Add or update a pricing tier. */
-export async function savePricingTier(formData: FormData): Promise<void> {
+export async function savePricingTier(formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
   const layoutId = String(formData.get("layoutId") ?? "");
   const tierId = String(formData.get("tierId") ?? "");
@@ -68,7 +76,7 @@ export async function savePricingTier(formData: FormData): Promise<void> {
   const applyTo = ["weekday", "weekend", "both"].includes(String(formData.get("applyTo"))) ? String(formData.get("applyTo")) : "both";
 
   const layout = await prisma.layout.findFirst({ where: { id: layoutId, courseId: course.id }, include: { pricing: true } });
-  if (!layout?.pricing) return;
+  if (!layout?.pricing) return { ok: false, message: "Layout not found." };
 
   if (tierId) {
     await prisma.pricingTier.update({
@@ -82,19 +90,21 @@ export async function savePricingTier(formData: FormData): Promise<void> {
   }
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
+  return { ok: true, message: `Tier "${name}" saved.` };
 }
 
 /** Delete a pricing tier. */
-export async function deletePricingTier(formData: FormData): Promise<void> {
+export async function deletePricingTier(formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
   const tierId = String(formData.get("tierId") ?? "");
 
   const tier = await prisma.pricingTier.findUnique({ where: { id: tierId }, include: { pricing: { include: { layout: true } } } });
-  if (!tier || tier.pricing.layout.courseId !== course.id) return;
+  if (!tier || tier.pricing.layout.courseId !== course.id) return { ok: false, message: "Tier not found." };
 
   await prisma.pricingTier.delete({ where: { id: tierId } });
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
+  return { ok: true, message: `Tier deleted.` };
 }
 
 /** Create a membership tier (scoped to the admin's course). */
