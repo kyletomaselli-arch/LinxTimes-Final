@@ -194,7 +194,8 @@ export function PreviewBookingPageModal({ data, isOpen, onClose }: { data: Previ
 
                 {/* Color info */}
                 <div className="mt-12 border-t border-black/10 pt-8">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/45 mb-4">Theme colors applied</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/45 mb-4">Theme colors</h3>
+                  <p className="text-xs text-foreground/50 mb-4">Primary is used for buttons and accents on the booking page. Secondary appears on the homepage "Add your course" CTA gradient.</p>
                   <div className="flex gap-6">
                     <div className="flex items-center gap-3">
                       <div
@@ -202,7 +203,7 @@ export function PreviewBookingPageModal({ data, isOpen, onClose }: { data: Previ
                         style={{ backgroundColor: data.primaryColor }}
                       />
                       <div>
-                        <div className="font-medium text-foreground text-sm">Primary (buttons, accents)</div>
+                        <div className="font-medium text-foreground text-sm">Primary color</div>
                         <div className="text-xs text-foreground/50 font-mono">{data.primaryColor}</div>
                       </div>
                     </div>
@@ -212,7 +213,7 @@ export function PreviewBookingPageModal({ data, isOpen, onClose }: { data: Previ
                         style={{ backgroundColor: data.secondaryColor }}
                       />
                       <div>
-                        <div className="font-medium text-foreground text-sm">Secondary (accents)</div>
+                        <div className="font-medium text-foreground text-sm">Secondary color</div>
                         <div className="text-xs text-foreground/50 font-mono">{data.secondaryColor}</div>
                       </div>
                     </div>
