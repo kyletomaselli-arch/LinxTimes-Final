@@ -64,7 +64,7 @@ export async function updateBookingWindow(formData: FormData): Promise<void> {
 }
 
 /** Add or update a pricing tier. */
-export async function savePricingTier(formData: FormData): Promise<void> {
+export async function savePricingTier(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
   const layoutId = String(formData.get("layoutId") ?? "");
   const tierId = String(formData.get("tierId") ?? "");
@@ -75,7 +75,7 @@ export async function savePricingTier(formData: FormData): Promise<void> {
   const applyTo = ["weekday", "weekend", "both"].includes(String(formData.get("applyTo"))) ? String(formData.get("applyTo")) : "both";
 
   const layout = await prisma.layout.findFirst({ where: { id: layoutId, courseId: course.id }, include: { pricing: true } });
-  if (!layout?.pricing) return;
+  if (!layout?.pricing) return { ok: false, message: "Layout not found." };
 
   if (tierId) {
     await prisma.pricingTier.update({
@@ -89,6 +89,7 @@ export async function savePricingTier(formData: FormData): Promise<void> {
   }
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
+  return { ok: true, message: `Tier "${name}" saved.` };
 }
 
 /** Delete a pricing tier. */
