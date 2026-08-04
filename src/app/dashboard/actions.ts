@@ -215,10 +215,7 @@ export async function adminAvailableSlots(
   const layout = await prisma.layout.findFirst({
     where: { id: layoutId, courseId: course.id },
     include: { pricing: true },
-  }).then(l => l ? {
-    ...l,
-    pricing: l.pricing
-  } : null);
+  });
   if (!layout) return [];
   const { computeAvailability } = await import("@/lib/availability");
   const { formatTimeLabel } = await import("@/lib/datetime");
