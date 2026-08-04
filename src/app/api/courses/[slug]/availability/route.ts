@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { PricingTier } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { resolveTenant } from "@/lib/tenant";
 import { rateLimit } from "@/lib/rate-limit";
@@ -40,7 +41,7 @@ export async function GET(
     include: { pricing: true },
   }).then(l => l ? {
     ...l,
-    pricing: l.pricing ? { ...l.pricing, tiers: [] } : null
+    pricing: l.pricing ? { ...l.pricing, tiers: [] as PricingTier[] } : null
   } : null);
   if (!layout) {
     return NextResponse.json({ error: "Layout not found" }, { status: 404 });

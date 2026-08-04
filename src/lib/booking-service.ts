@@ -9,7 +9,7 @@ import { sendBookingEmails } from "./email";
 import { resolveMembers } from "./members";
 import { resolvePromo } from "./promo";
 import { resolveRainCheck } from "./raincheck";
-import type { Course } from "./../generated/prisma";
+import type { Course, PricingTier } from "./../generated/prisma";
 import type { BookingInput } from "./validation";
 import { Prisma } from "./../generated/prisma";
 
@@ -48,7 +48,7 @@ export async function createBooking(
     include: { pricing: true },
   }).then(l => l ? {
     ...l,
-    pricing: l.pricing ? { ...l.pricing, tiers: [] } : null
+    pricing: l.pricing ? { ...l.pricing, tiers: [] as PricingTier[] } : null
   } : null);
   if (!layout || !layout.pricing) {
     return { ok: false, status: 404, reason: "Layout not configured" };

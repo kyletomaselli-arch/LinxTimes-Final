@@ -9,7 +9,7 @@ import { computeAvailability } from "@/lib/availability";
 import { buildConfirmationNo } from "@/lib/confirmation";
 import { fromDateKey, toDateKey, timeToMinutes, nowMinutesInTz } from "@/lib/datetime";
 import { planCharge, withAddons, recordManualPayment, startTerminalPayment, type ChargeMode } from "@/lib/inperson-payment";
-import { Prisma } from "@/generated/prisma";
+import { Prisma, type PricingTier } from "@/generated/prisma";
 
 export interface ActionResult {
   ok: boolean;
@@ -217,7 +217,7 @@ export async function adminAvailableSlots(
     include: { pricing: true },
   }).then(l => l ? {
     ...l,
-    pricing: l.pricing ? { ...l.pricing, tiers: [] } : null
+    pricing: l.pricing ? { ...l.pricing, tiers: [] as PricingTier[] } : null
   } : null);
   if (!layout) return [];
   const { computeAvailability } = await import("@/lib/availability");
@@ -258,7 +258,7 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
     include: { pricing: true },
   }).then(l => l ? {
     ...l,
-    pricing: l.pricing ? { ...l.pricing, tiers: [] } : null
+    pricing: l.pricing ? { ...l.pricing, tiers: [] as PricingTier[] } : null
   } : null);
   if (!layout || !layout.pricing) return { ok: false, message: "Layout not configured." };
 
