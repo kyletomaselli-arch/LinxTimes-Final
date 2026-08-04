@@ -65,7 +65,7 @@ export async function updateBookingWindow(formData: FormData): Promise<ActionRes
 }
 
 /** Add or update a pricing tier. */
-export async function savePricingTier(formData: FormData): Promise<ActionResult> {
+export async function savePricingTier(formData: FormData): Promise<void> {
   const { course } = await requireCourseAdmin();
   const layoutId = String(formData.get("layoutId") ?? "");
   const tierId = String(formData.get("tierId") ?? "");
@@ -76,7 +76,7 @@ export async function savePricingTier(formData: FormData): Promise<ActionResult>
   const applyTo = ["weekday", "weekend", "both"].includes(String(formData.get("applyTo"))) ? String(formData.get("applyTo")) : "both";
 
   const layout = await prisma.layout.findFirst({ where: { id: layoutId, courseId: course.id }, include: { pricing: true } });
-  if (!layout?.pricing) return { ok: false, message: "Layout not found." };
+  if (!layout?.pricing) return;
 
   if (tierId) {
     await prisma.pricingTier.update({
@@ -90,21 +90,19 @@ export async function savePricingTier(formData: FormData): Promise<ActionResult>
   }
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
-  return { ok: true, message: `Tier "${name}" saved.` };
 }
 
 /** Delete a pricing tier. */
-export async function deletePricingTier(formData: FormData): Promise<ActionResult> {
+export async function deletePricingTier(formData: FormData): Promise<void> {
   const { course } = await requireCourseAdmin();
   const tierId = String(formData.get("tierId") ?? "");
 
   const tier = await prisma.pricingTier.findUnique({ where: { id: tierId }, include: { pricing: { include: { layout: true } } } });
-  if (!tier || tier.pricing.layout.courseId !== course.id) return { ok: false, message: "Tier not found." };
+  if (!tier || tier.pricing.layout.courseId !== course.id) return;
 
   await prisma.pricingTier.delete({ where: { id: tierId } });
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
-  return { ok: true, message: `Tier deleted.` };
 }
 
 /** Create a membership tier (scoped to the admin's course). */
