@@ -46,7 +46,10 @@ export async function createBooking(
   const layout = await prisma.layout.findFirst({
     where: { id: input.layoutId, courseId: course.id, isActive: true },
     include: { pricing: true },
-  });
+  }).then(l => l ? {
+    ...l,
+    pricing: l.pricing ? { ...l.pricing, tiers: [] } : null
+  } : null);
   if (!layout || !layout.pricing) {
     return { ok: false, status: 404, reason: "Layout not configured" };
   }

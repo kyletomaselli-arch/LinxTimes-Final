@@ -56,6 +56,47 @@ export async function updateBookingWindow(formData: FormData): Promise<void> {
   revalidatePath(`/${course.slug}`);
 }
 
+/** Add or update a pricing tier. */
+export async function savePricingTier(formData: FormData): Promise<void> {
+  const { course } = await requireCourseAdmin();
+  const layoutId = String(formData.get("layoutId") ?? "");
+  const tierId = String(formData.get("tierId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const startHour = Math.max(0, Math.min(23, Math.round(Number(formData.get("startHour")) || 0)));
+  const endHour = Math.max(0, Math.min(23, Math.round(Number(formData.get("endHour")) || 0)));
+  const feeCents = toCents(formData.get("fee"));
+  const applyTo = ["weekday", "weekend", "both"].includes(String(formData.get("applyTo"))) ? String(formData.get("applyTo")) : "both";
+
+  const layout = await prisma.layout.findFirst({ where: { id: layoutId, courseId: course.id }, include: { pricing: true } });
+  if (!layout?.pricing) return;
+
+  if (tierId) {
+    await prisma.pricingTier.update({
+      where: { id: tierId },
+      data: { name, startHour, endHour, feeCents, applyTo },
+    });
+  } else {
+    await prisma.pricingTier.create({
+      data: { pricingId: layout.pricing.id, name, startHour, endHour, feeCents, applyTo, sortOrder: 999 },
+    });
+  }
+  revalidatePath("/dashboard/pricing");
+  revalidatePath(`/${course.slug}`);
+}
+
+/** Delete a pricing tier. */
+export async function deletePricingTier(formData: FormData): Promise<void> {
+  const { course } = await requireCourseAdmin();
+  const tierId = String(formData.get("tierId") ?? "");
+
+  const tier = await prisma.pricingTier.findUnique({ where: { id: tierId }, include: { pricing: { include: { layout: true } } } });
+  if (!tier || tier.pricing.layout.courseId !== course.id) return;
+
+  await prisma.pricingTier.delete({ where: { id: tierId } });
+  revalidatePath("/dashboard/pricing");
+  revalidatePath(`/${course.slug}`);
+}
+
 /** Create a membership tier (scoped to the admin's course). */
 export async function createMembershipTier(formData: FormData): Promise<void> {
   const { course } = await requireCourseAdmin();

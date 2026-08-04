@@ -94,7 +94,7 @@ export default async function TeeSheetPage(props: PageProps<"/dashboard">) {
     for (const l of layouts) {
       const t = l.teeTimeSlots.find((s) => s.dayOfWeek === dow && s.isActive);
       if (!t) continue;
-      for (const time of slotTimes(t.startTime, t.endTime, t.intervalMin)) {
+      for (const time of slotTimes(t.startTime, t.endTime, Number(t.intervalMin))) {
         const arr = (bookingsByKey.get(`${l.id}|${time}`) ?? []).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         const ov = closedSlots.get(time);
         const maxPlayers = ov?.maxPlayers ?? t.maxPlayers;

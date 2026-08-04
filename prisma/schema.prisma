@@ -193,20 +193,36 @@ model Waitlist {
 }
 
 model Pricing {
-  id               String  @id @default(uuid())
-  layoutId         String  @unique
-  weekdayFee       Int     @default(5000)
-  weekendFee       Int     @default(7000)
-  twilightFee      Int     @default(3000)
-  twilightHour     Int     @default(16)
-  memberFee        Int     @default(2500)
-  cartFee          Int     @default(1500)
-  cartAvailable    Boolean @default(true)
-  nineHoleDiscount Boolean @default(true)
-  twilightEnabled  Boolean @default(true)
-  layout           Layout  @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  id               String          @id @default(uuid())
+  layoutId         String          @unique
+  weekdayFee       Int             @default(5000)
+  weekendFee       Int             @default(7000)
+  twilightFee      Int             @default(3000)
+  twilightHour     Int             @default(16)
+  memberFee        Int             @default(2500)
+  cartFee          Int             @default(1500)
+  cartAvailable    Boolean         @default(true)
+  nineHoleDiscount Boolean         @default(true)
+  twilightEnabled  Boolean         @default(true)
+  layout           Layout          @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  tiers            PricingTier[]
 
   @@map("pricing")
+}
+
+model PricingTier {
+  id        String  @id @default(uuid())
+  pricingId String
+  name      String
+  startHour Int     @db.SmallInt
+  endHour   Int     @db.SmallInt
+  feeCents  Int
+  applyTo   String  @default("both")
+  sortOrder Int     @default(0)
+  pricing   Pricing @relation(fields: [pricingId], references: [id], onDelete: Cascade)
+
+  @@index([pricingId])
+  @@map("pricing_tiers")
 }
 
 model MembershipTier {
@@ -301,6 +317,7 @@ model Booking {
   @@index([courseId, bookingDate])
   @@index([golferEmail])
   @@index([confirmationNo])
+  @@index([slotHeldUntil])
   @@map("bookings")
 }
 

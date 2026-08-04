@@ -57,10 +57,15 @@ export async function saveSlots(formData: FormData): Promise<void> {
   for (let day = 0; day <= 6; day++) {
     const start = String(formData.get(`start_${day}`) ?? "07:00");
     const end = String(formData.get(`end_${day}`) ?? "18:00");
-    const interval = Math.max(5, Math.min(60, Math.round(Number(formData.get(`interval_${day}`)) || 10)));
+    const rawInterval = formData.get(`interval_${day}`);
+    const interval = Math.max(5, Math.min(60, Math.round(Number(rawInterval) || 10)));
     const maxPlayers = Math.max(1, Math.min(6, Math.round(Number(formData.get(`max_${day}`)) || 4)));
     const isActive = formData.get(`active_${day}`) === "on";
     if (!HHMM.test(start) || !HHMM.test(end)) continue;
+
+    if (day === 2) {
+      console.log(`[TUE] day=2, raw=${rawInterval}, interval=${interval}`);
+    }
 
     await prisma.teeTimeSlot.upsert({
       where: { layoutId_dayOfWeek: { layoutId, dayOfWeek: day } },
@@ -68,6 +73,11 @@ export async function saveSlots(formData: FormData): Promise<void> {
       create: { layoutId, dayOfWeek: day, startTime: start, endTime: end, intervalMin: interval, maxPlayers, isActive },
     });
   }
+
+  // Debug: check what's in DB for Tuesday
+  const tue = await prisma.teeTimeSlot.findFirst({ where: { layoutId, dayOfWeek: 2 } });
+  console.log(`[TUE DB] Read back from DB: ${tue?.intervalMin}`);
+
   await revalidate(course.slug);
 }
 
@@ -113,7 +123,7 @@ export async function blockRange(formData: FormData): Promise<void> {
   for (const l of layouts) {
     const t = l.teeTimeSlots.find((x) => x.dayOfWeek === dow && x.isActive);
     if (!t) continue;
-    for (let m = timeToMinutes(t.startTime); m <= timeToMinutes(t.endTime); m += t.intervalMin) {
+    for (let m = timeToMinutes(t.startTime); m <= timeToMinutes(t.endTime); m += Number(t.intervalMin)) {
       if (m >= s && m <= e) times.add(minutesToTime(m));
     }
   }

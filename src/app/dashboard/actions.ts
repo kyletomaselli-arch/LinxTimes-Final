@@ -215,7 +215,10 @@ export async function adminAvailableSlots(
   const layout = await prisma.layout.findFirst({
     where: { id: layoutId, courseId: course.id },
     include: { pricing: true },
-  });
+  }).then(l => l ? {
+    ...l,
+    pricing: l.pricing ? { ...l.pricing, tiers: [] } : null
+  } : null);
   if (!layout) return [];
   const { computeAvailability } = await import("@/lib/availability");
   const { formatTimeLabel } = await import("@/lib/datetime");
@@ -253,7 +256,10 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
   const layout = await prisma.layout.findFirst({
     where: { id: layoutId, courseId: course.id, isActive: true },
     include: { pricing: true },
-  });
+  }).then(l => l ? {
+    ...l,
+    pricing: l.pricing ? { ...l.pricing, tiers: [] } : null
+  } : null);
   if (!layout || !layout.pricing) return { ok: false, message: "Layout not configured." };
 
   const availability = await computeAvailability({ course, layout, dateKey: date });
