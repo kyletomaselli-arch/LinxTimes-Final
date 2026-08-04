@@ -12,28 +12,7 @@ import {
   BOOKING_LEAD_MINUTES,
 } from "./datetime";
 import { sweepAbandonedBookings } from "./booking-sweep";
-import type { Course, Layout, Pricing, PricingTier } from "../generated/prisma";
-
-/** Get the pricing tier for a given time, or undefined if no tier matches. */
-function getPricingTier(
-  tiers: PricingTier[],
-  time: string,
-  isWeekend: boolean
-): PricingTier | undefined {
-  const hour = parseInt(time.split(":")[0]);
-  for (const tier of tiers) {
-    // Check if tier applies to this day type
-    if (tier.applyTo !== "both") {
-      const tierIsWeekend = tier.applyTo === "weekend";
-      if (tierIsWeekend !== isWeekend) continue;
-    }
-    // Check if time falls within tier range
-    if (hour >= tier.startHour && hour < tier.endHour) {
-      return tier;
-    }
-  }
-  return undefined;
-}
+import type { Course, Layout, Pricing } from "../generated/prisma";
 
 export interface AvailableSlot {
   time: string; // "HH:mm"
@@ -58,7 +37,7 @@ export interface AvailabilityResult {
 
 interface ComputeArgs {
   course: Course;
-  layout: Layout & { pricing: (Pricing & { tiers: PricingTier[] }) | null };
+  layout: Layout & { pricing: Pricing | null };
   dateKey: string;
 }
 
@@ -141,16 +120,8 @@ export async function computeAvailability({
   const end = timeToMinutes(template.endTime);
   const interval = Number(template.intervalMin);
 
-  if (template.dayOfWeek === 2) {
-    console.log(`[AVAIL] TUE start: ${start}, end: ${end}, interval: ${interval} (typeof: ${typeof interval})`);
-  }
-
-  const tuesdayTimes: string[] = [];
   for (let mins = start; mins <= end; mins += interval) {
     const time = minutesToTime(mins);
-    if (template.dayOfWeek === 2) {
-      tuesdayTimes.push(time);
-    }
     const override = slotOverrides.get(time);
     const passed = isToday && mins <= cutoffMins;
     const blocked = (override?.isClosed ?? false) || passed;
@@ -158,37 +129,22 @@ export async function computeAvailability({
     const playersBooked = bookedMap.get(time) ?? 0;
     const spotsLeft = Math.max(0, maxPlayers - playersBooked);
 
-    // Determine rate type and price: check tiers first, then fall back to legacy pricing
-    let rateType: AvailableSlot["rateType"] = "weekday";
-    let fromPriceCents = 0;
+    // Determine rate type and price using legacy pricing (tiers coming soon)
+    const rateType: AvailableSlot["rateType"] = pricing
+      ? pricing.twilightEnabled && hourOf(time) >= pricing.twilightHour
+        ? "twilight"
+        : weekend
+          ? "weekend"
+          : "weekday"
+      : "weekday";
 
-    if (pricing) {
-      // If tiers exist, use them; otherwise fall back to legacy pricing
-      if (pricing.tiers && pricing.tiers.length > 0) {
-        const tier = getPricingTier(pricing.tiers, time, weekend);
-        if (tier) {
-          fromPriceCents = tier.feeCents;
-          rateType = "weekday"; // tier-based pricing is generic
-        } else {
-          // No matching tier; use default weekday rate
-          fromPriceCents = weekend ? pricing.weekendFee : pricing.weekdayFee;
-          rateType = weekend ? "weekend" : "weekday";
-        }
-      } else {
-        // Legacy pricing logic (no tiers defined)
-        rateType = pricing.twilightEnabled && hourOf(time) >= pricing.twilightHour
-          ? "twilight"
-          : weekend
-            ? "weekend"
-            : "weekday";
-
-        fromPriceCents = rateType === "twilight"
-          ? pricing.twilightFee
-          : rateType === "weekend"
-            ? pricing.weekendFee
-            : pricing.weekdayFee;
-      }
-    }
+    const fromPriceCents = pricing
+      ? rateType === "twilight"
+        ? pricing.twilightFee
+        : rateType === "weekend"
+          ? pricing.weekendFee
+          : pricing.weekdayFee
+      : 0;
 
     slots.push({
       time,
@@ -201,10 +157,6 @@ export async function computeAvailability({
       rateType,
       fromPriceCents,
     });
-  }
-
-  if (template.dayOfWeek === 2) {
-    console.log(`[AVAIL] TUE generated ${tuesdayTimes.length} times: ${tuesdayTimes.join(", ")}`);
   }
 
   return {
