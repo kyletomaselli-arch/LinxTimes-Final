@@ -56,6 +56,7 @@ export default async function PricingPage() {
           <div className="mt-3 flex flex-wrap gap-5">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="cartAvailable" defaultChecked={l.pricing?.cartAvailable ?? true} className="h-4 w-4 accent-[var(--course-primary)]" /> Carts available</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="nineHoleDiscount" defaultChecked={l.pricing?.nineHoleDiscount ?? true} className="h-4 w-4 accent-[var(--course-primary)]" /> 9 holes = half green fee</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="twilightEnabled" defaultChecked={l.pricing?.twilightEnabled ?? true} className="h-4 w-4 accent-[var(--course-primary)]" /> Twilight pricing</label>
           </div>
           <button className="mt-4 rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast">Save {l.name} pricing</button>
         </form>

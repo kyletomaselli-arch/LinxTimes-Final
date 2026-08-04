@@ -33,6 +33,7 @@ export async function updatePricing(formData: FormData): Promise<void> {
     cartFee: toCents(formData.get("cartFee")),
     cartAvailable: formData.get("cartAvailable") === "on",
     nineHoleDiscount: formData.get("nineHoleDiscount") === "on",
+    twilightEnabled: formData.get("twilightEnabled") === "on",
   };
 
   await prisma.pricing.upsert({

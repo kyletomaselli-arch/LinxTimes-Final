@@ -203,6 +203,7 @@ model Pricing {
   cartFee          Int     @default(1500)
   cartAvailable    Boolean @default(true)
   nineHoleDiscount Boolean @default(true)
+  twilightEnabled  Boolean @default(true)
   layout           Layout  @relation(fields: [layoutId], references: [id], onDelete: Cascade)
 
   @@map("pricing")
