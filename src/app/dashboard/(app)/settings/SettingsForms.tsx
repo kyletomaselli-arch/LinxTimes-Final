@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useActionState } from "react";
 import { updateProfile, changePassword, registerReader, type SettingsResult } from "./actions";
 import { SaveButton } from "../../_components/SaveButton";
+import { PreviewBookingPageModal } from "./_components/PreviewBookingPageModal";
 
 const inp = "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
 const init: SettingsResult = { ok: false, message: "" };
@@ -55,6 +56,15 @@ export function ProfileForm({ c }: { c: CourseValues }) {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroPreview, setHeroPreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [formValues, setFormValues] = useState({
+    name: c.name,
+    logoUrl: c.logoUrl,
+    heroImageUrl: c.heroImageUrl,
+    primaryColor: c.primaryColor,
+    secondaryColor: c.secondaryColor,
+    announcement: c.announcement,
+  });
 
   const handleFileSelect = (file: File | null, isHero: boolean) => {
     if (!file || !file.type.startsWith("image/")) {
@@ -86,10 +96,32 @@ export function ProfileForm({ c }: { c: CourseValues }) {
   };
 
   return (
-    <form action={handleSubmit} className="rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
-      <h2 className="font-display text-lg font-semibold text-foreground">Course profile</h2>
+    <>
+      <PreviewBookingPageModal
+        data={{
+          courseName: formValues.name,
+          logoUrl: formValues.logoUrl,
+          heroImageUrl: formValues.heroImageUrl,
+          primaryColor: formValues.primaryColor,
+          secondaryColor: formValues.secondaryColor,
+          announcement: formValues.announcement,
+        }}
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+      />
+      <form action={handleSubmit} className="rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg font-semibold text-foreground">Course profile</h2>
+          <button
+            type="button"
+            onClick={() => setShowPreview(true)}
+            className="text-sm font-medium text-foreground/60 hover:text-foreground transition rounded-full hover:bg-black/[0.04] px-3 py-1.5"
+          >
+            Preview booking page →
+          </button>
+        </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <F label="Course name"><input name="name" required defaultValue={c.name} className={inp} /></F>
+        <F label="Course name"><input name="name" required defaultValue={c.name} onChange={(e) => setFormValues(prev => ({ ...prev, name: e.target.value }))} className={inp} /></F>
         <F label="Phone"><input name="phone" defaultValue={c.phone ?? ""} className={inp} /></F>
         <F label="Website"><input name="website" defaultValue={c.website ?? ""} className={inp} /></F>
         <F label="Address"><input name="address" defaultValue={c.address ?? ""} className={inp} /></F>
@@ -122,6 +154,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
             type="url"
             placeholder="https://cdn.example.com/logo.png"
             defaultValue={c.logoUrl ?? ""}
+            onChange={(e) => setFormValues(prev => ({ ...prev, logoUrl: e.target.value || null }))}
             className={`${inp} mt-2`}
           />
         </F>
@@ -150,6 +183,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
               type="url"
               placeholder="https://cdn.example.com/hero.jpg"
               defaultValue={c.heroImageUrl ?? ""}
+              onChange={(e) => setFormValues(prev => ({ ...prev, heroImageUrl: e.target.value || null }))}
               className={inp}
             />
           </div>
@@ -157,17 +191,18 @@ export function ProfileForm({ c }: { c: CourseValues }) {
       </div>
       <div className="mt-4">
         <F label="Booking page banner (optional)">
-          <textarea name="announcement" rows={2} maxLength={280} defaultValue={c.announcement ?? ""} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
+          <textarea name="announcement" rows={2} maxLength={280} defaultValue={c.announcement ?? ""} onChange={(e) => setFormValues(prev => ({ ...prev, announcement: e.target.value || null }))} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
         </F>
         <p className="mt-1 text-xs text-foreground/45">Shown at the top of your public booking page. Leave blank to hide.</p>
       </div>
       <div className="mt-4 flex gap-5">
-        <F label="Primary color"><input name="primaryColor" type="color" defaultValue={c.primaryColor} className="h-10 w-16 rounded-lg border border-black/10" /></F>
-        <F label="Secondary color"><input name="secondaryColor" type="color" defaultValue={c.secondaryColor} className="h-10 w-16 rounded-lg border border-black/10" /></F>
+        <F label="Primary color"><input name="primaryColor" type="color" defaultValue={c.primaryColor} onChange={(e) => setFormValues(prev => ({ ...prev, primaryColor: e.target.value }))} className="h-10 w-16 rounded-lg border border-black/10" /></F>
+        <F label="Secondary color"><input name="secondaryColor" type="color" defaultValue={c.secondaryColor} onChange={(e) => setFormValues(prev => ({ ...prev, secondaryColor: e.target.value }))} className="h-10 w-16 rounded-lg border border-black/10" /></F>
       </div>
       <Note state={state} />
       <SaveButton label="Save profile" pending={pending} state={state} />
     </form>
+    </>
   );
 }
 
