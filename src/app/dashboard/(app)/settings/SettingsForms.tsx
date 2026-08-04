@@ -66,7 +66,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
     announcement: c.announcement,
   });
 
-  const handleFileSelect = (file: File | null, isHero: boolean) => {
+  const handleFileSelect = async (file: File | null, isHero: boolean) => {
     if (!file || !file.type.startsWith("image/")) {
       alert("Please select an image file");
       return;
@@ -75,18 +75,43 @@ export function ProfileForm({ c }: { c: CourseValues }) {
       alert("Image must be smaller than 5 MB");
       return;
     }
+
+    // Show local preview
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
       if (isHero) {
-        setHeroImageFile(file);
         setHeroPreview(dataUrl);
       } else {
-        setLogoFile(file);
         setLogoPreview(dataUrl);
       }
     };
     reader.readAsDataURL(file);
+
+    // Upload to Cloudinary
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(`Upload failed: ${error.error || "Unknown error"}`);
+        return;
+      }
+
+      const data = await response.json();
+      if (isHero) {
+        setFormValues((prev) => ({ ...prev, heroImageUrl: data.url }));
+      } else {
+        setFormValues((prev) => ({ ...prev, logoUrl: data.url }));
+      }
+    } catch (error) {
+      alert(`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
   };
 
   const handleSubmit = (formData: FormData) => {
@@ -143,7 +168,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                 onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, false)}
                 className="w-full text-sm"
               />
-              <p className="mt-1 text-[11px] text-foreground/45">Preview only. To save, paste a CDN URL below (Cloudinary, imgur, etc.)</p>
+              <p className="mt-1 text-[11px] text-foreground/45">Uploads automatically and updates preview instantly</p>
             </div>
             {(logoPreview || c.logoUrl) && (
               <img src={logoPreview || c.logoUrl || undefined} alt="Logo" className="h-12 w-12 rounded-lg object-cover" />
@@ -172,7 +197,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                   onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, true)}
                   className="w-full text-sm"
                 />
-                <p className="mt-1 text-[11px] text-foreground/45">Preview only. To save, paste a CDN URL below (Cloudinary, imgur, etc.)</p>
+                <p className="mt-1 text-[11px] text-foreground/45">Uploads automatically and updates preview instantly</p>
               </div>
               {(heroPreview || c.heroImageUrl) && (
                 <img src={heroPreview || c.heroImageUrl || undefined} alt="Hero" className="h-20 w-32 rounded-lg object-cover" />
