@@ -19,7 +19,7 @@ export interface ActionResult {
 }
 
 /** Update pricing for one layout (scoped to the admin's course). */
-export async function updatePricing(formData: FormData): Promise<ActionResult> {
+export async function updatePricing(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
   const layoutId = String(formData.get("layoutId") ?? "");
 
@@ -65,7 +65,7 @@ export async function updateBookingWindow(formData: FormData): Promise<ActionRes
 }
 
 /** Add or update a pricing tier. */
-export async function savePricingTier(formData: FormData): Promise<ActionResult> {
+export async function savePricingTier(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
   const layoutId = String(formData.get("layoutId") ?? "");
   const tierId = String(formData.get("tierId") ?? "");
@@ -94,7 +94,7 @@ export async function savePricingTier(formData: FormData): Promise<ActionResult>
 }
 
 /** Delete a pricing tier. */
-export async function deletePricingTier(formData: FormData): Promise<ActionResult> {
+export async function deletePricingTier(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   const { course } = await requireCourseAdmin();
   const tierId = String(formData.get("tierId") ?? "");
 
