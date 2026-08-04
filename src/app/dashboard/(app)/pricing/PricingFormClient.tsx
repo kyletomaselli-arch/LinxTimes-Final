@@ -28,6 +28,14 @@ export function PricingFormClient({
     cartAvailable?: boolean;
     nineHoleDiscount?: boolean;
     twilightEnabled?: boolean;
+    tiers?: Array<{
+      id: string;
+      name: string;
+      startHour: number;
+      endHour: number;
+      feeCents: number;
+      applyTo: string;
+    }>;
   } | null;
 }) {
   const [state, formAction] = useFormState(updatePricing, { ok: false, message: "" });
