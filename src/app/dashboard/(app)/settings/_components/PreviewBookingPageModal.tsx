@@ -170,7 +170,7 @@ export function PreviewBookingPageModal({ data, isOpen, onClose }: { data: Previ
                           }`}
                           style={
                             !isFull
-                              ? { borderColor: data.primaryColor, "--hover-shadow": "var(--course-shadow)" }
+                              ? ({ borderColor: data.primaryColor } as React.CSSProperties)
                               : undefined
                           }
                         >
