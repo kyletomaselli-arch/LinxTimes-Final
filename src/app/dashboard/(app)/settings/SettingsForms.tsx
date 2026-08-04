@@ -66,7 +66,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
     announcement: c.announcement,
   });
 
-  const handleFileSelect = async (file: File | null, isHero: boolean) => {
+  const handleFileSelect = (file: File | null, isHero: boolean) => {
     if (!file || !file.type.startsWith("image/")) {
       alert("Please select an image file");
       return;
@@ -76,42 +76,18 @@ export function ProfileForm({ c }: { c: CourseValues }) {
       return;
     }
 
-    // Show local preview
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
       if (isHero) {
         setHeroPreview(dataUrl);
+        setFormValues((prev) => ({ ...prev, heroImageUrl: dataUrl }));
       } else {
         setLogoPreview(dataUrl);
+        setFormValues((prev) => ({ ...prev, logoUrl: dataUrl }));
       }
     };
     reader.readAsDataURL(file);
-
-    // Upload to Cloudinary
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/upload-image", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        alert(`Upload failed: ${error.error || "Unknown error"}`);
-        return;
-      }
-
-      const data = await response.json();
-      if (isHero) {
-        setFormValues((prev) => ({ ...prev, heroImageUrl: data.url }));
-      } else {
-        setFormValues((prev) => ({ ...prev, logoUrl: data.url }));
-      }
-    } catch (error) {
-      alert(`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
-    }
   };
 
   const handleSubmit = (formData: FormData) => {
