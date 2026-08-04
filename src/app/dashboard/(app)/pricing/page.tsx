@@ -4,6 +4,7 @@ import { updatePricing, updateBookingWindow, createMembershipTier, deleteMembers
 
 const inp = "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
 
+// Force rebuild with fresh Prisma client
 function dollars(cents: number | undefined): string {
   return cents != null ? (cents / 100).toFixed(2) : "";
 }
