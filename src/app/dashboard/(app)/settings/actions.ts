@@ -169,7 +169,6 @@ export async function updateProfile(_prev: SettingsResult, formData: FormData): 
       logoUrl: str(formData.get("logoUrl")),
       heroImageUrl: str(formData.get("heroImageUrl")),
       primaryColor: hex(formData.get("primaryColor"), "#0d3522"),
-      secondaryColor: hex(formData.get("secondaryColor"), "#c9a84c"),
       notificationEmail: str(formData.get("notificationEmail")),
       timezone: String(formData.get("timezone") ?? "America/Chicago").trim() || "America/Chicago",
       announcement: (() => { const s = String(formData.get("announcement") ?? "").trim(); return s ? s.slice(0, 280) : null; })(),

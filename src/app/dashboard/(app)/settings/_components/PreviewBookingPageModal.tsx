@@ -9,7 +9,6 @@ interface PreviewData {
   logoUrl: string | null;
   heroImageUrl: string | null;
   primaryColor: string;
-  secondaryColor: string;
   announcement: string | null;
 }
 
@@ -21,7 +20,7 @@ export function PreviewBookingPageModal({ data, isOpen, onClose }: { data: Previ
   const today = new Date().toISOString().split("T")[0];
   const dayKeys = Array.from({ length: 60 }, (_, i) => addDays(today, i));
 
-  const themeStyle = courseThemeStyle(data.primaryColor, data.secondaryColor);
+  const themeStyle = courseThemeStyle(data.primaryColor, "#c9a84c");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -194,28 +193,15 @@ export function PreviewBookingPageModal({ data, isOpen, onClose }: { data: Previ
 
                 {/* Color info */}
                 <div className="mt-12 border-t border-black/10 pt-8">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/45 mb-4">Theme colors</h3>
-                  <p className="text-xs text-foreground/50 mb-4">Primary is used for buttons and accents on the booking page. Secondary appears on the homepage "Add your course" CTA gradient.</p>
-                  <div className="flex gap-6">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-12 w-12 rounded-lg border border-black/10 shadow-sm"
-                        style={{ backgroundColor: data.primaryColor }}
-                      />
-                      <div>
-                        <div className="font-medium text-foreground text-sm">Primary color</div>
-                        <div className="text-xs text-foreground/50 font-mono">{data.primaryColor}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-12 w-12 rounded-lg border border-black/10 shadow-sm"
-                        style={{ backgroundColor: data.secondaryColor }}
-                      />
-                      <div>
-                        <div className="font-medium text-foreground text-sm">Secondary color</div>
-                        <div className="text-xs text-foreground/50 font-mono">{data.secondaryColor}</div>
-                      </div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/45 mb-3">Brand color</h3>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-12 w-12 rounded-lg border border-black/10 shadow-sm"
+                      style={{ backgroundColor: data.primaryColor }}
+                    />
+                    <div>
+                      <div className="font-medium text-foreground text-sm">Used for buttons and accents</div>
+                      <div className="text-xs text-foreground/50 font-mono">{data.primaryColor}</div>
                     </div>
                   </div>
                 </div>

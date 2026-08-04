@@ -62,7 +62,6 @@ export function ProfileForm({ c }: { c: CourseValues }) {
     logoUrl: c.logoUrl,
     heroImageUrl: c.heroImageUrl,
     primaryColor: c.primaryColor,
-    secondaryColor: c.secondaryColor,
     announcement: c.announcement,
   });
 
@@ -104,7 +103,6 @@ export function ProfileForm({ c }: { c: CourseValues }) {
           logoUrl: formValues.logoUrl,
           heroImageUrl: formValues.heroImageUrl,
           primaryColor: formValues.primaryColor,
-          secondaryColor: formValues.secondaryColor,
           announcement: formValues.announcement,
         }}
         isOpen={showPreview}
@@ -196,9 +194,8 @@ export function ProfileForm({ c }: { c: CourseValues }) {
         </F>
         <p className="mt-1 text-xs text-foreground/45">Shown at the top of your public booking page. Leave blank to hide.</p>
       </div>
-      <div className="mt-4 flex gap-5">
-        <F label="Primary color"><input name="primaryColor" type="color" defaultValue={c.primaryColor} onChange={(e) => setFormValues(prev => ({ ...prev, primaryColor: e.target.value }))} className="h-10 w-16 rounded-lg border border-black/10" /></F>
-        <F label="Secondary color"><input name="secondaryColor" type="color" defaultValue={c.secondaryColor} onChange={(e) => setFormValues(prev => ({ ...prev, secondaryColor: e.target.value }))} className="h-10 w-16 rounded-lg border border-black/10" /></F>
+      <div className="mt-4">
+        <F label="Brand color"><input name="primaryColor" type="color" defaultValue={c.primaryColor} onChange={(e) => setFormValues(prev => ({ ...prev, primaryColor: e.target.value }))} className="h-10 w-16 rounded-lg border border-black/10" /><p className="mt-1 text-xs text-foreground/45">Used for buttons and accents on your booking page</p></F>
       </div>
       <Note state={state} />
       <SaveButton label="Save profile" pending={pending} state={state} />
