@@ -81,36 +81,40 @@ export function PricingFormClient({
         <p className="text-xs text-foreground/60 mb-4">Set different rates for different times of day (e.g., early bird, peak, twilight)</p>
 
         {/* Add tier form */}
-        <form action={savePricingTier} className="mb-4 flex flex-wrap items-end gap-3 rounded-lg bg-black/[0.02] p-4">
+        <form action={savePricingTier} className="mb-4 space-y-3 rounded-lg bg-black/[0.02] p-4">
           <input type="hidden" name="layoutId" value={layoutId} />
-          <label className="block flex-1 min-w-48">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Tier name</span>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-1">Tier name</label>
             <input name="name" required placeholder="Early bird" className={inp} />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Start hour (0–23)</span>
-            <select name="startHour" className={inp} defaultValue="6">
-              {timeOpts.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">End hour (0–23)</span>
-            <select name="endHour" className={inp} defaultValue="10">
-              {timeOpts.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Price ($)</span>
-            <input name="fee" type="number" step="0.01" required placeholder="45.00" className={`${inp} w-24`} />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Apply to</span>
-            <select name="applyTo" className={inp}>
-              <option value="both">Both days</option>
-              <option value="weekday">Weekdays</option>
-              <option value="weekend">Weekends</option>
-            </select>
-          </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-1">Start hour</label>
+              <select name="startHour" className={inp} defaultValue="6">
+                {timeOpts.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-1">End hour</label>
+              <select name="endHour" className={inp} defaultValue="10">
+                {timeOpts.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-1">Price ($)</label>
+              <input name="fee" type="number" step="0.01" required placeholder="45.00" className={inp} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-1">Apply to</label>
+              <select name="applyTo" className={inp}>
+                <option value="both">Both days</option>
+                <option value="weekday">Weekdays</option>
+                <option value="weekend">Weekends</option>
+              </select>
+            </div>
+          </div>
           <button className="rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast">Add tier</button>
         </form>
 
