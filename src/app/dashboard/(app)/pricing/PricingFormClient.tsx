@@ -39,6 +39,7 @@ export function PricingFormClient({
   } | null;
 }) {
   const [state, formAction] = useFormState(updatePricing, { ok: false, message: "" });
+  const [tierState, tierFormAction] = useFormState(savePricingTier, { ok: false, message: "" });
   const { pending } = useFormStatus();
 
   return (
@@ -81,7 +82,7 @@ export function PricingFormClient({
         <p className="text-xs text-foreground/60 mb-4">Set different rates for different times of day (e.g., early bird, peak, twilight)</p>
 
         {/* Add tier form */}
-        <form action={savePricingTier} className="mb-4 space-y-3 rounded-lg bg-black/[0.02] p-4">
+        <form action={tierFormAction} className="mb-4 space-y-3 rounded-lg bg-black/[0.02] p-4">
           <input type="hidden" name="layoutId" value={layoutId} />
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-1">Tier name</label>
