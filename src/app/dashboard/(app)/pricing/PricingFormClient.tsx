@@ -43,6 +43,7 @@ export function PricingFormClient({
   const { pending } = useFormStatus();
 
   return (
+    <>
     <form action={formAction} className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
       <input type="hidden" name="layoutId" value={layoutId} />
       <div className="flex items-center justify-between">
@@ -143,6 +144,7 @@ export function PricingFormClient({
       </div>
       </div>
     </div>
+    </>
   );
 }
 
