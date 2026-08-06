@@ -142,7 +142,6 @@ export function PricingFormClient({
           </div>
         )}
       </div>
-      </div>
     </div>
     </>
   );
