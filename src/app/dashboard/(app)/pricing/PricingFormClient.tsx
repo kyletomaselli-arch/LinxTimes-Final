@@ -72,8 +72,10 @@ export function PricingFormClient({
         </label>
       </div>
       <SaveButton label={`Save ${layoutName} pricing`} pending={pending} state={state} />
+    </form>
 
-      {/* Time-based pricing tiers */}
+    {/* Time-based pricing tiers */}
+    <div className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
       <div className="mt-6 border-t border-black/5 pt-6">
         <h3 className="font-semibold text-foreground mb-1">Time-based pricing tiers</h3>
         <p className="text-xs text-foreground/60 mb-4">Set different rates for different times of day (e.g., early bird, peak, twilight)</p>
@@ -134,7 +136,8 @@ export function PricingFormClient({
           </div>
         )}
       </div>
-    </form>
+      </div>
+    </div>
   );
 }
 
