@@ -82,7 +82,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
     return false;
   };
 
-  const handleFileSelect = (file: File | null, isHero: boolean) => {
+  const handleFileSelect = async (file: File | null, isHero: boolean) => {
     if (!file || !file.type.startsWith("image/")) {
       alert("Please select an image file");
       return;
@@ -92,18 +92,40 @@ export function ProfileForm({ c }: { c: CourseValues }) {
       return;
     }
 
+    // Show local preview
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
       if (isHero) {
         setHeroPreview(dataUrl);
-        setFormValues((prev) => ({ ...prev, heroImageUrl: dataUrl }));
       } else {
         setLogoPreview(dataUrl);
-        setFormValues((prev) => ({ ...prev, logoUrl: dataUrl }));
       }
     };
     reader.readAsDataURL(file);
+
+    // Upload to Vercel Blob
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-image", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(`Upload failed: ${data.error}`);
+        return;
+      }
+
+      // Save the CDN URL
+      if (isHero) {
+        setFormValues((prev) => ({ ...prev, heroImageUrl: data.url }));
+      } else {
+        setFormValues((prev) => ({ ...prev, logoUrl: data.url }));
+      }
+    } catch (error) {
+      alert("Upload failed. Please try again.");
+      console.error(error);
+    }
   };
 
   const handleSubmit = (formData: FormData) => {
@@ -159,7 +181,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                 onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, false)}
                 className="w-full text-sm"
               />
-              <p className="mt-1 text-[11px] text-foreground/45">Preview shows instantly. Enter CDN URL below to save.</p>
+              <p className="mt-1 text-[11px] text-foreground/45">Uploads instantly. Preview updates in real-time.</p>
             </div>
             {(logoPreview || c.logoUrl) && (
               <img src={logoPreview || c.logoUrl || undefined} alt="Logo" className="h-12 w-12 rounded-lg object-cover" />
@@ -194,7 +216,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                   onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, true)}
                   className="w-full text-sm"
                 />
-                <p className="mt-1 text-[11px] text-foreground/45">Preview shows instantly. Enter CDN URL below to save.</p>
+                <p className="mt-1 text-[11px] text-foreground/45">Uploads instantly. Preview updates in real-time.</p>
               </div>
               {(heroPreview || c.heroImageUrl) && (
                 <img src={heroPreview || c.heroImageUrl || undefined} alt="Hero" className="h-20 w-32 rounded-lg object-cover" />
