@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireCourseAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
+const timeOpts = Array.from({ length: 24 }, (_, i) => ({ val: i, label: `${i === 0 ? 12 : i > 12 ? i - 12 : i}:00 ${i < 12 ? "AM" : "PM"}` }));
+
 const toCents = (v: FormDataEntryValue | null) => {
   const n = Number(String(v ?? "").trim());
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : 0;
@@ -74,8 +76,31 @@ export async function savePricingTier(_prevState: ActionResult, formData: FormDa
   const feeCents = toCents(formData.get("fee"));
   const applyTo = ["weekday", "weekend", "both"].includes(String(formData.get("applyTo"))) ? String(formData.get("applyTo")) : "both";
 
-  const layout = await prisma.layout.findFirst({ where: { id: layoutId, courseId: course.id }, include: { pricing: true } });
+  if (startHour >= endHour) return { ok: false, message: "Start time must be before end time." };
+  if (!name) return { ok: false, message: "Tier name is required." };
+  if (feeCents < 0) return { ok: false, message: "Price must be positive." };
+
+  const layout = await prisma.layout.findFirst({
+    where: { id: layoutId, courseId: course.id },
+    include: { pricing: { include: { tiers: true } } }
+  });
   if (!layout?.pricing) return { ok: false, message: "Layout not found." };
+
+  // Check for overlapping tiers
+  const existingTiers = layout.pricing.tiers.filter(t => t.id !== tierId); // Exclude current tier if updating
+  const checkDays = (applyTo === "both") ? ["weekday", "weekend", "both"] : [applyTo, "both"];
+
+  for (const tier of existingTiers) {
+    const tierDays = (tier.applyTo === "both") ? ["weekday", "weekend", "both"] : [tier.applyTo, "both"];
+    const daysOverlap = checkDays.some(d => tierDays.includes(d));
+
+    if (daysOverlap) {
+      // Check if time ranges overlap: new tier's start < existing tier's end AND new tier's end > existing tier's start
+      if (startHour < tier.endHour && endHour > tier.startHour) {
+        return { ok: false, message: `Time conflicts with "${tier.name}" (${timeOpts[tier.startHour]?.label} – ${timeOpts[tier.endHour]?.label})` };
+      }
+    }
+  }
 
   if (tierId) {
     await prisma.pricingTier.update({
@@ -89,7 +114,7 @@ export async function savePricingTier(_prevState: ActionResult, formData: FormDa
   }
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
-  return { ok: true, message: `Tier "${name}" added.` };
+  return { ok: true, message: `Tier "${name}" saved.` };
 }
 
 /** Delete a pricing tier. */
