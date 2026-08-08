@@ -86,13 +86,15 @@ export async function savePricingTier(_prevState: ActionResult, formData: FormDa
   });
   if (!layout?.pricing) return { ok: false, message: "Layout not found." };
 
-  // Check for overlapping tiers
+  // Check for overlapping tiers (only for matching day types within this layout)
   const existingTiers = layout.pricing.tiers.filter(t => t.id !== tierId); // Exclude current tier if updating
-  const checkDays = (applyTo === "both") ? ["weekday", "weekend", "both"] : [applyTo, "both"];
 
   for (const tier of existingTiers) {
-    const tierDays = (tier.applyTo === "both") ? ["weekday", "weekend", "both"] : [tier.applyTo, "both"];
-    const daysOverlap = checkDays.some(d => tierDays.includes(d));
+    // Check if day types match or overlap
+    // - "weekday" tier only conflicts with "weekday" or "both"
+    // - "weekend" tier only conflicts with "weekend" or "both"
+    // - "both" tier conflicts with anything
+    const daysOverlap = applyTo === tier.applyTo || applyTo === "both" || tier.applyTo === "both";
 
     if (daysOverlap) {
       // Check if time ranges overlap: new tier's start < existing tier's end AND new tier's end > existing tier's start
