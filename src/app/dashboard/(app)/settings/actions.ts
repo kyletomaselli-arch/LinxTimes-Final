@@ -153,6 +153,16 @@ const hex = (v: FormDataEntryValue | null, dflt: string) => {
   const s = String(v ?? "").trim();
   return /^#[0-9a-fA-F]{6}$/.test(s) ? s : dflt;
 };
+const validateUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) return null;
+    return url;
+  } catch {
+    return null;
+  }
+};
 
 export async function updateProfile(_prev: SettingsResult, formData: FormData): Promise<SettingsResult> {
   const { course } = await requireCourseAdmin();
@@ -172,6 +182,12 @@ export async function updateProfile(_prev: SettingsResult, formData: FormData): 
   const primaryColor = hex(formData.get("primaryColor"), "#0d3522");
   if (!/^#[0-9a-fA-F]{6}$/.test(primaryColor)) return { ok: false, message: "Brand color must be a valid hex code." };
 
+  const logoUrl = validateUrl(str(formData.get("logoUrl")));
+  if (str(formData.get("logoUrl")) && !logoUrl) return { ok: false, message: "Logo URL must be a valid http/https URL." };
+
+  const heroImageUrl = validateUrl(str(formData.get("heroImageUrl")));
+  if (str(formData.get("heroImageUrl")) && !heroImageUrl) return { ok: false, message: "Hero image URL must be a valid http/https URL." };
+
   await prisma.course.update({
     where: { id: course.id },
     data: {
@@ -182,8 +198,8 @@ export async function updateProfile(_prev: SettingsResult, formData: FormData): 
       zip: str(formData.get("zip")),
       phone,
       website,
-      logoUrl: str(formData.get("logoUrl")),
-      heroImageUrl: str(formData.get("heroImageUrl")),
+      logoUrl,
+      heroImageUrl,
       primaryColor,
       notificationEmail,
       timezone: String(formData.get("timezone") ?? "America/Chicago").trim() || "America/Chicago",
