@@ -57,61 +57,17 @@ export function PricingFormClient({
   const weekdayTiers = (pricing?.tiers ?? []).filter(t => t.applyTo === "weekday" || t.applyTo === "both").sort((a, b) => a.startHour - b.startHour);
   const weekendTiers = (pricing?.tiers ?? []).filter(t => t.applyTo === "weekend" || t.applyTo === "both").sort((a, b) => a.startHour - b.startHour);
 
-  // Build complete schedule including base rates and gaps between tiers
-  const buildSchedule = (baseFee: number, tiers: typeof weekdayTiers, isTwilight: boolean) => {
-    const schedule: Array<{ start: number; end: number; price: number; label: string; isBase: boolean }> = [];
+  // Show only explicitly-defined tiers, sorted by time
+  const sortedWeekdayTiers = weekdayTiers.sort((a, b) => a.startHour - b.startHour);
+  const sortedWeekendTiers = weekendTiers.sort((a, b) => a.startHour - b.startHour);
 
-    if (tiers.length === 0) {
-      // No tiers, just base and twilight
-      if (isTwilight) {
-        schedule.push({ start: 0, end: twilightHour, price: baseFee, label: "Base rate", isBase: true });
-        schedule.push({ start: twilightHour, end: 24, price: twilightFee, label: "Twilight", isBase: true });
-      } else {
-        schedule.push({ start: 0, end: 24, price: baseFee, label: "Base rate", isBase: true });
-      }
-      return schedule;
-    }
-
-    // Start from midnight
-    let currentHour = 0;
-
-    // Add segments before, between, and after tiers
-    tiers.forEach((tier, i) => {
-      // Add base rate gap before this tier
-      if (currentHour < tier.startHour) {
-        const endHour = tier.startHour;
-        const price = isTwilight && currentHour >= twilightHour ? twilightFee : baseFee;
-        schedule.push({ start: currentHour, end: endHour, price, label: "Base rate", isBase: true });
-        currentHour = endHour;
-      }
-
-      // Add the tier itself
-      schedule.push({ start: tier.startHour, end: tier.endHour, price: tier.feeCents, label: tier.name, isBase: false });
-      currentHour = tier.endHour;
-    });
-
-    // Add base rate after last tier
-    if (currentHour < 24) {
-      const price = isTwilight && currentHour >= twilightHour ? twilightFee : baseFee;
-      schedule.push({ start: currentHour, end: 24, price, label: "Base rate", isBase: true });
-    }
-
-    return schedule;
-  };
-
-  const weekdaySchedule = buildSchedule(weekdayFee, weekdayTiers, pricing?.twilightEnabled ?? true);
-  const weekendSchedule = buildSchedule(weekendFee, weekendTiers, pricing?.twilightEnabled ?? true);
-
-  const TimelineItem = ({ time, label, price, isBase }: { time: string; label?: string; price: number; isBase?: boolean }) => (
+  const TimelineItem = ({ time, label, price }: { time: string; label: string; price: number }) => (
     <div className="flex items-center justify-between rounded-lg bg-black/[0.02] px-4 py-3 border-l-4 border-course">
       <div>
-        <div className="text-sm font-medium text-foreground">{time}</div>
-        {label && <div className="text-xs text-foreground/60 mt-0.5">{label}</div>}
+        <div className="text-sm font-medium text-foreground">{label}</div>
+        <div className="text-xs text-foreground/60 mt-0.5">{time}</div>
       </div>
-      <div className="flex items-center gap-2">
-        <div className="text-lg font-semibold text-course">${(price / 100).toFixed(2)}</div>
-        {!isBase && <span className="text-xs bg-course/10 text-course px-2 py-1 rounded">Tier</span>}
-      </div>
+      <div className="text-lg font-semibold text-course">${(price / 100).toFixed(2)}</div>
     </div>
   );
 
@@ -130,22 +86,30 @@ export function PricingFormClient({
           <div className="space-y-6">
             {/* WEEKDAY RATES */}
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-3">Weekday Rates</div>
-              <div className="space-y-2">
-                {weekdaySchedule.map((slot, i) => (
-                  <TimelineItem key={i} time={`${getTimeLabel(slot.start)} – ${slot.end === 24 ? "Close" : getTimeLabel(slot.end)}`} label={slot.label} price={slot.price} isBase={slot.isBase} />
-                ))}
-              </div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-3">Weekday Pricing</div>
+              {sortedWeekdayTiers.length > 0 ? (
+                <div className="space-y-2">
+                  {sortedWeekdayTiers.map((tier) => (
+                    <TimelineItem key={tier.id} time={`${getTimeLabel(tier.startHour)} – ${getTimeLabel(tier.endHour)}`} label={tier.name} price={tier.feeCents} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-foreground/60 py-4">No pricing configured yet. Click Edit to add tiers.</div>
+              )}
             </div>
 
             {/* WEEKEND RATES */}
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-3">Weekend Rates</div>
-              <div className="space-y-2">
-                {weekendSchedule.map((slot, i) => (
-                  <TimelineItem key={i} time={`${getTimeLabel(slot.start)} – ${slot.end === 24 ? "Close" : getTimeLabel(slot.end)}`} label={slot.label} price={slot.price} isBase={slot.isBase} />
-                ))}
-              </div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-3">Weekend Pricing</div>
+              {sortedWeekendTiers.length > 0 ? (
+                <div className="space-y-2">
+                  {sortedWeekendTiers.map((tier) => (
+                    <TimelineItem key={tier.id} time={`${getTimeLabel(tier.startHour)} – ${getTimeLabel(tier.endHour)}`} label={tier.name} price={tier.feeCents} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-foreground/60 py-4">No pricing configured yet. Click Edit to add tiers.</div>
+              )}
             </div>
 
             {/* OPTIONS */}
@@ -171,57 +135,11 @@ export function PricingFormClient({
       ) : (
         <>
           {/* EDIT FORM - ONLY SHOWN WHEN showEdit IS TRUE */}
-          <form action={formAction} className="space-y-4">
-            <input type="hidden" name="layoutId" value={layoutId} />
-
+          <div className="space-y-6">
+            {/* TIME-BASED TIERS SECTION */}
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-3">Base Rates</div>
-              <div className="grid grid-cols-2 gap-3">
-                <Money name="weekdayFee" label="Weekday" v={dollars(weekdayFee)} />
-                <Money name="weekendFee" label="Weekend" v={dollars(weekendFee)} />
-              </div>
-            </div>
-
-            <div className="border-t border-black/5 pt-4">
-              <div className="mb-3">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="twilightEnabled" defaultChecked={pricing?.twilightEnabled ?? true} className="h-4 w-4 accent-[var(--course-primary)]" />
-                  <span>Twilight pricing</span>
-                </label>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Money name="twilightFee" label="Twilight price" v={dollars(twilightFee)} />
-                <div>
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Starts at</span>
-                  <input name="twilightHour" type="number" min={0} max={23} defaultValue={twilightHour} className={inp} />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-black/5 pt-4">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/45 mb-3">Options</div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="cartAvailable" defaultChecked={pricing?.cartAvailable ?? true} className="h-4 w-4 accent-[var(--course-primary)]" />
-                  Carts available
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="nineHoleDiscount" defaultChecked={pricing?.nineHoleDiscount ?? true} className="h-4 w-4 accent-[var(--course-primary)]" />
-                  9 holes = half green fee
-                </label>
-              </div>
-              <div className="mt-3">
-                <Money name="cartFee" label="Cart fee" v={dollars(cartFee)} />
-              </div>
-            </div>
-
-            <SaveButton label={`Save ${layoutName} pricing`} pending={pending} state={state} />
-          </form>
-
-          {/* TIME-BASED TIERS SECTION */}
-          <div className="mt-6 border-t border-black/5 pt-6">
-            <h3 className="font-semibold text-foreground mb-1">Time-based tiers</h3>
-            <p className="text-xs text-foreground/60 mb-4">Add special rates for specific times of day (overrides base rates)</p>
+              <h3 className="font-semibold text-foreground mb-1">Pricing Tiers</h3>
+              <p className="text-xs text-foreground/60 mb-4">Add time-based pricing. Each tier specifies the exact hours and price.</p>
 
             <form action={tierFormAction} className="mb-4 space-y-3 rounded-lg bg-black/[0.02] p-4">
               <input type="hidden" name="layoutId" value={layoutId} />
