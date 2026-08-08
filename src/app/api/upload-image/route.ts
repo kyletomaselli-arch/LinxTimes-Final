@@ -12,12 +12,18 @@ export async function POST(request: NextRequest) {
     if (!file.type.startsWith("image/")) return NextResponse.json({ error: "File must be an image" }, { status: 400 });
     if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
 
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      console.error("BLOB_READ_WRITE_TOKEN not set");
+      return NextResponse.json({ error: "Server not configured for uploads" }, { status: 500 });
+    }
+
     const filename = `${course.id}/${Date.now()}-${file.name}`;
     const blob = await put(filename, file, { access: "public" });
 
     return NextResponse.json({ url: blob.url });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return NextResponse.json({ error: `Upload failed: ${error instanceof Error ? error.message : "unknown error"}` }, { status: 500 });
   }
 }
