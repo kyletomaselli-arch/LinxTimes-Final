@@ -141,6 +141,17 @@ export function PricingFormClient({
               <h3 className="font-semibold text-foreground mb-1">Pricing Tiers</h3>
               <p className="text-xs text-foreground/60 mb-4">Add time-based pricing. Each tier specifies the exact hours and price.</p>
 
+              {tierState && !tierState.ok && tierState.message && (
+                <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3">
+                  <p className="text-sm text-red-700">{tierState.message}</p>
+                </div>
+              )}
+              {tierState && tierState.ok && tierState.message && (
+                <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-3">
+                  <p className="text-sm text-green-700">{tierState.message}</p>
+                </div>
+              )}
+
             <form action={tierFormAction} className="mb-4 space-y-3 rounded-lg bg-black/[0.02] p-4">
               <input type="hidden" name="layoutId" value={layoutId} />
               <div>
