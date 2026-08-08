@@ -137,15 +137,15 @@ export function ProfileForm({ c }: { c: CourseValues }) {
           </button>
         </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <F label="Course name"><input name="name" required value={formValues.name} onChange={(e) => setFormValues(prev => ({ ...prev, name: e.target.value }))} className={inp} /></F>
-        <F label="Phone"><input name="phone" defaultValue={c.phone ?? ""} className={inp} /></F>
-        <F label="Website"><input name="website" defaultValue={c.website ?? ""} className={inp} /></F>
-        <F label="Address"><input name="address" defaultValue={c.address ?? ""} className={inp} /></F>
-        <F label="City"><input name="city" defaultValue={c.city ?? ""} className={inp} /></F>
-        <F label="State"><input name="state" defaultValue={c.state ?? ""} className={inp} /></F>
-        <F label="ZIP"><input name="zip" defaultValue={c.zip ?? ""} className={inp} /></F>
-        <F label="Timezone"><select name="timezone" defaultValue={c.timezone} className={inp}>{TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}</select></F>
-        <F label="New-booking email"><input name="notificationEmail" type="email" defaultValue={c.notificationEmail ?? ""} className={inp} /></F>
+        <F label="Course name"><input disabled={pending} name="name" required value={formValues.name} onChange={(e) => setFormValues(prev => ({ ...prev, name: e.target.value }))} className={inp} /></F>
+        <F label="Phone"><input disabled={pending} name="phone" defaultValue={c.phone ?? ""} className={inp} /></F>
+        <F label="Website"><input disabled={pending} name="website" defaultValue={c.website ?? ""} className={inp} /></F>
+        <F label="Address"><input disabled={pending} name="address" defaultValue={c.address ?? ""} className={inp} /></F>
+        <F label="City"><input disabled={pending} name="city" defaultValue={c.city ?? ""} className={inp} /></F>
+        <F label="State"><input disabled={pending} name="state" defaultValue={c.state ?? ""} className={inp} /></F>
+        <F label="ZIP"><input disabled={pending} name="zip" defaultValue={c.zip ?? ""} className={inp} /></F>
+        <F label="Timezone"><select disabled={pending} name="timezone" defaultValue={c.timezone} className={inp}>{TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}</select><p className="mt-1 text-xs text-foreground/45">Used for tee time display and booking rules</p></F>
+        <F label="New-booking email"><input disabled={pending} name="notificationEmail" type="email" defaultValue={c.notificationEmail ?? ""} className={inp} /></F>
       </div>
 
       {/* Logo upload */}
@@ -159,7 +159,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                 onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, false)}
                 className="w-full text-sm"
               />
-              <p className="mt-1 text-[11px] text-foreground/45">Uploads automatically and updates preview instantly</p>
+              <p className="mt-1 text-[11px] text-foreground/45">Preview shows instantly. Enter CDN URL below to save.</p>
             </div>
             {(logoPreview || c.logoUrl) && (
               <img src={logoPreview || c.logoUrl || undefined} alt="Logo" className="h-12 w-12 rounded-lg object-cover" />
@@ -167,6 +167,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
           </div>
           <div className="mt-2 flex gap-2">
             <input
+              disabled={pending}
               name="logoUrl"
               type="url"
               placeholder="https://cdn.example.com/logo.png"
@@ -193,7 +194,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                   onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null, true)}
                   className="w-full text-sm"
                 />
-                <p className="mt-1 text-[11px] text-foreground/45">Uploads automatically and updates preview instantly</p>
+                <p className="mt-1 text-[11px] text-foreground/45">Preview shows instantly. Enter CDN URL below to save.</p>
               </div>
               {(heroPreview || c.heroImageUrl) && (
                 <img src={heroPreview || c.heroImageUrl || undefined} alt="Hero" className="h-20 w-32 rounded-lg object-cover" />
@@ -201,6 +202,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
             </div>
             <div className="flex gap-2">
               <input
+                disabled={pending}
                 name="heroImageUrl"
                 type="url"
                 placeholder="https://cdn.example.com/hero.jpg"
@@ -217,7 +219,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
       </div>
       <div className="mt-4">
         <F label="Booking page banner (optional)">
-          <textarea name="announcement" rows={2} maxLength={280} value={formValues.announcement ?? ""} onChange={(e) => setFormValues(prev => ({ ...prev, announcement: e.target.value.slice(0, 280) || null }))} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
+          <textarea disabled={pending} name="announcement" rows={2} maxLength={280} value={formValues.announcement ?? ""} onChange={(e) => setFormValues(prev => ({ ...prev, announcement: e.target.value.slice(0, 280) || null }))} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
         </F>
         <div className="mt-1 flex justify-between">
           <p className="text-xs text-foreground/45">Shown at the top of your public booking page. Leave blank to hide.</p>
@@ -228,8 +230,8 @@ export function ProfileForm({ c }: { c: CourseValues }) {
         <F label="Brand color">
           <div className="flex items-end gap-3">
             <div className="flex flex-col gap-2">
-              <input name="primaryColor" type="color" value={formValues.primaryColor} onChange={(e) => { setFormValues(prev => ({ ...prev, primaryColor: e.target.value })); validateHexColor(e.target.value); }} className="h-10 w-16 rounded-lg border border-black/10" />
-              <input type="text" value={formValues.primaryColor} onChange={(e) => { const val = e.target.value; setFormValues(prev => ({ ...prev, primaryColor: val })); validateHexColor(val); }} placeholder="#0d3522" className={`text-xs ${inp}`} />
+              <input disabled={pending} name="primaryColor" type="color" value={formValues.primaryColor} onChange={(e) => { setFormValues(prev => ({ ...prev, primaryColor: e.target.value })); validateHexColor(e.target.value); }} className="h-10 w-16 rounded-lg border border-black/10" />
+              <input disabled={pending} type="text" value={formValues.primaryColor} onChange={(e) => { const val = e.target.value; setFormValues(prev => ({ ...prev, primaryColor: val })); validateHexColor(val); }} placeholder="#0d3522" className={`text-xs ${inp}`} />
             </div>
             {colorError && <p className="text-xs text-red-600">{colorError}</p>}
           </div>
