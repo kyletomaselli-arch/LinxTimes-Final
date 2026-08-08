@@ -1,4 +1,5 @@
 import { requireCourseAdmin } from "@/lib/session";
+import { isSuspended, SUSPENDED_MESSAGE } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { buildConnectUrl } from "@/lib/stripe-connect";
 import { ProfileForm, PasswordForm, ReaderForm } from "./SettingsForms";
@@ -32,6 +33,13 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="font-display text-3xl font-semibold text-foreground">Settings</h1>
+
+      {/* Suspended course banner */}
+      {isSuspended(course) && (
+        <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-4">
+          <p className="text-sm font-medium text-red-800">{SUSPENDED_MESSAGE}</p>
+        </div>
+      )}
 
       {/* Go-live checklist — only while the course isn't live yet (owner only) */}
       {admin.role === "owner" && course.status !== "active" && <GoLiveChecklist course={course} />}

@@ -50,6 +50,13 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">{label}</span>{children}</label>;
 }
 
+const TIMEZONES = [
+  "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+  "America/Anchorage", "Pacific/Honolulu", "Europe/London", "Europe/Paris",
+  "Europe/Berlin", "Asia/Tokyo", "Asia/Shanghai", "Asia/Hong_Kong",
+  "Australia/Sydney", "Australia/Melbourne", "UTC"
+];
+
 export function ProfileForm({ c }: { c: CourseValues }) {
   const [state, action, pending] = useActionState(updateProfile, init);
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
@@ -57,6 +64,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
   const [heroPreview, setHeroPreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [colorError, setColorError] = useState<string | null>(null);
   const [formValues, setFormValues] = useState({
     name: c.name,
     logoUrl: c.logoUrl,
@@ -64,6 +72,15 @@ export function ProfileForm({ c }: { c: CourseValues }) {
     primaryColor: c.primaryColor,
     announcement: c.announcement,
   });
+
+  const validateHexColor = (hex: string) => {
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+      setColorError(null);
+      return true;
+    }
+    setColorError("Color must be a valid hex code (e.g. #0d3522)");
+    return false;
+  };
 
   const handleFileSelect = (file: File | null, isHero: boolean) => {
     if (!file || !file.type.startsWith("image/")) {
@@ -127,7 +144,7 @@ export function ProfileForm({ c }: { c: CourseValues }) {
         <F label="City"><input name="city" defaultValue={c.city ?? ""} className={inp} /></F>
         <F label="State"><input name="state" defaultValue={c.state ?? ""} className={inp} /></F>
         <F label="ZIP"><input name="zip" defaultValue={c.zip ?? ""} className={inp} /></F>
-        <F label="Timezone"><input name="timezone" defaultValue={c.timezone} className={inp} /></F>
+        <F label="Timezone"><select name="timezone" defaultValue={c.timezone} className={inp}>{TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}</select></F>
         <F label="New-booking email"><input name="notificationEmail" type="email" defaultValue={c.notificationEmail ?? ""} className={inp} /></F>
       </div>
 
@@ -148,14 +165,19 @@ export function ProfileForm({ c }: { c: CourseValues }) {
               <img src={logoPreview || c.logoUrl || undefined} alt="Logo" className="h-12 w-12 rounded-lg object-cover" />
             )}
           </div>
-          <input
-            name="logoUrl"
-            type="url"
-            placeholder="https://cdn.example.com/logo.png"
-            value={formValues.logoUrl ?? ""}
-            onChange={(e) => setFormValues(prev => ({ ...prev, logoUrl: e.target.value || null }))}
-            className={`${inp} mt-2`}
-          />
+          <div className="mt-2 flex gap-2">
+            <input
+              name="logoUrl"
+              type="url"
+              placeholder="https://cdn.example.com/logo.png"
+              value={formValues.logoUrl ?? ""}
+              onChange={(e) => setFormValues(prev => ({ ...prev, logoUrl: e.target.value || null }))}
+              className={inp}
+            />
+            {formValues.logoUrl && (
+              <span className="text-xs text-foreground/60 truncate max-w-xs" title={formValues.logoUrl}>{formValues.logoUrl}</span>
+            )}
+          </div>
         </F>
       </div>
 
@@ -177,25 +199,42 @@ export function ProfileForm({ c }: { c: CourseValues }) {
                 <img src={heroPreview || c.heroImageUrl || undefined} alt="Hero" className="h-20 w-32 rounded-lg object-cover" />
               )}
             </div>
-            <input
-              name="heroImageUrl"
-              type="url"
-              placeholder="https://cdn.example.com/hero.jpg"
-              value={formValues.heroImageUrl ?? ""}
-              onChange={(e) => setFormValues(prev => ({ ...prev, heroImageUrl: e.target.value || null }))}
-              className={inp}
-            />
+            <div className="flex gap-2">
+              <input
+                name="heroImageUrl"
+                type="url"
+                placeholder="https://cdn.example.com/hero.jpg"
+                value={formValues.heroImageUrl ?? ""}
+                onChange={(e) => setFormValues(prev => ({ ...prev, heroImageUrl: e.target.value || null }))}
+                className={inp}
+              />
+              {formValues.heroImageUrl && (
+                <span className="text-xs text-foreground/60 truncate max-w-xs" title={formValues.heroImageUrl}>{formValues.heroImageUrl}</span>
+              )}
+            </div>
           </div>
         </F>
       </div>
       <div className="mt-4">
         <F label="Booking page banner (optional)">
-          <textarea name="announcement" rows={2} maxLength={280} value={formValues.announcement ?? ""} onChange={(e) => setFormValues(prev => ({ ...prev, announcement: e.target.value || null }))} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
+          <textarea name="announcement" rows={2} maxLength={280} value={formValues.announcement ?? ""} onChange={(e) => setFormValues(prev => ({ ...prev, announcement: e.target.value.slice(0, 280) || null }))} placeholder="e.g. Frost delay until 9am · Greens aerated this week · Twilight rates after 4pm" className={`${inp} w-full resize-none`} />
         </F>
-        <p className="mt-1 text-xs text-foreground/45">Shown at the top of your public booking page. Leave blank to hide.</p>
+        <div className="mt-1 flex justify-between">
+          <p className="text-xs text-foreground/45">Shown at the top of your public booking page. Leave blank to hide.</p>
+          <p className="text-xs text-foreground/45">{(formValues.announcement ?? "").length}/280</p>
+        </div>
       </div>
       <div className="mt-4">
-        <F label="Brand color"><input name="primaryColor" type="color" defaultValue={c.primaryColor} onChange={(e) => setFormValues(prev => ({ ...prev, primaryColor: e.target.value }))} className="h-10 w-16 rounded-lg border border-black/10" /><p className="mt-1 text-xs text-foreground/45">Used for buttons and accents on your booking page</p></F>
+        <F label="Brand color">
+          <div className="flex items-end gap-3">
+            <div className="flex flex-col gap-2">
+              <input name="primaryColor" type="color" value={formValues.primaryColor} onChange={(e) => { setFormValues(prev => ({ ...prev, primaryColor: e.target.value })); validateHexColor(e.target.value); }} className="h-10 w-16 rounded-lg border border-black/10" />
+              <input type="text" value={formValues.primaryColor} onChange={(e) => { const val = e.target.value; setFormValues(prev => ({ ...prev, primaryColor: val })); validateHexColor(val); }} placeholder="#0d3522" className={`text-xs ${inp}`} />
+            </div>
+            {colorError && <p className="text-xs text-red-600">{colorError}</p>}
+          </div>
+          <p className="mt-1 text-xs text-foreground/45">Used for buttons and accents on your booking page</p>
+        </F>
       </div>
       <Note state={state} />
       <SaveButton label="Save profile" pending={pending} state={state} />
@@ -220,13 +259,35 @@ export function ReaderForm({ hasReader }: { hasReader: boolean }) {
 
 export function PasswordForm() {
   const [state, action, pending] = useActionState(changePassword, init);
+  const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswords(prev => ({ ...prev, [field]: value }));
+    setPasswordError(null);
+  };
+
+  const handleSubmit = (formData: FormData) => {
+    if (passwords.next !== passwords.confirm) {
+      setPasswordError("New passwords don't match");
+      return;
+    }
+    if (passwords.next.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
+      return;
+    }
+    action(formData);
+  };
+
   return (
-    <form action={action} className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
+    <form action={handleSubmit} className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
       <h2 className="font-display text-lg font-semibold text-foreground">Change password</h2>
       <div className="mt-4 grid max-w-md gap-3">
-        <F label="Current password"><input name="current" type="password" autoComplete="current-password" required className={inp} /></F>
-        <F label="New password"><input name="next" type="password" autoComplete="new-password" required className={inp} /></F>
+        <F label="Current password"><input name="current" type="password" autoComplete="current-password" value={passwords.current} onChange={(e) => handlePasswordChange("current", e.target.value)} required className={inp} /></F>
+        <F label="New password"><input name="next" type="password" autoComplete="new-password" value={passwords.next} onChange={(e) => handlePasswordChange("next", e.target.value)} required className={inp} /></F>
+        <F label="Confirm new password"><input name="confirm" type="password" value={passwords.confirm} onChange={(e) => handlePasswordChange("confirm", e.target.value)} required className={inp} /></F>
       </div>
+      {passwordError && <p className="mt-2 text-sm text-red-600">{passwordError}</p>}
       <Note state={state} />
       <SaveButton label="Update password" pending={pending} state={state} />
     </form>

@@ -25,6 +25,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
   const [state, action, pending] = useActionState(inviteAdmin, init);
   const [rowMsg, setRowMsg] = useState<string | null>(null);
   const [rowPending, startTransition] = useTransition();
+  const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
   const router = useRouter();
 
   function changeRole(id: string, role: string) {
@@ -32,10 +33,19 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
     startTransition(async () => { const r = await setAdminRole(fd); setRowMsg(r.message); if (r.ok) router.refresh(); });
   }
   function remove(id: string) {
-    if (!confirm("Remove this team member's login?")) return;
+    const member = members.find(m => m.id === id);
+    if (!member) return;
+    if (!confirm(`Remove ${member.name} (${member.email}) from this course?`)) return;
     const fd = new FormData(); fd.set("id", id);
     startTransition(async () => { const r = await removeAdmin(fd); setRowMsg(r.message); if (r.ok) router.refresh(); });
   }
+
+  const handleAddMember = async (formData: FormData) => {
+    await action(formData);
+    if (state.ok) {
+      formRef?.reset();
+    }
+  };
 
   return (
     <div className="rounded-2xl bg-white p-5 shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)]">
@@ -63,7 +73,7 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
       </div>
       {rowMsg && <p className="mt-2 text-xs font-medium text-foreground/60">{rowMsg}</p>}
 
-      <form action={action} className="mt-5 border-t border-black/5 pt-4">
+      <form ref={setFormRef} action={handleAddMember} className="mt-5 border-t border-black/5 pt-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-foreground/45">Add a team member</div>
         <div className="mt-2 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           <input name="name" required placeholder="Name" className={inp} />

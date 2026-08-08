@@ -52,8 +52,12 @@ export async function registerReader(_prev: SettingsResult, formData: FormData):
       location: locationId,
     });
     await prisma.course.update({ where: { id: course.id }, data: { stripeTerminalReaderId: reader.id } });
-  } catch {
-    return { ok: false, message: "Couldn't register that reader — check the code and that Stripe is set up." };
+  } catch (e) {
+    const error = e as any;
+    if (error.code === "resource_missing") return { ok: false, message: "Registration code not found. Check the code on the reader." };
+    if (error.code === "invalid_request_error") return { ok: false, message: "Invalid registration code format. Check the code on the reader." };
+    if (error.message?.includes("already registered")) return { ok: false, message: "This reader is already registered. Use a different reader." };
+    return { ok: false, message: "Couldn't register that reader. Check the code and that Stripe is set up." };
   }
   revalidatePath("/dashboard/settings");
   return { ok: true, message: "Card reader connected to LinxTimes." };
@@ -156,6 +160,18 @@ export async function updateProfile(_prev: SettingsResult, formData: FormData): 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { ok: false, message: "Course name is required." };
 
+  const phone = str(formData.get("phone"));
+  if (phone && !/^[\d\s\-\+\(\)\.]+$/.test(phone)) return { ok: false, message: "Phone number contains invalid characters." };
+
+  const website = str(formData.get("website"));
+  if (website && !/^https?:\/\/|^[a-zA-Z0-9][\w\-\.]*\.[a-zA-Z]{2,}$/.test(website)) return { ok: false, message: "Website must be a valid URL or domain." };
+
+  const notificationEmail = str(formData.get("notificationEmail"));
+  if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) return { ok: false, message: "Invalid email address." };
+
+  const primaryColor = hex(formData.get("primaryColor"), "#0d3522");
+  if (!/^#[0-9a-fA-F]{6}$/.test(primaryColor)) return { ok: false, message: "Brand color must be a valid hex code." };
+
   await prisma.course.update({
     where: { id: course.id },
     data: {
@@ -164,12 +180,12 @@ export async function updateProfile(_prev: SettingsResult, formData: FormData): 
       city: str(formData.get("city")),
       state: str(formData.get("state")),
       zip: str(formData.get("zip")),
-      phone: str(formData.get("phone")),
-      website: str(formData.get("website")),
+      phone,
+      website,
       logoUrl: str(formData.get("logoUrl")),
       heroImageUrl: str(formData.get("heroImageUrl")),
-      primaryColor: hex(formData.get("primaryColor"), "#0d3522"),
-      notificationEmail: str(formData.get("notificationEmail")),
+      primaryColor,
+      notificationEmail,
       timezone: String(formData.get("timezone") ?? "America/Chicago").trim() || "America/Chicago",
       announcement: (() => { const s = String(formData.get("announcement") ?? "").trim(); return s ? s.slice(0, 280) : null; })(),
     },
