@@ -12,6 +12,7 @@ const ICON: Record<string, string> = {
   pricing: "M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6",
   shop: "M6 7h12l-1 13H7zM9 7a3 3 0 016 0",
   discounts: "M4 4h7l9 9-7 7-9-9zM8 8h.01",
+  issues: "M12 8v5m0 5v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
   reports: "M3 3v18h18M8 17v-6M13 17V7M18 17v-10",
   settings: "M12 9a3 3 0 100 6 3 3 0 000-6z M19.4 15a7.9 7.9 0 000-6l2-1.5-2-3.5-2.4 1a8 8 0 00-5-3L11.6 1H8.4L8 2.5a8 8 0 00-5 3l-2.4-1-2 3.5 2 1.5a7.9 7.9 0 000 6l-2 1.5 2 3.5 2.4-1a8 8 0 005 3L8.4 23h3.2l.4-1.5a8 8 0 005-3l2.4 1 2-3.5z",
 };
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/dashboard/members", label: "Members", icon: "members" },
   { href: "/dashboard/pricing", label: "Pricing", icon: "pricing" },
   { href: "/dashboard/shop", label: "Shop", icon: "shop" },
+  { href: "/dashboard/activity", label: "Activity", icon: "issues" },
   { href: "/dashboard/discounts", label: "Discounts", icon: "discounts" },
   { href: "/dashboard/reports", label: "Reports", icon: "reports" },
   { href: "/dashboard/tee-times", label: "Tee time settings", icon: "times" },
