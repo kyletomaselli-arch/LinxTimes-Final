@@ -312,6 +312,10 @@ function AddRow({ slot, date, open, onToggle, onClose, grid, timezone, nowMins }
   const [withCart, setWithCart] = useState(false);
   const [showPastWarning, setShowPastWarning] = useState(false);
   const [confirmedPast, setConfirmedPast] = useState(false);
+  const [golferName, setGolferName] = useState("");
+  const [numPlayers, setNumPlayers] = useState(1);
+  const [holes, setHoles] = useState("18");
+  const [source, setSource] = useState("walkin");
   const router = useRouter();
 
   // Check if slot is in the past
@@ -373,51 +377,80 @@ function AddRow({ slot, date, open, onToggle, onClose, grid, timezone, nowMins }
         <>
           <div className="fixed inset-0 z-40 bg-black/45" onClick={onClose} />
           <form onSubmit={add} className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-[420px] rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)]">
-              <div className="p-5 space-y-4">
+            <div className="grid w-full max-w-[760px] grid-cols-1 overflow-hidden rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] sm:grid-cols-[1.2fr_1fr]">
+              <div className="p-7 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Add group · {slot.label} {slot.ampm}</h3>
+                  <h3 className="text-base font-semibold text-foreground">Add group</h3>
                   <button type="button" onClick={onClose} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold">✕</button>
                 </div>
-                <input name="golferName" required placeholder="Golfer name" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
-                <input name="golferEmail" type="email" placeholder="Email (optional)" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
-                <input name="golferPhone" placeholder="Phone (optional)" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
-                <div className="flex gap-2">
-                  <select name="numPlayers" className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs">
+                <input name="golferName" required placeholder="Golfer name" value={golferName} onChange={(e) => setGolferName(e.target.value)} className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-[#12a06f]" />
+                <input name="golferEmail" type="email" placeholder="Email (optional)" className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-[#12a06f]" />
+                <input name="golferPhone" placeholder="Phone (optional)" className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-[#12a06f]" />
+                <div className="flex gap-3">
+                  <select name="numPlayers" value={numPlayers} onChange={(e) => setNumPlayers(Number(e.target.value))} className="flex-1 rounded-lg border border-black/10 px-3.5 py-2.5 text-sm">
                     {Array.from({ length: slot.spotsLeft }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} player{n === 1 ? "" : "s"}</option>)}
                   </select>
-                  <select name="holes" className="rounded-lg border border-black/10 px-3 py-2 text-xs"><option value="18">18H</option><option value="9">9H</option></select>
+                  <select name="holes" value={holes} onChange={(e) => setHoles(e.target.value)} className="rounded-lg border border-black/10 px-3.5 py-2.5 text-sm"><option value="18">18H</option><option value="9">9H</option></select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-foreground/70 mb-2">Source</label>
-                  <select name="source" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs">
+                  <select name="source" value={source} onChange={(e) => setSource(e.target.value)} className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-sm">
                     <option value="walkin">Walk-in</option>
                     <option value="phone">Phone</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-foreground/70 mb-2">Transport</label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => setWithCart(false)}
-                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${!withCart ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${!withCart ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
                     >
-                      Walking
+                      <i className="ti ti-walk" style={{ fontSize: "14px" }} aria-hidden="true" /> Walking
                     </button>
                     <button
                       type="button"
                       onClick={() => setWithCart(true)}
-                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${withCart ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${withCart ? "bg-[#12a06f] text-white" : "bg-black/[0.04] text-foreground/70 hover:bg-black/[0.08]"}`}
                     >
-                      Cart
+                      <i className="ti ti-car" style={{ fontSize: "14px" }} aria-hidden="true" /> Cart
                     </button>
                   </div>
                 </div>
                 {err && <p className="text-xs font-medium text-red-600">{err}</p>}
-                <div className="flex gap-2 pt-2">
-                  <button disabled={pending} className="flex-1 rounded-full bg-[#12a06f] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Adding…" : "Add"}</button>
-                  <button type="button" onClick={onClose} className="rounded-full px-3 py-2 text-xs font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
+              </div>
+              <div className="flex flex-col bg-[#f2fbf6] p-7">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[#12a06f]/70">Summary</div>
+                <div className="mt-3 text-2xl font-semibold text-foreground">{slot.label} <span className="text-base font-medium text-foreground/50">{slot.ampm}</span></div>
+                <div className="text-sm text-foreground/60">{slot.layoutName}</div>
+                <div className="mt-6 space-y-3 border-t border-[#12a06f]/15 pt-5 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground/55">Golfer</span>
+                    <span className="font-medium text-foreground">{golferName.trim() || "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground/55">Players</span>
+                    <span className="font-medium text-foreground">{numPlayers} of {slot.spotsLeft} spot{slot.spotsLeft === 1 ? "" : "s"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground/55">Holes</span>
+                    <span className="font-medium text-foreground">{holes}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground/55">Source</span>
+                    <span className="font-medium text-foreground">{source === "phone" ? "Phone" : "Walk-in"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground/55">Transport</span>
+                    <span className="flex items-center gap-1 font-medium text-foreground">
+                      {withCart ? <><i className="ti ti-car" style={{ fontSize: "13px" }} aria-hidden="true" /> Cart</> : <><i className="ti ti-walk" style={{ fontSize: "13px" }} aria-hidden="true" /> Walking</>}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-auto flex flex-col gap-2 pt-6">
+                  <button disabled={pending} className="w-full rounded-full bg-[#12a06f] px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{pending ? "Adding…" : "Add booking"}</button>
+                  <button type="button" onClick={onClose} className="w-full rounded-full px-3 py-2.5 text-sm font-medium text-foreground/50 hover:bg-black/[0.04]">Cancel</button>
                 </div>
               </div>
             </div>
