@@ -54,14 +54,17 @@ export function OpenSlot({
 
   return (
     <div className="relative">
-      <form onSubmit={submit} className="absolute left-0 top-0 z-20 w-56 rounded-xl border border-black/10 bg-white p-3 shadow-xl">
+      <form onSubmit={submit} className="absolute left-0 top-0 z-20 w-80 rounded-xl border border-black/10 bg-white p-3 shadow-xl">
         <div className="mb-2 text-xs font-semibold text-foreground/70">Add booking · {formatTimeLabel(time)}</div>
         <input name="golferName" required placeholder="Golfer name" className="w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-linx-green" />
+        <input name="golferEmail" type="email" placeholder="Email (optional)" className="mt-2 w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-linx-green" />
+        <input name="golferPhone" placeholder="Phone (optional)" className="mt-2 w-full rounded-lg border border-black/10 px-2.5 py-1.5 text-xs outline-none focus:border-linx-green" />
         <div className="mt-2 flex gap-2">
+          <select name="source" className="flex-1 rounded-lg border border-black/10 px-2 py-1.5 text-xs"><option value="walkin">Walk-in</option><option value="phone">Phone</option></select>
           <select name="numPlayers" className="flex-1 rounded-lg border border-black/10 px-2 py-1.5 text-xs">{[1,2,3,4].map(n=><option key={n} value={n}>{n} players</option>)}</select>
           <select name="holes" className="rounded-lg border border-black/10 px-2 py-1.5 text-xs"><option value="18">18H</option><option value="9">9H</option></select>
         </div>
-        <input type="hidden" name="source" value="walkin" />
+        <label className="mt-2 flex items-center gap-2 text-xs"><input type="checkbox" name="withCart" className="h-3 w-3 accent-linx-green" /> Cart</label>
         {err && <p className="mt-2 text-xs font-medium text-red-600">{err}</p>}
         <div className="mt-2.5 flex gap-2">
           <button disabled={pending} className="flex-1 rounded-full bg-linx-green px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Adding…" : "Add"}</button>
