@@ -385,7 +385,6 @@ function AddRow({ slot, date, open, onToggle, onClose, grid, timezone, nowMins }
                 </div>
                 <input name="golferName" required placeholder="Golfer name" value={golferName} onChange={(e) => setGolferName(e.target.value)} className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-[#12a06f]" />
                 <input name="golferEmail" type="email" placeholder="Email (optional)" className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-[#12a06f]" />
-                <input name="golferPhone" placeholder="Phone (optional)" className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-[#12a06f]" />
                 <div className="flex gap-3">
                   <select name="numPlayers" value={numPlayers} onChange={(e) => setNumPlayers(Number(e.target.value))} className="flex-1 rounded-lg border border-black/10 px-3.5 py-2.5 text-sm">
                     {Array.from({ length: slot.spotsLeft }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} player{n === 1 ? "" : "s"}</option>)}
@@ -700,7 +699,6 @@ function DetailsPopover({ booking, slotTime, bookingDate, onClose, grid, shopIte
               <button type="button" onClick={onClose} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold leading-none">✕</button>
             </div>
             <div className="text-xs text-foreground/50">{booking.golferEmail}</div>
-            {booking.golferPhone && <div className="text-xs text-foreground/50">{booking.golferPhone}</div>}
             <div className="flex items-center justify-between text-xs text-foreground/70">
               <span>{booking.numPlayers} players · {booking.holes}H · {booking.withCart ? <><i className="ti ti-car" style={{ fontSize: "12px", marginRight: "2px" }} aria-hidden="true" /> Cart</> : <><i className="ti ti-walk" style={{ fontSize: "12px", marginRight: "2px" }} aria-hidden="true" /> Walking</>}{booking.memberCount > 0 ? ` · ★ ${booking.memberCount} member${booking.memberCount === 1 ? "" : "s"}` : ""}</span>
               <span className="font-semibold">{formatCentsCompact(booking.totalCents)}</span>
@@ -1006,7 +1004,6 @@ function DetailsPopover({ booking, slotTime, bookingDate, onClose, grid, shopIte
           <form onSubmit={save} className="p-5 space-y-3">
             <div className="text-sm font-semibold text-foreground">Edit booking</div>
             <input name="golferName" defaultValue={booking.golferName} required placeholder="Name" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
-            <input name="golferPhone" defaultValue={booking.golferPhone ?? ""} placeholder="Phone" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
             <div className="flex gap-2">
               <select name="numPlayers" defaultValue={booking.numPlayers} disabled={!manual} className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs disabled:opacity-50">{[1,2,3,4].map((n)=><option key={n} value={n}>{n}p</option>)}</select>
               <select name="holes" defaultValue={booking.holes} disabled={!manual} className="rounded-lg border border-black/10 px-3 py-2 text-xs disabled:opacity-50"><option value="18">18H</option><option value="9">9H</option></select>
