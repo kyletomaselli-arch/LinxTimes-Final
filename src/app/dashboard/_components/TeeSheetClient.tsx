@@ -380,6 +380,8 @@ function AddRow({ slot, date, open, onToggle, onClose, grid, timezone, nowMins }
                   <button type="button" onClick={onClose} className="text-foreground/50 hover:text-foreground/70 text-lg font-semibold">✕</button>
                 </div>
                 <input name="golferName" required placeholder="Golfer name" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+                <input name="golferEmail" type="email" placeholder="Email (optional)" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
+                <input name="golferPhone" placeholder="Phone (optional)" className="w-full rounded-lg border border-black/10 px-3 py-2 text-xs outline-none focus:border-[#12a06f]" />
                 <div className="flex gap-2">
                   <select name="numPlayers" className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-xs">
                     {Array.from({ length: slot.spotsLeft }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} player{n === 1 ? "" : "s"}</option>)}
