@@ -278,9 +278,7 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
                                 <span className="truncate text-foreground/80">{b.golferName.split(" ")[0]}</span>
                                 <span className="text-[10px] text-foreground/60">·</span>
                                 <span className="shrink-0 text-foreground/70">{b.numPlayers}p</span>
-                                <i className="ml-auto shrink-0" title={b.withCart ? "Riding — cart" : "Walking"} aria-label={b.withCart ? "cart" : "walking"} style={{ fontSize: "12px" }}>
-                                  {b.withCart ? <i className="ti ti-car" aria-hidden="true" /> : <i className="ti ti-walk" aria-hidden="true" />}
-                                </i>
+                                {b.withCart ? <i className="ml-auto shrink-0 ti ti-car" title="Riding — cart" aria-label="cart" style={{ fontSize: "12px" }} aria-hidden="true" /> : <i className="ml-auto shrink-0 ti ti-walk" title="Walking" aria-label="walking" style={{ fontSize: "12px" }} aria-hidden="true" />}
                                 <span className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${pillCls(b.paymentStatus)}`}>
                                   {b.paymentStatus === "paid_online" ? "Paid" : b.paymentStatus === "paid_in_person" ? "Paid · counter" : b.paymentStatus === "partially_paid" ? "Part-paid" : b.paymentStatus === "refunded" ? "Refunded" : "Unpaid"}
                                 </span>
