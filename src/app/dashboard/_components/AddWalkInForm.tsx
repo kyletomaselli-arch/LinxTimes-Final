@@ -83,6 +83,7 @@ export function AddWalkInForm({
     <form onSubmit={submit} className="w-full rounded-2xl border border-black/5 bg-white p-5 animate-fade-up">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <label className="block sm:col-span-2"><span className={lbl}>Golfer name</span><input name="golferName" required className={inp} /></label>
+        <label className="block"><span className={lbl}>Email</span><input name="golferEmail" type="email" className={inp} /></label>
         <label className="block"><span className={lbl}>Phone</span><input name="golferPhone" className={inp} /></label>
         <label className="block"><span className={lbl}>Source</span><select name="source" className={inp}><option value="walkin">Walk-in</option><option value="phone">Phone</option></select></label>
 
