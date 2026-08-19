@@ -278,7 +278,9 @@ export function TeeSheetClient({ date, slots, layouts, shopItems, taxRateBps, in
                                 <span className="truncate text-foreground/80">{b.golferName.split(" ")[0]}</span>
                                 <span className="text-[10px] text-foreground/60">·</span>
                                 <span className="shrink-0 text-foreground/70">{b.numPlayers}p</span>
-                                {b.withCart && <i className="ml-auto shrink-0 ti ti-car" title="Riding — cart" aria-label="cart" style={{ fontSize: "12px" }} aria-hidden="true" />}
+                                <i className="ml-auto shrink-0" title={b.withCart ? "Riding — cart" : "Walking"} aria-label={b.withCart ? "cart" : "walking"} style={{ fontSize: "12px" }}>
+                                  {b.withCart ? <i className="ti ti-car" aria-hidden="true" /> : <i className="ti ti-walk" aria-hidden="true" />}
+                                </i>
                                 <span className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${pillCls(b.paymentStatus)}`}>
                                   {b.paymentStatus === "paid_online" ? "Paid" : b.paymentStatus === "paid_in_person" ? "Paid · counter" : b.paymentStatus === "partially_paid" ? "Part-paid" : b.paymentStatus === "refunded" ? "Refunded" : "Unpaid"}
                                 </span>
@@ -373,7 +375,7 @@ function AddRow({ slot, date, open, onToggle, onClose, grid, timezone, nowMins }
         <>
           <div className="fixed inset-0 z-40 bg-black/45" onClick={onClose} />
           <form onSubmit={add} className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-[420px] rounded-xl border border-black/10 bg-white shadow-2xl">
+            <div className="w-full max-w-[420px] rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)]">
               <div className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">Add group · {slot.label} {slot.ampm}</h3>
