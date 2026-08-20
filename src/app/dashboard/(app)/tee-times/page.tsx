@@ -28,7 +28,7 @@ export default async function TeeTimesPage() {
 
       {/* Add layout */}
       <form action={addLayout} className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
-        <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">New layout name</span><input name="name" required placeholder="The Rock" className={`${inp} w-48`} /></label>
+        <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">New layout name</span><input name="name" required placeholder="Course name" className={`${inp} w-48`} /></label>
         <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Holes</span><select name="holes" className={inp}><option value="18">18</option><option value="9">9</option></select></label>
         <button className="rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast">Add layout</button>
       </form>
