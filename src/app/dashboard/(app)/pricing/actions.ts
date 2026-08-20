@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import { requireCourseAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
-const timeOpts = Array.from({ length: 24 }, (_, i) => ({ val: i, label: `${i === 0 ? 12 : i > 12 ? i - 12 : i}:00 ${i < 12 ? "AM" : "PM"}` }));
-
 const toCents = (v: FormDataEntryValue | null) => {
   const n = Number(String(v ?? "").trim());
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : 0;
@@ -61,73 +59,6 @@ export async function updateBookingWindow(formData: FormData): Promise<void> {
     where: { id: course.id },
     data: { maxDaysAhead },
   });
-  revalidatePath("/dashboard/pricing");
-  revalidatePath(`/${course.slug}`);
-}
-
-/** Add or update a pricing tier. */
-export async function savePricingTier(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
-  const { course } = await requireCourseAdmin();
-  const layoutId = String(formData.get("layoutId") ?? "");
-  const tierId = String(formData.get("tierId") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
-  const startHour = Math.max(0, Math.min(23, Math.round(Number(formData.get("startHour")) || 0)));
-  const endHour = Math.max(0, Math.min(23, Math.round(Number(formData.get("endHour")) || 0)));
-  const feeCents = toCents(formData.get("fee"));
-  const applyTo = ["weekday", "weekend", "both"].includes(String(formData.get("applyTo"))) ? String(formData.get("applyTo")) : "both";
-
-  if (startHour >= endHour) return { ok: false, message: "Start time must be before end time." };
-  if (!name) return { ok: false, message: "Tier name is required." };
-  if (feeCents < 0) return { ok: false, message: "Price must be positive." };
-
-  const layout = await prisma.layout.findFirst({
-    where: { id: layoutId, courseId: course.id },
-    include: { pricing: { include: { tiers: true } } }
-  });
-  if (!layout?.pricing) return { ok: false, message: "Layout not found." };
-
-  // Check for overlapping tiers (only for matching day types within this layout)
-  const existingTiers = layout.pricing.tiers.filter(t => t.id !== tierId); // Exclude current tier if updating
-
-  for (const tier of existingTiers) {
-    // Check if day types match or overlap
-    // - "weekday" tier only conflicts with "weekday" or "both"
-    // - "weekend" tier only conflicts with "weekend" or "both"
-    // - "both" tier conflicts with anything
-    const daysOverlap = applyTo === tier.applyTo || applyTo === "both" || tier.applyTo === "both";
-
-    if (daysOverlap) {
-      // Check if time ranges overlap: new tier's start < existing tier's end AND new tier's end > existing tier's start
-      if (startHour < tier.endHour && endHour > tier.startHour) {
-        return { ok: false, message: `Time conflicts with "${tier.name}" (${timeOpts[tier.startHour]?.label} – ${timeOpts[tier.endHour]?.label})` };
-      }
-    }
-  }
-
-  if (tierId) {
-    await prisma.pricingTier.update({
-      where: { id: tierId },
-      data: { name, startHour, endHour, feeCents, applyTo },
-    });
-  } else {
-    await prisma.pricingTier.create({
-      data: { pricingId: layout.pricing.id, name, startHour, endHour, feeCents, applyTo, sortOrder: 999 },
-    });
-  }
-  revalidatePath("/dashboard/pricing");
-  revalidatePath(`/${course.slug}`);
-  return { ok: true, message: `Tier "${name}" saved.` };
-}
-
-/** Delete a pricing tier. */
-export async function deletePricingTier(formData: FormData): Promise<void> {
-  const { course } = await requireCourseAdmin();
-  const tierId = String(formData.get("tierId") ?? "");
-
-  const tier = await prisma.pricingTier.findUnique({ where: { id: tierId }, include: { pricing: { include: { layout: true } } } });
-  if (!tier || tier.pricing.layout.courseId !== course.id) return;
-
-  await prisma.pricingTier.delete({ where: { id: tierId } });
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
 }

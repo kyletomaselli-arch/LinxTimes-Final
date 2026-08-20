@@ -4,22 +4,13 @@ import { updateBookingWindow, createMembershipTier, deleteMembershipTier } from 
 import { PricingFormClient } from "./PricingFormClient";
 
 const inp = "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
-const timeOpts = Array.from({ length: 24 }, (_, i) => ({ val: i, label: `${i === 0 ? 12 : i > 12 ? i - 12 : i}:00 ${i < 12 ? "AM" : "PM"}` }));
-
-function dollars(cents: number | undefined): string {
-  return cents != null ? (cents / 100).toFixed(2) : "";
-}
 
 export default async function PricingPage() {
   const { course } = await requireCourseAdmin();
   const [layouts, membershipTiers] = await Promise.all([
     prisma.layout.findMany({
       where: { courseId: course.id },
-      include: {
-        pricing: {
-          include: { tiers: { orderBy: { sortOrder: "asc" } } }
-        }
-      },
+      include: { pricing: true },
       orderBy: { name: "asc" },
     }),
     prisma.membershipTier.findMany({
@@ -75,14 +66,5 @@ export default async function PricingPage() {
         )}
       </div>
     </div>
-  );
-}
-
-function Money({ name, label, v }: { name: string; label: string; v: string }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-foreground/45">{label} ($)</span>
-      <input name={name} inputMode="decimal" defaultValue={v} className={inp} />
-    </label>
   );
 }
