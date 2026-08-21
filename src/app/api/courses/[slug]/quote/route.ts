@@ -8,6 +8,7 @@ import { resolvePromo } from "@/lib/promo";
 import { resolveRainCheck } from "@/lib/raincheck";
 import { rateLimit } from "@/lib/rate-limit";
 import { quoteSchema } from "@/lib/validation";
+import { fromDateKey } from "@/lib/datetime";
 
 /**
  * POST /api/courses/[slug]/quote
@@ -47,11 +48,15 @@ export async function POST(
 
   const layout = await prisma.layout.findFirst({
     where: { id: layoutId, courseId: tenant.course.id, isActive: true },
-    include: { pricing: true },
+    include: { pricing: { include: { bands: true } } },
   });
   if (!layout || !layout.pricing) {
     return NextResponse.json({ error: "Layout not configured" }, { status: 404 });
   }
+
+  const dateOverride = await prisma.dailyOverride.findFirst({
+    where: { courseId: tenant.course.id, overrideDate: fromDateKey(date), slotTime: null, feeCents: { not: null } },
+  });
 
   const codes = [...memberIds, ...(memberId ? [memberId] : [])];
   const [members, promoRes, creditRes] = await Promise.all([
@@ -72,6 +77,7 @@ export async function POST(
     members,
     promo: promoRes?.promo ?? null,
     credit: creditRes ? { code: creditRes.code, amountCents: creditRes.amountCents } : null,
+    dateOverrideFeeCents: dateOverride?.feeCents ?? null,
   });
 
   // Mark the promo code valid for the UI when it actually produced a discount.

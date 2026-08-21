@@ -82,13 +82,15 @@ async function main() {
     update: {},
     create: {
       layoutId: liberator.id,
-      weekdayFee: 5500,
-      weekendFee: 7500,
-      twilightFee: 3500,
-      twilightHour: 16,
       memberFee: 2500,
       cartFee: 1800,
       cartAvailable: true,
+      bands: {
+        create: [
+          { startHour: 0, endHour: 16, monThuFeeCents: 5500, friFeeCents: 6500, satFeeCents: 7500, sunFeeCents: 7500, sortOrder: 0 },
+          { startHour: 16, endHour: 24, monThuFeeCents: 3500, friFeeCents: 3500, satFeeCents: 3500, sunFeeCents: 3500, sortOrder: 1 },
+        ],
+      },
     },
   });
 
@@ -127,13 +129,15 @@ async function main() {
     update: {},
     create: {
       layoutId: rock.id,
-      weekdayFee: 3000,
-      weekendFee: 4000,
-      twilightFee: 2000,
-      twilightHour: 16,
       memberFee: 1500,
       cartFee: 1000,
       cartAvailable: true,
+      bands: {
+        create: [
+          { startHour: 0, endHour: 16, monThuFeeCents: 3000, friFeeCents: 3500, satFeeCents: 4000, sunFeeCents: 4000, sortOrder: 0 },
+          { startHour: 16, endHour: 24, monThuFeeCents: 2000, friFeeCents: 2000, satFeeCents: 2000, sunFeeCents: 2000, sortOrder: 1 },
+        ],
+      },
     },
   });
 

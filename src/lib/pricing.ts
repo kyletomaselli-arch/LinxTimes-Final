@@ -1,5 +1,5 @@
-import type { Course, Pricing, Member, DiscountKind } from "../generated/prisma";
-import { hourOf, isWeekend, dayOfWeek } from "./datetime";
+import type { Course, Pricing, PriceBand, Member, DiscountKind } from "../generated/prisma";
+import { hourOf, dayOfWeek } from "./datetime";
 
 export interface AppliedPromo {
   code: string;
@@ -8,10 +8,11 @@ export interface AppliedPromo {
 }
 
 export type RateType = "weekday" | "weekend" | "twilight" | "member";
+export type DayGroup = "monThu" | "fri" | "sat" | "sun";
 
 export interface PricingInput {
   course: Pick<Course, "linxtimesFee" | "taxRateBps">;
-  pricing: Pricing;
+  pricing: Pricing & { bands: PriceBand[] };
   dateKey: string;
   slotTime: string; // "HH:mm"
   numPlayers: number; // 1-4
@@ -28,6 +29,8 @@ export interface PricingInput {
   promo?: AppliedPromo | null;
   /** A validated rain-check credit, applied after any promo discount. */
   credit?: { code: string; amountCents: number } | null;
+  /** A whole-day flat guest green fee (e.g. a holiday rate) that overrides band lookup entirely. */
+  dateOverrideFeeCents?: number | null;
 }
 
 export interface PriceBreakdown {
@@ -58,30 +61,63 @@ export function memberDiscountApplies(member: Member, dateKey: string): boolean 
   return d >= 1 && d <= 4;
 }
 
-/** The standard (guest / non-member) rate type for this date & time. */
+/** Which price-band column a date falls into. 0=Sun..6=Sat. */
+export function dayGroupOf(dateKey: string): DayGroup {
+  const d = dayOfWeek(dateKey);
+  if (d === 0) return "sun";
+  if (d === 6) return "sat";
+  if (d === 5) return "fri";
+  return "monThu";
+}
+
+const dayGroupFeeField: Record<DayGroup, keyof PriceBand> = {
+  monThu: "monThuFeeCents",
+  fri: "friFeeCents",
+  sat: "satFeeCents",
+  sun: "sunFeeCents",
+};
+
+/**
+ * Find the band covering this hour (bands must fully cover 0-24 with no gaps —
+ * enforced when bands are saved) and return its fee for the given day group.
+ * Also reports whether this is the last (latest-starting) band of the day, so
+ * callers can label it "twilight" the way the old flat twilight rate did.
+ */
+export function resolveBand(
+  bands: PriceBand[],
+  hour: number
+): { band: PriceBand; isLastBand: boolean } | null {
+  if (bands.length === 0) return null;
+  const sorted = [...bands].sort((a, b) => a.startHour - b.startHour);
+  const band = sorted.find((b) => hour >= b.startHour && hour < b.endHour);
+  if (!band) return null;
+  const isLastBand = band.id === sorted[sorted.length - 1].id;
+  return { band, isLastBand };
+}
+
+/** The standard (guest / non-member) rate type for this date & time, for display/reporting. */
 export function guestRateType(
   input: Pick<PricingInput, "pricing" | "dateKey" | "slotTime">
 ): Exclude<RateType, "member"> {
-  if (hourOf(input.slotTime) >= input.pricing.twilightHour) return "twilight";
-  return isWeekend(input.dateKey) ? "weekend" : "weekday";
+  const resolved = resolveBand(input.pricing.bands, hourOf(input.slotTime));
+  if (resolved?.isLastBand) return "twilight";
+  const group = dayGroupOf(input.dateKey);
+  return group === "monThu" ? "weekday" : "weekend";
 }
 
-/** Standard (guest) per-player green fee in cents for the given rate type. */
-function guestGreenFee(rateType: Exclude<RateType, "member">, input: PricingInput): number {
-  const { pricing, holes } = input;
-  switch (rateType) {
-    case "twilight":
-      return pricing.twilightFee; // flat — not halved for 9 holes
-    case "weekend": {
-      const base = pricing.weekendFee;
-      return holes === 9 && pricing.nineHoleDiscount ? Math.round(base / 2) : base;
-    }
-    case "weekday":
-    default: {
-      const base = pricing.weekdayFee;
-      return holes === 9 && pricing.nineHoleDiscount ? Math.round(base / 2) : base;
-    }
+/** Standard (guest) per-player green fee in cents, from the matching band or a date override. */
+function guestGreenFee(input: PricingInput): number {
+  const { pricing, holes, dateOverrideFeeCents } = input;
+
+  if (dateOverrideFeeCents != null) {
+    return holes === 9 && pricing.nineHoleDiscount ? Math.round(dateOverrideFeeCents / 2) : dateOverrideFeeCents;
   }
+
+  const resolved = resolveBand(pricing.bands, hourOf(input.slotTime));
+  if (!resolved) return 0;
+  const group = dayGroupOf(input.dateKey);
+  const base = resolved.band[dayGroupFeeField[group]] as number;
+  return holes === 9 && pricing.nineHoleDiscount ? Math.round(base / 2) : base;
 }
 
 /** Per-member green fee (flat member rate; per-member override wins). */
@@ -101,7 +137,7 @@ export function computePricing(input: PricingInput): PriceBreakdown {
   const guestCount = numPlayers - memberCount;
 
   const gRateType = guestRateType(input);
-  const guestPerPlayer = guestGreenFee(gRateType, input);
+  const guestPerPlayer = guestGreenFee(input);
 
   // Green fee = each member's own rate + guests at the standard rate.
   const memberGreenTotal = eligibleMembers.reduce((n, m) => n + memberGreenFee(m, pricing), 0);

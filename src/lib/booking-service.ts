@@ -45,11 +45,15 @@ export async function createBooking(
 ): Promise<BookingResult> {
   const layout = await prisma.layout.findFirst({
     where: { id: input.layoutId, courseId: course.id, isActive: true },
-    include: { pricing: true },
+    include: { pricing: { include: { bands: true } } },
   });
   if (!layout || !layout.pricing) {
     return { ok: false, status: 404, reason: "Layout not configured" };
   }
+
+  const dateOverride = await prisma.dailyOverride.findFirst({
+    where: { courseId: course.id, overrideDate: fromDateKey(input.date), slotTime: null, feeCents: { not: null } },
+  });
 
   // Validate the slot against the same rules the public grid uses (window,
   // day template, overrides, already-booked).
@@ -100,6 +104,7 @@ export async function createBooking(
     members,
     promo: promoRes?.promo ?? null,
     credit: creditRes ? { code: creditRes.code, amountCents: creditRes.amountCents } : null,
+    dateOverrideFeeCents: dateOverride?.feeCents ?? null,
   });
 
   const bookingFeeCents = breakdown.bookingFeeCents;

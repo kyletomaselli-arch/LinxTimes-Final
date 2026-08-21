@@ -214,7 +214,7 @@ export async function adminAvailableSlots(
   if (!layoutId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return [];
   const layout = await prisma.layout.findFirst({
     where: { id: layoutId, courseId: course.id },
-    include: { pricing: true },
+    include: { pricing: { include: { bands: true } } },
   });
   if (!layout) return [];
   const { computeAvailability } = await import("@/lib/availability");
@@ -252,16 +252,17 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
 
   const layout = await prisma.layout.findFirst({
     where: { id: layoutId, courseId: course.id, isActive: true },
-    include: { pricing: true },
-  }).then(l => l ? {
-    ...l,
-    pricing: l.pricing
-  } : null);
+    include: { pricing: { include: { bands: true } } },
+  });
   if (!layout || !layout.pricing) return { ok: false, message: "Layout not configured." };
 
   const availability = await computeAvailability({ course, layout, dateKey: date });
   const slot = availability.slots.find((s) => s.time === slotTime);
   if (!slot) return { ok: false, message: "That time isn't on the schedule for this date." };
+
+  const dateOverride = await prisma.dailyOverride.findFirst({
+    where: { courseId: course.id, overrideDate: fromDateKey(date), slotTime: null, feeCents: { not: null } },
+  });
 
   // Check if this slot is in the past
   const slotMins = timeToMinutes(slotTime);
@@ -278,6 +279,7 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
   const breakdown = computePricing({
     course, pricing: layout.pricing, dateKey: date, slotTime,
     numPlayers, holes, withCart, members: [],
+    dateOverrideFeeCents: dateOverride?.feeCents ?? null,
   });
   // No LinxTimes fee on manual bookings.
   const totalCents = breakdown.greenFeeCents + breakdown.cartFeeCents;
@@ -348,7 +350,7 @@ export async function editBooking(formData: FormData): Promise<ActionResult> {
 
   const booking = await prisma.booking.findFirst({
     where: { id, courseId: course.id },
-    include: { layout: { include: { pricing: true } } },
+    include: { layout: { include: { pricing: { include: { bands: true } } } } },
   });
   if (!booking) return { ok: false, message: "Booking not found." };
 
@@ -370,6 +372,7 @@ export async function editBooking(formData: FormData): Promise<ActionResult> {
       where: { layoutId_dayOfWeek: { layoutId: booking.layoutId, dayOfWeek: booking.bookingDate.getUTCDay() } },
     });
     const override = await tx.dailyOverride.findFirst({ where: { courseId: course.id, overrideDate: booking.bookingDate, slotTime: booking.slotTime } });
+    const dateOverride = await tx.dailyOverride.findFirst({ where: { courseId: course.id, overrideDate: booking.bookingDate, slotTime: null, feeCents: { not: null } } });
     const maxPlayers = override?.maxPlayers ?? template?.maxPlayers ?? 4;
     const agg = await tx.booking.aggregate({
       where: { layoutId: booking.layoutId, bookingDate: booking.bookingDate, slotTime: booking.slotTime, status: { not: "cancelled" }, id: { not: id } },
@@ -378,7 +381,7 @@ export async function editBooking(formData: FormData): Promise<ActionResult> {
     const remaining = maxPlayers - (agg._sum.numPlayers ?? 0);
     if (numPlayers > remaining) return { conflict: remaining } as const;
 
-    const bd = computePricing({ course, pricing, dateKey: toDateKey(booking.bookingDate), slotTime: booking.slotTime, numPlayers, holes, withCart, members: [] });
+    const bd = computePricing({ course, pricing, dateKey: toDateKey(booking.bookingDate), slotTime: booking.slotTime, numPlayers, holes, withCart, members: [], dateOverrideFeeCents: dateOverride?.feeCents ?? null });
     await tx.booking.update({
       where: { id },
       data: { golferName, golferPhone, numPlayers, holes, withCart, greenFeeCents: bd.greenFeeCents, cartFeeCents: bd.cartFeeCents, totalCents: bd.greenFeeCents + bd.cartFeeCents },

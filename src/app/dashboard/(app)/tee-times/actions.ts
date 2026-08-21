@@ -22,7 +22,12 @@ export async function addLayout(formData: FormData): Promise<void> {
   const layout = await prisma.layout.create({
     data: { courseId: course.id, name, holes, isActive: true },
   });
-  await prisma.pricing.create({ data: { layoutId: layout.id } });
+  await prisma.pricing.create({
+    data: {
+      layoutId: layout.id,
+      bands: { create: [{ startHour: 0, endHour: 24, monThuFeeCents: 5000, friFeeCents: 5000, satFeeCents: 7000, sunFeeCents: 7000, sortOrder: 0 }] },
+    },
+  });
   for (let day = 0; day <= 6; day++) {
     await prisma.teeTimeSlot.create({
       data: { layoutId: layout.id, dayOfWeek: day, startTime: "07:00", endTime: "18:00", intervalMin: 10, maxPlayers: 4, isActive: true },

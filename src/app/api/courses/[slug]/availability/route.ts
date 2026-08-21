@@ -37,7 +37,7 @@ export async function GET(
 
   const layout = await prisma.layout.findFirst({
     where: { id: parsed.data.layoutId, courseId: tenant.course.id, isActive: true },
-    include: { pricing: true },
+    include: { pricing: { include: { bands: true } } },
   });
   if (!layout) {
     return NextResponse.json({ error: "Layout not found" }, { status: 404 });

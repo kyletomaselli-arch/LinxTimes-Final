@@ -2,27 +2,32 @@ import { requireCourseAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { updateBookingWindow, createMembershipTier, deleteMembershipTier } from "./actions";
 import { PricingFormClient } from "./PricingFormClient";
+import { DateOverrideSection } from "./DateOverrideSection";
 
 const inp = "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none transition focus:border-course focus:ring-2 focus:ring-course/25";
 
 export default async function PricingPage() {
   const { course } = await requireCourseAdmin();
-  const [layouts, membershipTiers] = await Promise.all([
+  const [layouts, membershipTiers, dateOverrides] = await Promise.all([
     prisma.layout.findMany({
       where: { courseId: course.id },
-      include: { pricing: true },
+      include: { pricing: { include: { bands: { orderBy: { startHour: "asc" } } } } },
       orderBy: { name: "asc" },
     }),
     prisma.membershipTier.findMany({
       where: { courseId: course.id },
       orderBy: { sortOrder: "asc" },
     }),
+    prisma.dailyOverride.findMany({
+      where: { courseId: course.id, slotTime: null, feeCents: { not: null } },
+      orderBy: { overrideDate: "asc" },
+    }),
   ]);
 
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="font-display text-3xl font-semibold text-foreground">Pricing</h1>
-      <p className="mt-1 text-sm text-foreground/55">Rates are per player. Twilight is a flat rate; 9 holes can be half the green fee.</p>
+      <p className="mt-1 text-sm text-foreground/55">Rates are per player. 9 holes can be half the green fee.</p>
 
       {/* Booking window */}
       <form action={updateBookingWindow} className="mt-6 flex flex-wrap items-end gap-4 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">
@@ -36,6 +41,10 @@ export default async function PricingPage() {
       {layouts.map((l) => (
         <PricingFormClient key={l.id} layoutId={l.id} layoutName={l.name} pricing={l.pricing} />
       ))}
+
+      <DateOverrideSection
+        overrides={dateOverrides.map((o) => ({ id: o.id, overrideDate: o.overrideDate, feeCents: o.feeCents!, reason: o.reason }))}
+      />
 
       {/* Membership tiers */}
       <div className="mt-6 rounded-2xl bg-white shadow-[0_18px_40px_-34px_rgba(16,50,34,0.4)] p-5">

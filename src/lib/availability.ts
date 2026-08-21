@@ -7,12 +7,19 @@ import {
   addDays,
   compareDateKeys,
   hourOf,
-  isWeekend,
   nowMinutesInTz,
   BOOKING_LEAD_MINUTES,
 } from "./datetime";
 import { sweepAbandonedBookings } from "./booking-sweep";
-import type { Course, Layout, Pricing } from "../generated/prisma";
+import { resolveBand, dayGroupOf } from "./pricing";
+import type { Course, Layout, Pricing, PriceBand } from "../generated/prisma";
+
+const dayGroupFeeField = {
+  monThu: "monThuFeeCents",
+  fri: "friFeeCents",
+  sat: "satFeeCents",
+  sun: "sunFeeCents",
+} as const;
 
 export interface AvailableSlot {
   time: string; // "HH:mm"
@@ -37,7 +44,7 @@ export interface AvailabilityResult {
 
 interface ComputeArgs {
   course: Course;
-  layout: Layout & { pricing: Pricing | null };
+  layout: Layout & { pricing: (Pricing & { bands: PriceBand[] }) | null };
   dateKey: string;
 }
 
@@ -91,6 +98,7 @@ export async function computeAvailability({
   const slotOverrides = new Map(
     overrides.filter((o) => o.slotTime).map((o) => [o.slotTime as string, o])
   );
+  const dateOverrideFeeCents = overrides.find((o) => !o.slotTime && o.feeCents != null)?.feeCents ?? null;
 
   // Existing active bookings for this layout/date.
   const bookings = await prisma.booking.findMany({
@@ -108,7 +116,7 @@ export async function computeAvailability({
   }
 
   const pricing = layout.pricing;
-  const weekend = isWeekend(dateKey);
+  const dayGroup = dayGroupOf(dateKey);
 
   // On the current day, tee times that have passed (or are within the lead-time
   // cutoff before start) are not bookable.
@@ -129,22 +137,20 @@ export async function computeAvailability({
     const playersBooked = bookedMap.get(time) ?? 0;
     const spotsLeft = Math.max(0, maxPlayers - playersBooked);
 
-    // Determine rate type and price using legacy pricing (tiers coming soon)
-    const rateType: AvailableSlot["rateType"] = pricing
-      ? pricing.twilightEnabled && hourOf(time) >= pricing.twilightHour
-        ? "twilight"
-        : weekend
-          ? "weekend"
-          : "weekday"
-      : "weekday";
-
-    const fromPriceCents = pricing
-      ? rateType === "twilight"
-        ? pricing.twilightFee
-        : rateType === "weekend"
-          ? pricing.weekendFee
-          : pricing.weekdayFee
-      : 0;
+    // Determine rate type and price from the matching price band (or a
+    // whole-day override, e.g. a holiday rate).
+    let rateType: AvailableSlot["rateType"] = "weekday";
+    let fromPriceCents = 0;
+    if (dateOverrideFeeCents != null) {
+      rateType = dayGroup === "monThu" ? "weekday" : "weekend";
+      fromPriceCents = dateOverrideFeeCents;
+    } else if (pricing) {
+      const resolved = resolveBand(pricing.bands, hourOf(time));
+      if (resolved) {
+        rateType = resolved.isLastBand ? "twilight" : dayGroup === "monThu" ? "weekday" : "weekend";
+        fromPriceCents = resolved.band[dayGroupFeeField[dayGroup]];
+      }
+    }
 
     slots.push({
       time,

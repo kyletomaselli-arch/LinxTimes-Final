@@ -117,6 +117,9 @@ model DailyOverride {
   slotTime     String?
   isClosed     Boolean  @default(true)
   maxPlayers   Int?
+  /// Whole-day flat per-player green fee override (e.g. a holiday rate).
+  /// Only meaningful when slotTime is null and isClosed is false.
+  feeCents     Int?
   reason       String?
   createdAt    DateTime @default(now())
   course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -193,36 +196,36 @@ model Waitlist {
 }
 
 model Pricing {
-  id               String          @id @default(uuid())
-  layoutId         String          @unique
-  weekdayFee       Int             @default(5000)
-  weekendFee       Int             @default(7000)
-  twilightFee      Int             @default(3000)
-  twilightHour     Int             @default(16)
-  memberFee        Int             @default(2500)
-  cartFee          Int             @default(1500)
-  cartAvailable    Boolean         @default(true)
-  nineHoleDiscount Boolean         @default(true)
-  twilightEnabled  Boolean         @default(true)
-  layout           Layout          @relation(fields: [layoutId], references: [id], onDelete: Cascade)
-  tiers            PricingTier[]
+  id               String      @id @default(uuid())
+  layoutId         String      @unique
+  memberFee        Int         @default(2500)
+  cartFee          Int         @default(1500)
+  cartAvailable    Boolean     @default(true)
+  nineHoleDiscount Boolean     @default(true)
+  layout           Layout      @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  bands            PriceBand[]
 
   @@map("pricing")
 }
 
-model PricingTier {
-  id        String  @id @default(uuid())
-  pricingId String
-  name      String
-  startHour Int     @db.SmallInt
-  endHour   Int     @db.SmallInt
-  feeCents  Int
-  applyTo   String  @default("both")
-  sortOrder Int     @default(0)
-  pricing   Pricing @relation(fields: [pricingId], references: [id], onDelete: Cascade)
+/// A per-player green fee for one time-of-day range, priced independently for
+/// Mon–Thu vs. Fri vs. Sat vs. Sun. Bands must cover the full 24 hours with no
+/// gaps — computePricing() has no fallback for an hour that matches no band.
+model PriceBand {
+  id             String  @id @default(uuid())
+  pricingId      String
+  startHour      Int     @db.SmallInt
+  /// Exclusive — 24 means "through close".
+  endHour        Int     @db.SmallInt
+  monThuFeeCents Int
+  friFeeCents    Int
+  satFeeCents    Int
+  sunFeeCents    Int
+  sortOrder      Int     @default(0)
+  pricing        Pricing @relation(fields: [pricingId], references: [id], onDelete: Cascade)
 
   @@index([pricingId])
-  @@map("pricing_tiers")
+  @@map("price_bands")
 }
 
 model MembershipTier {

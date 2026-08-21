@@ -6,12 +6,15 @@ export function SaveButton({
   label,
   pending,
   state,
-  className = "mt-4 rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast disabled:opacity-50"
+  className = "mt-4 rounded-full bg-course px-5 py-2 text-sm font-semibold text-course-contrast disabled:opacity-50",
+  formId,
 }: {
   label: string;
   pending: boolean;
   state: { ok: boolean; message?: string };
   className?: string;
+  /** Associates the button with a form elsewhere in the DOM (for fields that can't be nested inside it). */
+  formId?: string;
 }) {
   const [showSaved, setShowSaved] = useState(false);
 
@@ -26,6 +29,7 @@ export function SaveButton({
   return (
     <div className="flex items-center gap-2">
       <button
+        form={formId}
         disabled={pending}
         className={className}
       >
