@@ -170,6 +170,7 @@ export async function updateCourse(formData: FormData): Promise<AdminActionResul
       linxtimesFee: feeCents(formData.get("fee"), course.linxtimesFee),
       linxtimesInPersonFee: feeCents(formData.get("inPersonFee"), course.linxtimesInPersonFee),
       taxRateBps: taxBps(formData.get("taxRate"), course.taxRateBps),
+      taxRateSet: true,
       status: valid.includes(status) ? (status as typeof course.status) : course.status,
     },
   });

@@ -67,6 +67,7 @@ export async function saveAllPricing(_prevState: ActionResult, formData: FormDat
     cartFee: toCents(formData.get("cartFee")),
     cartAvailable: formData.get("cartAvailable") === "on",
     nineHoleDiscount: formData.get("nineHoleDiscount") === "on",
+    reviewed: true,
   };
 
   const pricing = await prisma.pricing.upsert({
@@ -130,6 +131,7 @@ export async function moveBoundary(_prevState: ActionResult, formData: FormData)
   await prisma.$transaction([
     prisma.priceBand.update({ where: { id: before.id }, data: { endHour: newHour } }),
     prisma.priceBand.update({ where: { id: after.id }, data: { startHour: newHour } }),
+    prisma.pricing.update({ where: { id: before.pricingId }, data: { reviewed: true } }),
   ]);
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
@@ -162,6 +164,7 @@ export async function splitBand(_prevState: ActionResult, formData: FormData): P
         sortOrder: band.sortOrder + 1,
       },
     }),
+    prisma.pricing.update({ where: { id: band.pricingId }, data: { reviewed: true } }),
   ]);
   revalidatePath("/dashboard/pricing");
   revalidatePath(`/${course.slug}`);
@@ -188,11 +191,13 @@ export async function mergeBand(_prevState: ActionResult, formData: FormData): P
     await prisma.$transaction([
       prisma.priceBand.update({ where: { id: next.id }, data: { startHour: band.startHour } }),
       prisma.priceBand.delete({ where: { id: band.id } }),
+      prisma.pricing.update({ where: { id: pricing.id }, data: { reviewed: true } }),
     ]);
   } else if (prev) {
     await prisma.$transaction([
       prisma.priceBand.update({ where: { id: prev.id }, data: { endHour: band.endHour } }),
       prisma.priceBand.delete({ where: { id: band.id } }),
+      prisma.pricing.update({ where: { id: pricing.id }, data: { reviewed: true } }),
     ]);
   }
   revalidatePath("/dashboard/pricing");

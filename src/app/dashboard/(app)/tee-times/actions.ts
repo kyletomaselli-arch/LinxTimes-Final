@@ -68,10 +68,6 @@ export async function saveSlots(formData: FormData): Promise<void> {
     const isActive = formData.get(`active_${day}`) === "on";
     if (!HHMM.test(start) || !HHMM.test(end)) continue;
 
-    if (day === 2) {
-      console.log(`[TUE] day=2, raw=${rawInterval}, interval=${interval}`);
-    }
-
     await prisma.teeTimeSlot.upsert({
       where: { layoutId_dayOfWeek: { layoutId, dayOfWeek: day } },
       update: { startTime: start, endTime: end, intervalMin: interval, maxPlayers, isActive },
@@ -79,9 +75,7 @@ export async function saveSlots(formData: FormData): Promise<void> {
     });
   }
 
-  // Debug: check what's in DB for Tuesday
-  const tue = await prisma.teeTimeSlot.findFirst({ where: { layoutId, dayOfWeek: 2 } });
-  console.log(`[TUE DB] Read back from DB: ${tue?.intervalMin}`);
+  await prisma.layout.update({ where: { id: layoutId }, data: { teeTimesReviewed: true } });
 
   await revalidate(course.slug);
 }

@@ -33,7 +33,7 @@ export async function getCourseReadiness(course: Course): Promise<Readiness> {
   const [activeLayouts, teeSlotCount] = await Promise.all([
     prisma.layout.findMany({
       where: { courseId: course.id, isActive: true },
-      select: { id: true, pricing: { select: { id: true } } },
+      select: { id: true, teeTimesReviewed: true, pricing: { select: { id: true, reviewed: true } } },
     }),
     prisma.teeTimeSlot.count({
       where: { isActive: true, layout: { courseId: course.id, isActive: true } },
@@ -41,8 +41,10 @@ export async function getCourseReadiness(course: Course): Promise<Readiness> {
   ]);
 
   const hasLayout = activeLayouts.length > 0;
-  const hasPricing = activeLayouts.some((l) => l.pricing);
-  const hasTeeTimes = teeSlotCount > 0;
+  // The default pricing/schedule created alongside a new layout doesn't count —
+  // the owner has to have actually saved a change themselves (reviewed: true).
+  const hasPricing = hasLayout && activeLayouts.every((l) => l.pricing?.reviewed);
+  const hasTeeTimes = teeSlotCount > 0 && hasLayout && activeLayouts.every((l) => l.teeTimesReviewed);
   const stripeVerified = Boolean(course.stripeAccountId && course.stripeOnboarded);
 
   // The connected account must actually have the `transfers` capability active,
@@ -79,6 +81,12 @@ export async function getCourseReadiness(course: Course): Promise<Readiness> {
       ok: hasTeeTimes,
       hint: "Add a tee time schedule (at least one day with start/end times).",
       href: "/dashboard/tee-times",
+    },
+    {
+      key: "taxRate",
+      label: "Tax rate set",
+      ok: course.taxRateSet,
+      hint: "This is set by LinxTimes, not something you can change yourself — ask LinxTimes to set your sales tax rate.",
     },
     {
       key: "stripe",

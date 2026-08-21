@@ -50,6 +50,10 @@ model Course {
   linxtimesInPersonFee   Int              @default(50)
   stripeTerminalReaderId String?
   taxRateBps             Int              @default(0)
+  /// True once LinxTimes has deliberately set a tax rate for this course (even
+  /// 0%) — distinguishes "no tax" from "nobody's configured this yet", since
+  /// the go-live checklist needs to require the latter be addressed.
+  taxRateSet             Boolean          @default(false)
   announcement           String?
   cancellationFeeBps     Int              @default(0)
   bookings               Booking[]
@@ -81,16 +85,20 @@ model CourseAdmin {
 }
 
 model Layout {
-  id           String        @id @default(uuid())
-  courseId     String
-  name         String
-  holes        Int           @default(18)
-  isActive     Boolean       @default(true)
-  bookings     Booking[]
-  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  pricing      Pricing?
-  teeTimeSlots TeeTimeSlot[]
-  waitlist     Waitlist[]
+  id               String        @id @default(uuid())
+  courseId         String
+  name             String
+  holes            Int           @default(18)
+  isActive         Boolean       @default(true)
+  /// True once the owner has saved a tee time schedule themselves — the
+  /// default 7am-6pm/10-min schedule created alongside a new layout doesn't
+  /// count, so the go-live checklist can't be satisfied by unedited defaults.
+  teeTimesReviewed Boolean       @default(false)
+  bookings         Booking[]
+  course           Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  pricing          Pricing?
+  teeTimeSlots     TeeTimeSlot[]
+  waitlist         Waitlist[]
 
   @@map("layouts")
 }
@@ -202,6 +210,10 @@ model Pricing {
   cartFee          Int         @default(1500)
   cartAvailable    Boolean     @default(true)
   nineHoleDiscount Boolean     @default(true)
+  /// True once the owner has saved pricing themselves — the default band
+  /// created alongside a new layout doesn't count, so the go-live checklist
+  /// can't be satisfied by unedited defaults.
+  reviewed         Boolean     @default(false)
   layout           Layout      @relation(fields: [layoutId], references: [id], onDelete: Cascade)
   bands            PriceBand[]
 
