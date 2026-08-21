@@ -46,6 +46,12 @@ interface ComputeArgs {
   course: Course;
   layout: Layout & { pricing: (Pricing & { bands: PriceBand[] }) | null };
   dateKey: string;
+  /**
+   * Minutes before a tee time that it stops being bookable. Defaults to the
+   * public online-booking safety margin; pass 0 for staff-entered walk-ins,
+   * where blocking a slot that's happening right now makes no sense.
+   */
+  leadMinutes?: number;
 }
 
 /**
@@ -57,6 +63,7 @@ export async function computeAvailability({
   course,
   layout,
   dateKey,
+  leadMinutes = BOOKING_LEAD_MINUTES,
 }: ComputeArgs): Promise<AvailabilityResult> {
   // Lazily release tee times held by abandoned online checkouts before
   // counting capacity, so a dead unpaid booking can't block the grid.
@@ -121,7 +128,7 @@ export async function computeAvailability({
   // On the current day, tee times that have passed (or are within the lead-time
   // cutoff before start) are not bookable.
   const isToday = compareDateKeys(dateKey, today) === 0;
-  const cutoffMins = isToday ? nowMinutesInTz(course.timezone) + BOOKING_LEAD_MINUTES : -1;
+  const cutoffMins = isToday ? nowMinutesInTz(course.timezone) + leadMinutes : -1;
 
   const slots: AvailableSlot[] = [];
   const start = timeToMinutes(template.startTime);

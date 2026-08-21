@@ -219,7 +219,7 @@ export async function adminAvailableSlots(
   if (!layout) return [];
   const { computeAvailability } = await import("@/lib/availability");
   const { formatTimeLabel } = await import("@/lib/datetime");
-  const result = await computeAvailability({ course, layout, dateKey: date });
+  const result = await computeAvailability({ course, layout, dateKey: date, leadMinutes: 0 });
   return result.slots
     .filter((s) => s.available)
     .map((s) => ({ time: s.time, label: formatTimeLabel(s.time) }));
@@ -256,7 +256,7 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
   });
   if (!layout || !layout.pricing) return { ok: false, message: "Layout not configured." };
 
-  const availability = await computeAvailability({ course, layout, dateKey: date });
+  const availability = await computeAvailability({ course, layout, dateKey: date, leadMinutes: 0 });
   const slot = availability.slots.find((s) => s.time === slotTime);
   if (!slot) return { ok: false, message: "That time isn't on the schedule for this date." };
 
@@ -272,6 +272,7 @@ export async function createWalkIn(formData: FormData): Promise<ActionResult> {
   // For past slots, staff can add walk-ins without capacity restrictions (retroactive bookings).
   // For current/future slots, enforce normal availability rules.
   if (!isPast) {
+    if (slot.blocked) return { ok: false, message: slot.reason ? `That tee time is closed: ${slot.reason}` : "That tee time is closed." };
     if (!slot.available) return { ok: false, message: "That tee time is full." };
     if (numPlayers > slot.spotsLeft) return { ok: false, message: `Only ${slot.spotsLeft} spot${slot.spotsLeft === 1 ? "" : "s"} left at this time.` };
   }
