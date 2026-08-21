@@ -93,8 +93,8 @@ export function PricingFormClient({
 
       <div className="mt-4 overflow-x-auto">
         <div
-          className="relative grid min-w-[560px]"
-          style={{ gridTemplateColumns: "150px repeat(4, 1fr) 26px", gap: 0 }}
+          className="relative grid min-w-[620px]"
+          style={{ gridTemplateColumns: "200px repeat(4, 1fr) 26px", gap: 0 }}
         >
           <div
             aria-hidden="true"
@@ -120,10 +120,10 @@ export function PricingFormClient({
             return (
               <div key={band.id} className="contents">
                 <div className="flex items-center gap-1.5 whitespace-nowrap px-2 py-2 text-sm text-foreground/80">
-                  <span>{formatHour(band.startHour)}</span>
+                  <span className="text-sm text-foreground/80">{formatHour(band.startHour)}</span>
                   <span className="text-foreground/40">–</span>
                   {isLast ? (
-                    <span>close</span>
+                    <span className="text-sm text-foreground/80">close</span>
                   ) : (
                     <form action={moveAction} className="inline">
                       <input type="hidden" name="beforeBandId" value={band.id} />
