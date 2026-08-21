@@ -93,13 +93,13 @@ export function PricingFormClient({
 
       <div className="mt-4 overflow-x-auto">
         <div
-          className="relative grid min-w-[520px]"
-          style={{ gridTemplateColumns: "130px repeat(4, 1fr) 26px", gap: 0 }}
+          className="relative grid min-w-[560px]"
+          style={{ gridTemplateColumns: "150px repeat(4, 1fr) 26px", gap: 0 }}
         >
           <div
             aria-hidden="true"
             className="rounded-lg border-[1.5px] bg-[#12a06f]/[0.07]"
-            style={{ position: "absolute", gridColumn: "4 / 6", gridRow: `1 / ${bands.length + 2}`, inset: 0, ...accentBorderStyle }}
+            style={{ position: "absolute", gridColumn: "2 / 6", gridRow: `1 / ${bands.length + 2}`, inset: 0, ...accentBorderStyle }}
           />
 
           <div className="px-2 py-2 text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Time</div>
@@ -119,7 +119,7 @@ export function PricingFormClient({
 
             return (
               <div key={band.id} className="contents">
-                <div className="flex items-center gap-1 whitespace-nowrap px-2 py-2 text-xs text-foreground/70">
+                <div className="flex items-center gap-1.5 whitespace-nowrap px-2 py-2 text-sm text-foreground/80">
                   <span>{formatHour(band.startHour)}</span>
                   <span className="text-foreground/40">–</span>
                   {isLast ? (
@@ -134,7 +134,7 @@ export function PricingFormClient({
                         defaultValue={band.endHour}
                         disabled={structPending}
                         onChange={(e) => e.currentTarget.form?.requestSubmit()}
-                        className="rounded border border-black/10 bg-white px-1 py-0.5 text-xs outline-none focus:border-[#12a06f]"
+                        className="rounded border border-black/10 bg-white px-1.5 py-1 text-sm outline-none focus:border-[#12a06f]"
                       >
                         {boundaryOptions.map((h) => (
                           <option key={h} value={h}>{formatHour(h)}</option>
