@@ -103,7 +103,7 @@ export function PricingFormClient({
           />
 
           <div className="px-2 py-2 text-[11px] font-semibold uppercase tracking-wide text-foreground/45">Time</div>
-          <div className="px-2 py-2 text-center text-xs font-semibold text-foreground/70">Mon–Thu</div>
+          <div className="relative z-10 px-2 py-2 text-center text-xs font-semibold text-foreground/70">Mon–Thu</div>
           <div className="relative z-10 px-2 py-2 text-center text-xs font-semibold text-foreground/70">Fri</div>
           <div className="relative z-10 px-2 py-2 text-center text-xs font-semibold text-[#0f7d53]">Sat</div>
           <div className="relative z-10 px-2 py-2 text-center text-xs font-semibold text-[#0f7d53]">Sun</div>
@@ -144,7 +144,7 @@ export function PricingFormClient({
                   )}
                 </div>
 
-                <div className="px-1.5 py-1.5">
+                <div className="relative z-10 px-1.5 py-1.5">
                   <input form={formId} name={`band_${band.id}_monThu`} inputMode="decimal" defaultValue={dollars(band.monThuFeeCents)} className={priceInp} />
                 </div>
                 <div className="relative z-10 px-1.5 py-1.5">
